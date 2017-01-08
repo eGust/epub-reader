@@ -108,6 +108,16 @@ export class EPubManager {
 		}
 		this.handleNull(cb)
 	}
+
+	queryDocPath({ docId, filePath, go }) {
+		let doc = this.epubs[docId]
+		console.log({ docId, filePath, go }, 'doc:', !!doc)
+		if (!doc) return null
+		let item = filePath === '' ? doc.rootItem : doc.pathToItem(filePath)
+		if (!item) return null
+		item = doc[`${go}ItemOf`].call(doc, item)
+		return item && item.href
+	}
 }
 
 export const epubManager = new EPubManager

@@ -1,16 +1,32 @@
 $(() => {
 	console.log('frame ready')
+	$(window).resize(() => {
+		console.log($(window).width(), $(window).height(), $('main#main>#content').width(), $('main#main>#content').height())
+	})
 })
 
 function messageHandler(event) {
-	console.log('[frame]', event)
-	postWebMessage({ source: 'frame', received: event.data })
+	let data = event.data, { channel, action } = data
+	if (channel !== 'epub')
+		return
+
+	_.unset(data, [ 'channel', 'action', ])
+	console.log('[frame]', { action, data })
+	MESSAGE_HANDLERS[action] && MESSAGE_HANDLERS[action](data)
 }
 
 window.addEventListener('message', messageHandler, false)
 
+const MESSAGE_HANDLERS = {
+	changePage({ go }) {
+		console.log('changePage', { go })
+		// postWebMessage({ action: 'pageChanged', page: '' })
+		postWebMessage({ action: 'changePath', go })
+	},
+}
+
 function postWebMessage(data) {
-	window.parent.postMessage(data, '*')
+	window.parent.postMessage(_.merge({ channel: 'epub' }, data), '*')
 }
 
 function reloadCSSLink() {

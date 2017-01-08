@@ -1,17 +1,7 @@
-* {
-	box-sizing: border-box;
-}
-
-body {
-	margin: 0;
-	padding: 0;
-}
-
 #root {
 	position: absolute;
 	width: 100vw;
 	height: 100vh;
-	padding: 10px;
 }
 
 #main {
@@ -22,19 +12,11 @@ body {
 }
 
 #nav {
-	position: absolute;
-	top: -10px;
-	left: -10px;
-	right: -10px;
-	height: 50px;
-	padding: 10px;
-}
-
-#frm-wrap {
-	position: absolute;
-	top: 40px;
-	bottom: 0;
+	position: fixed;
+	top: 0;
 	width: 100%;
+	height: 40px;
+	padding: 10px;
 }
 
 #frm-book {
@@ -42,5 +24,57 @@ body {
 	width: 100%;
 	height: 100%;
 	border: none;
-	padding: 5px 20px 10px 20px;
+	padding: 5px 20px 30px 20px;
+}
+
+#menu-toc {
+    position: absolute;
+    top: 40px;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+}
+
+footer {
+	position: absolute;
+	background-color: #EEE;
+	border-top: 1px solid #CCC;
+	bottom: 0;
+	width: 100%;
+	height: 25px;
+	padding: 0 8px;
+	vertical-align: middle;
+	line-height: 24px;
+	font-size: 13px;
+}
+
+.page-nav-button {
+	position: absolute;
+	width: 40px;
+	top: 0;
+	bottom: 0;
+	color: rgba(255,255,255,0.2);
+	background-color: rgba(0,0,0,0.3);
+}
+
+.page-nav-button>i {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+}
+
+.page-nav-button:hover {
+	color: white;
+	background-color: rgba(0,0,0,0.6);
+}
+
+.page-nav-button.left {
+	left: 0;
+}
+
+.page-nav-button.right {
+	right: 0;
 }

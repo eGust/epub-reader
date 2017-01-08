@@ -143,7 +143,9 @@ ${$head.html()}
 	</style>
 </head>
 <body>
+<main id="main"><div id="content">
 ${$body.html()}
+</div></main>
 </body>
 </html>`
 						window.close()
@@ -166,11 +168,11 @@ ${$body.html()}
 	}
 
 	prevItemOf(item) {
-		return this.data.items[item.index-1]
+		return this.data.items[item.order-1]
 	}
 
 	nextItemOf(item) {
-		return this.data.items[item.index+1]
+		return this.data.items[item.order+1]
 	}
 
 	static loadFile(fileName, cb) {
