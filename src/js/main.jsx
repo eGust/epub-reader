@@ -3,7 +3,7 @@ import $ from 'jquery'
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
 import { ipcRenderer } from 'electron'
-import { Menu, Sidebar, Button, Icon, Segment, Header } from 'semantic-ui-react'
+import { Menu, Sidebar, Button, Icon, Segment, Header, Accordion, List, Item, Dimmer } from 'semantic-ui-react'
 
 ipcRenderer.on('reply-setupDevTools', (event, data) => {
 	require('electron-react-devtools').install()
@@ -23,20 +23,42 @@ const NavBar = ({onClickedMenu, iconName}) => {
 
 let updateAppState, getAppState, getCurrentDoc
 
+const TocItems = ({items, onClickItem, prefix = ''}) => (
+	<Accordion inverted styled exclusive={false} fluid className='list divided relaxed'>
+	{
+		_.map(items, (item, index) => (
+			item && item.subItems && item.subItems.length ? ([
+				<Accordion.Title key={`${prefix}.${index}.title`}>
+					<Icon name='folder' />
+					{item.text}
+					<Icon name='dropdown' />
+				</Accordion.Title>,
+				<Accordion.Content key={`${prefix}.${index}.content`}>
+				{
+					<TocItems items={item.subItems} prefix={`${prefix}.${index}`} onClickItem={onClickItem} />
+				}
+				</Accordion.Content>
+			]) : (
+				<List.Item key={`${prefix}.${index}`}>
+					<List.Icon name='file' />
+					<List.Content>
+						<a href={item.content} onClick={(e) => onClickItem(e, item)}>{item.text}</a>
+					</List.Content>
+				</List.Item>
+			)
+		))
+	}
+	</Accordion>
+)
+
 class App extends Component {
 	constructor(props) {
 		super(props)
 		this.state = {
 			tocVisible: false,
-			docId: '1',
-			filePath: '',
-			toHash: '',
 		}
 
-		this.currentDoc = {
-			docId: '1',
-			filePath: '',
-		}
+		this.currentDoc = {}
 	}
 
 	updateCurrentDoc() {
@@ -69,8 +91,15 @@ class App extends Component {
 		postWebMessage({ action: 'changePage', go: 'next', })
 	}
 
+	onClickedTocMenuItem(event, item) {
+		event.preventDefault()
+		let [ filePath, toHash = '' ] = item.content.split('#')
+		this.setState({ filePath, toHash })
+		console.log('clicked', item, { filePath, toHash })
+	}
+
 	render() {
-		const { tocVisible, docId, filePath, toHash } = this.state
+		const { tocVisible, docId, filePath, toHash, toc } = this.state
 		return (
 	<div id='main'>
 		<Sidebar as={Menu} direction='top' visible={true} inverted>
@@ -79,28 +108,26 @@ class App extends Component {
 			</Menu.Item>
 		</Sidebar>
 		<Sidebar.Pushable id='menu-toc'>
-			<Sidebar as={Menu} animation='overlay' width='thin' visible={tocVisible} icon='labeled' vertical inverted>
-				<Menu.Item name='home'>
-					<Icon name='home' />
-					Home
-				</Menu.Item>
-				<Menu.Item name='gamepad'>
-					<Icon name='gamepad' />
-					Games
-				</Menu.Item>
-				<Menu.Item name='camera'>
-					<Icon name='camera' />
-					Channels
-				</Menu.Item>
+			<Sidebar as={Segment} animation='overlay' width='wide' visible={tocVisible} icon='labeled' vertical inverted>
+				<TocItems items={toc} onClickItem={(e, item) => this.onClickedTocMenuItem(e, item)} />
+			{/*
+				_.map(toc, (item, index) => (
+					<TocItem as={Menu.Item} item={item} prefix={index} key={index} onClickItem={(e, item) => this.onClickedTocMenuItem(e, item)} />
+				))
+				//*/
+			}
 			</Sidebar>
 			<Sidebar.Pusher>
-				<iframe src={`epub://doc:${docId}/${filePath}${toHash.length ? `#${toHash}` : ''}`} id='frm-book' onLoad={() => this.updateCurrentDoc()} ></iframe>
-				<a className='page-nav-button left' href='#' onClick={(e) => {e.preventDefault(); this.goPrevPage()}}>
-					<Icon name='chevron left' className='big' />
-				</a>
-				<a className='page-nav-button right' href='#' onClick={(e) => {e.preventDefault(); this.goNextPage()}}>
-					<Icon name='chevron right' className='big' />
-				</a>
+				<Dimmer.Dimmable dimmed={tocVisible} id='dimmer-wrap'>
+					<Dimmer active={tocVisible} onClickOutside={() => this.setState({ tocVisible: false })} />
+					<iframe src={docId ? `epub://doc:${docId}/${filePath}${toHash.length ? `#${toHash}` : ''}` : ''} id='frm-book' onLoad={() => this.updateCurrentDoc()}></iframe>
+					<a className='page-nav-button left' href='#' onClick={(e) => {e.preventDefault(); this.goPrevPage()}}>
+						<Icon name='chevron left' className='big' />
+					</a>
+					<a className='page-nav-button right' href='#' onClick={(e) => {e.preventDefault(); this.goNextPage()}}>
+						<Icon name='chevron right' className='big' />
+					</a>
+				</Dimmer.Dimmable>
 			</Sidebar.Pusher>
 		</Sidebar.Pushable>
 		<footer>test</footer>
@@ -115,6 +142,23 @@ ReactDOM.render(
 )
 
 window.$ = $
+
+function switchDoc(docId) {
+	$.getJSON(`epub://toc:${docId}/`)
+	.done((toc) => {
+		console.log(toc)
+		updateAppState({
+			toc,
+			docId,
+			filePath: '',
+			toHash: '',
+		})
+	})
+}
+
+$(() => {
+	switchDoc(1)
+})
 
 ipcRenderer.on('reply-doc-path', (event, data) => {
 	console.log('reply-doc-path', data)

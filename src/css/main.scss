@@ -35,6 +35,12 @@
     height: auto;
 }
 
+#dimmer-wrap {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
+
 footer {
 	position: absolute;
 	background-color: #EEE;
@@ -77,4 +83,24 @@ footer {
 
 .page-nav-button.right {
 	right: 0;
+}
+
+.ui.styled.accordion.inverted, .ui.styled.accordion.inverted .accordion {
+	background-color: rgba(0,0,0,.87);
+}
+
+.ui.styled.accordion.inverted .accordion .active.title, .ui.styled.accordion.inverted .active.title {
+	color: #EEE;
+}
+
+.ui.styled.accordion.inverted .accordion .active.title, .ui.styled.accordion.inverted .accordion .title:hover, .ui.styled.accordion.inverted .active.title, .ui.styled.accordion.inverted .title:hover {
+	color: #CCC;
+}
+
+.ui.accordion.list > .item {
+	padding-left: 1rem;
+}
+
+.pushable > .ui.segment {
+	padding-top: 0;
 }
