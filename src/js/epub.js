@@ -132,6 +132,7 @@ export class EPub extends Doc {
 						$head.find('script').remove()
 						$body.find('script').remove()
 						$body.find('link').appendTo($head)
+						$body.find('style').appendTo($head)
 						item.cached = `<html>
 <head>
 ${$head.html()}

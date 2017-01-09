@@ -1,100 +1,61 @@
 * {
 	box-sizing: border-box !important;
+	font-family: '微软雅黑';
+	font-size: 20px;
+	line-height: 1.6rem;
 }
 
 body {
 	background-color: #EEE !important;
 	text-align: center;
-	width: 100vw;
-	height: 100vh;
-	overflow: hidden;
 }
 
 main#main {
 	position: relative;
 	margin: auto;
-	width: 90%;
-	height: 90vh;
-	margin-top: 5vh;
+	width: 95vw;
+	height: 94vh;
+	margin-top: 3vh;
 	overflow: hidden;
+	visibility: hidden;
+}
+
+main#main.show {
+	visibility: visible;
 }
 
 main#main>#content {
 	position: absolute;
+	width: 100%;
 	height: 100%;
 	column-fill: auto;
 	text-align: left;
 }
 
 @media (min-width: 512px) {
-	main#main {
-		width: 480px;
-	}
-
 	main#main>#content {
-		column-width: 460px;
-	}
-}
-
-@media (min-width: 768px) {
-	main#main {
-		width: 720px;
-	}
-
-	main#main>#content {
-		column-width: 700px;
+		column-width: 95vw;
 	}
 
 	svg, img {
-		max-width: 600px;
+		max-width: 95vw;
 		margin: auto;
 	}
 }
 
 @media (min-width: 992px) {
-	main#main {
-		width: 960px;
-	}
-
-	main#main>#content {
-		column-width: 420px;
-		column-gap: 120px;
-	}
-
-	svg, img {
-		max-width: 420px;
-		margin: auto;
-	}
-}
-
-@media (min-width: 1200px) {
-	main#main {
-		width: 1180px;
-	}
-
-	main#main>#content {
-		column-width: 520px;
-		column-gap: 140px;
-	}
-
-	svg, img {
-		max-width: 500px;
-		margin: auto;
-	}
-}
-
-@media (min-width: 1600px) {
-	main#main {
-		width: 88vw;
-	}
-
 	main#main>#content {
 		column-width: 40vw;
-		column-gap: 4vw;
+		column-gap: 3vw;
 	}
 
 	svg, img {
 		max-width: 40vw;
 		margin: auto;
 	}
+}
+
+p {
+	margin-top: 0.1rem !important;
+	margin-bottom: 0.3rem !important;
 }

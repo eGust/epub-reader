@@ -1,8 +1,47 @@
+window.location.toHash = window.location.hash
+window.location.hash = ''
+
+$(document)
+.on('click', 'a', function (event) {
+	// event.preventDefault()
+	// let $el = $(this), target = $el.attr('href')
+})
+
+let pageCount = 1, currentPage = 0, gapWidth, pageWidth
+
+function updatePageCount() {
+	let $m = $('main#main'), $c = $('main#main>#content'), c = $c[0]
+	gapWidth = parseFloat($c.css('column-gap'))
+	pageWidth = c.clientWidth + gapWidth
+	pageCount = Math.floor(c.scrollWidth/ pageWidth + 0.7)
+	console.log($c.width(), c.scrollWidth, pageCount)
+}
+
+function updatePageNo(page) {
+	currentPage = Math.max(0, Math.min(pageCount-1, page))
+	$('main#main>#content').css({left: -pageWidth * currentPage})
+}
+
+$(window).resize(() => {
+	updatePageCount()
+	updatePageNo(currentPage)
+})
+
 $(() => {
-	console.log('frame ready')
-	$(window).resize(() => {
-		console.log($(window).width(), $(window).height(), $('main#main>#content').width(), $('main#main>#content').height())
-	})
+	console.log('frame ready', location.toString())
+	updatePageCount()
+	switch (window.location.toHash) {
+		case '##scroll-to-first-page':
+			updatePageNo(0)
+			break
+		case '##scroll-to-last-page':
+			updatePageNo(pageCount-1)
+			break
+		case '':
+			break
+		default:
+	}
+	$('main#main').addClass('show')
 })
 
 function messageHandler(event) {
@@ -20,8 +59,22 @@ window.addEventListener('message', messageHandler, false)
 const MESSAGE_HANDLERS = {
 	changePage({ go }) {
 		console.log('changePage', { go })
-		// postWebMessage({ action: 'pageChanged', page: '' })
-		postWebMessage({ action: 'changePath', go })
+		let page
+		if (go === 'prev') {
+			page = currentPage - 1
+		} else if (go === 'next') {
+			page = currentPage + 1
+		}
+
+		if (page === currentPage)
+			return
+
+		if (page < 0 || page >= pageCount) {
+			postWebMessage({ action: 'changePath', go })
+			return
+		}
+
+		updatePageNo(page)
 	},
 }
 

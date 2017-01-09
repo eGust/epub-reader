@@ -21,7 +21,7 @@ const NavBar = ({onClickedMenu, iconName}) => {
 	)
 }
 
-let updateAppState, getAppState
+let updateAppState, getAppState, getCurrentDoc
 
 class App extends Component {
 	constructor(props) {
@@ -30,12 +30,31 @@ class App extends Component {
 			tocVisible: false,
 			docId: '1',
 			filePath: '',
+			toHash: '',
+		}
+
+		this.currentDoc = {
+			docId: '1',
+			filePath: '',
+		}
+	}
+
+	updateCurrentDoc() {
+		let { hostname, port, pathname, toHash } = document.getElementById('frm-book').contentWindow.location
+		if (hostname === 'doc') {
+			this.currentDoc = {
+				docId: port,
+				filePath: pathname.slice(1),
+				toHash,
+			}
+			console.log('curDoc:', this.currentDoc)
 		}
 	}
 
 	componentWillMount() {
 		updateAppState = (state) => this.setState(state)
 		getAppState = () => this.state
+		getCurrentDoc = () => this.currentDoc
 	}
 
 	toggleTocVisibility() {
@@ -51,7 +70,7 @@ class App extends Component {
 	}
 
 	render() {
-		const { tocVisible, docId, filePath } = this.state
+		const { tocVisible, docId, filePath, toHash } = this.state
 		return (
 	<div id='main'>
 		<Sidebar as={Menu} direction='top' visible={true} inverted>
@@ -75,7 +94,7 @@ class App extends Component {
 				</Menu.Item>
 			</Sidebar>
 			<Sidebar.Pusher>
-				<iframe src={`epub://doc:${docId}/${filePath}`} id='frm-book'></iframe>
+				<iframe src={`epub://doc:${docId}/${filePath}${toHash.length ? `#${toHash}` : ''}`} id='frm-book' onLoad={() => this.updateCurrentDoc()} ></iframe>
 				<a className='page-nav-button left' href='#' onClick={(e) => {e.preventDefault(); this.goPrevPage()}}>
 					<Icon name='chevron left' className='big' />
 				</a>
@@ -100,13 +119,14 @@ window.$ = $
 ipcRenderer.on('reply-doc-path', (event, data) => {
 	console.log('reply-doc-path', data)
 	if (data.path) {
-		updateAppState({ filePath: data.path })
+		let { go } = data.query, toHash = go === 'prev' ? '#scroll-to-last-page' : ''
+		updateAppState({ filePath: data.path, toHash })
 	}
 })
 
 const MESSAGE_HANDLERS = {
 	changePath({ go }) {
-		let { docId, filePath } = getAppState()
+		let { docId, filePath } = getCurrentDoc()
 		console.log('changePath', { docId, filePath, go })
 		ipcRenderer.send('query-doc-path', { docId, filePath, go })
 		// updateAppState({ path })
@@ -114,6 +134,10 @@ const MESSAGE_HANDLERS = {
 
 	pageChanged({ page }) {
 		console.log('pageChanged', { page })
+	},
+
+	pathChanged({ path }) {
+		//
 	},
 }
 

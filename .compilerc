@@ -7,7 +7,7 @@
             "env",
             {
               "targets": {
-                "electron": "1.4.12"
+                "electron": "1.4.13"
               }
             }
           ],
@@ -15,7 +15,8 @@
           "react"
         ],
         "plugins": [
-          "transform-async-to-generator", "transform-object-rest-spread"
+          "transform-async-to-generator",
+          "transform-object-rest-spread"
         ],
         "sourceMaps": "inline"
       }
@@ -27,7 +28,7 @@
             "env",
             {
               "targets": {
-                "electron": "1.4.12"
+                "electron": "1.4.13"
               }
             }
           ],
@@ -35,10 +36,20 @@
           "react"
         ],
         "plugins": [
-          "transform-async-to-generator", "transform-object-rest-spread"
+          "transform-async-to-generator",
+          "transform-object-rest-spread"
         ],
         "sourceMaps": "none"
       }
     }
+  },
+  "application/javascript": {
+    "presets": [
+      "es2015",
+      "react"
+    ],
+    "plugins": [
+      "transform-object-rest-spread"
+    ]
   }
 }
