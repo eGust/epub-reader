@@ -11,13 +11,14 @@ let pageCount = 1, currentPage = 0, gapWidth, pageWidth
 
 function updatePageCount() {
 	let $m = $('main#main'), $c = $('main#main>#content'), c = $c[0]
-	gapWidth = parseFloat($c.css('column-gap'))
+	gapWidth = parseFloat($c.css('column-gap')) || $m.width() * 0.02
 	pageWidth = c.clientWidth + gapWidth
 	pageCount = Math.floor(c.scrollWidth/ pageWidth + 0.7)
 	console.log($c.width(), c.scrollWidth, pageCount)
 }
 
 function updatePageNo(page) {
+	console.log('updatePageNo', { page, left: pageWidth * currentPage })
 	currentPage = Math.max(0, Math.min(pageCount-1, page))
 	$('main#main>#content').css({left: -pageWidth * currentPage})
 }
@@ -66,11 +67,14 @@ const MESSAGE_HANDLERS = {
 			page = currentPage + 1
 		}
 
-		if (page === currentPage)
+		if (page === currentPage) {
+			console.log('same page', { page, currentPage })
 			return
+		}
 
 		if (page < 0 || page >= pageCount) {
 			postWebMessage({ action: 'changePath', go })
+			console.log('changePath', { go })
 			return
 		}
 

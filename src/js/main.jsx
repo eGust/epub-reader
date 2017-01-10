@@ -13,7 +13,7 @@ ipcRenderer.send('require-setupDevTools', 'setup')
 
 const NavBar = ({onClickedMenu, iconName}) => {
 	return (
-	<Sidebar as={Menu} animation='overlay' direction='top' visible={true} inverted>
+	<Sidebar as={Menu} animation='overlay' direction='top' visible inverted>
 		<Menu.Item name='menu' style={{cursor: 'pointer'}} onClick={onClickedMenu}>
 			<Icon name={iconName} />
 		</Menu.Item>
@@ -108,7 +108,7 @@ class App extends Component {
 			</Menu.Item>
 		</Sidebar>
 		<Sidebar.Pushable id='menu-toc'>
-			<Sidebar as={Segment} animation='overlay' width='wide' visible={tocVisible} icon='labeled' vertical inverted>
+			<Sidebar as={Segment} animation='push' width='wide' visible={tocVisible} icon='labeled' vertical inverted>
 				<TocItems items={toc} onClickItem={(e, item) => this.onClickedTocMenuItem(e, item)} />
 			{/*
 				_.map(toc, (item, index) => (
@@ -118,16 +118,14 @@ class App extends Component {
 			}
 			</Sidebar>
 			<Sidebar.Pusher>
-				<Dimmer.Dimmable dimmed={tocVisible} id='dimmer-wrap'>
-					<Dimmer active={tocVisible} onClickOutside={() => this.setState({ tocVisible: false })} />
-					<iframe src={docId ? `epub://doc:${docId}/${filePath}${toHash.length ? `#${toHash}` : ''}` : ''} id='frm-book' onLoad={() => this.updateCurrentDoc()}></iframe>
-					<a className='page-nav-button left' href='#' onClick={(e) => {e.preventDefault(); this.goPrevPage()}}>
-						<Icon name='chevron left' className='big' />
-					</a>
-					<a className='page-nav-button right' href='#' onClick={(e) => {e.preventDefault(); this.goNextPage()}}>
-						<Icon name='chevron right' className='big' />
-					</a>
-				</Dimmer.Dimmable>
+				<iframe src={docId ? `epub://doc:${docId}/${filePath}${toHash.length ? `#${toHash}` : ''}` : ''} id='frm-book' onLoad={() => this.updateCurrentDoc()}></iframe>
+				<a className='page-nav-button left' href='#' onClick={(e) => {e.preventDefault(); this.goPrevPage()}}>
+					<Icon name='chevron left' className='big' />
+				</a>
+				<a className='page-nav-button right' href='#' onClick={(e) => {e.preventDefault(); this.goNextPage()}}>
+					<Icon name='chevron right' className='big' />
+				</a>
+				<div id='dimmer' className={tocVisible ? 'active' : ''} onClick={() => this.setState({ tocVisible: false })} />
 			</Sidebar.Pusher>
 		</Sidebar.Pushable>
 		<footer>test</footer>

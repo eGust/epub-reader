@@ -35,10 +35,18 @@
     height: auto;
 }
 
-#dimmer-wrap {
-	position: absolute;
+#dimmer {
+	display: none;
+}
+
+#dimmer.active {
+	display: block;
+	position: fixed;
+	top: 0;
+	left: 0;
 	width: 100%;
 	height: 100%;
+	background-color: rgba(0, 0, 0, 0.4)
 }
 
 footer {
@@ -59,8 +67,8 @@ footer {
 	width: 40px;
 	top: 0;
 	bottom: 0;
-	color: rgba(255,255,255,0.2);
-	background-color: rgba(0,0,0,0.3);
+	color: rgba(0,0,0,0.2);
+	background-color: rgba(255,255,255,0.1);
 }
 
 .page-nav-button>i {
@@ -74,7 +82,7 @@ footer {
 
 .page-nav-button:hover {
 	color: white;
-	background-color: rgba(0,0,0,0.6);
+	background-color: rgba(0,0,0,0.4);
 }
 
 .page-nav-button.left {
@@ -86,7 +94,7 @@ footer {
 }
 
 .ui.styled.accordion.inverted, .ui.styled.accordion.inverted .accordion {
-	background-color: rgba(0,0,0,.87);
+	background-color: #181818;
 }
 
 .ui.styled.accordion.inverted .accordion .active.title, .ui.styled.accordion.inverted .active.title {
@@ -103,4 +111,13 @@ footer {
 
 .pushable > .ui.segment {
 	padding-top: 0;
+}
+
+.ui.styled.accordion .accordion .title.active, .ui.styled.accordion .title.active {
+	padding-bottom: 0;
+}
+
+.ui.styled.accordion .accordion .content, .ui.styled.accordion .content {
+	padding-top: 0.1em;
+	padding-bottom: 0.5em;
 }
