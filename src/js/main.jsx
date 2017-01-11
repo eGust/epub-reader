@@ -81,10 +81,9 @@ class App extends Component {
 
 	onClickedTocMenuItem(event, item) {
 		event.preventDefault()
-		let [ filePath, toHash = '' ] = item.content.split('#')
-		postWebMessage({ action: 'changePath', filePath, toHash })
-		// this.setState({ filePath, toHash })
-		console.log('clicked', item, { filePath, toHash })
+		let [ filePath, anchor = '' ] = item.content.split('#')
+		postWebMessage({ action: 'changePath', filePath, anchor })
+		console.log('clicked', item, { filePath, anchor })
 	}
 
 	render() {
@@ -101,7 +100,7 @@ class App extends Component {
 				<TocItems items={toc} onClickItem={(e, item) => this.onClickedTocMenuItem(e, item)} />
 			</Sidebar>
 			<Sidebar.Pusher>
-				<iframe src={docId ? `epub://doc:${docId}/frame.html` : ''} id='frm-book' onLoad={() => postWebMessage({ action: 'changePath', filePath: '', toHash: '' })}></iframe>
+				<iframe src={docId ? `epub://doc:${docId}/frame.html` : ''} id='frm-book' onLoad={() => postWebMessage({ action: 'changePath', filePath: '', anchor: '' })}></iframe>
 				<a className='page-nav-button left' href='#' onClick={(e) => {e.preventDefault(); this.goPrevPage()}}>
 					<Icon name='chevron left' className='big' />
 				</a>
@@ -142,15 +141,15 @@ $(() => {
 ipcRenderer.on('reply-doc-path', (event, data) => {
 	console.log('reply-doc-path', data)
 	if (data.path) {
-		let { go } = data.query, toHash = go === 'prev' ? '#scroll-to-last-page' : ''
-		postWebMessage({ action: 'changePath', filePath: data.path, toHash })
-		// updateAppState({ filePath: data.path, toHash })
+		let { go } = data.query, anchor = go === 'prev' ? '*scroll-to-last-page' : ''
+		postWebMessage({ action: 'changePath', filePath: data.path, anchor })
+		// updateAppState({ filePath: data.path, anchor })
 	}
 })
 
 const MESSAGE_HANDLERS = {
-	changePath({ go }) {
-		let { docId, filePath } = getCurrentDoc()
+	changePath({ go, filePath }) {
+		let { docId } = getAppState()
 		console.log('changePath', { docId, filePath, go })
 		ipcRenderer.send('query-doc-path', { docId, filePath, go })
 		// updateAppState({ path })

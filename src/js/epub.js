@@ -124,31 +124,7 @@ export class EPub extends Doc {
 				fulfill(item.cached)
 			})
 		}
-		return this.data.zip.files[item.href].async('nodebuffer').then((buffer) => {
-			if (item.mediaType.indexOf('html') > 0) {
-				return new Promise((fulfill, reject) => {
-					jsdom.env(buffer.toString(), (err, window) => {
-						let $ = require('jquery')(window), $head = $('head'), $body = $('body')
-						$head.find('script').remove()
-						$body.find('script').remove()
-						$body.find('link').appendTo($head)
-						$body.find('style').appendTo($head)
-						item.cached = `<html>
-<head>
-${$head.html()}
-</head>
-<body>
-${$body.html()}
-</body>
-</html>`
-						window.close()
-						fulfill(item.cached)
-					})
-				})
-			} else {
-				return (item.cached = buffer)
-			}
-		})
+		return this.data.zip.files[item.href].async('nodebuffer').then((buffer) => (item.cached = buffer))
 	}
 
 	get rootItem() {

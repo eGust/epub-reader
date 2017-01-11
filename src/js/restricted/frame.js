@@ -1,7 +1,11 @@
+function log() {
+	console.log.call(console, '[frame]')
+}
+
 let currentLocation = {
 	filePath: null,
-	toHash: null,
-	page: 0,
+	anchor: null,
+	pageNo: 0,
 	pageCount: 1,
 	gapWidth: null,
 	pageWidth: null,
@@ -9,8 +13,10 @@ let currentLocation = {
 
 $(document)
 .on('click', 'a', function (event) {
-	// event.preventDefault()
-	// let $el = $(this), target = $el.attr('href')
+	event.preventDefault()
+	let a = $(this)[0], filePath = a.pathname.slice(1), anchor = a.hash
+	// console.log($el[0])
+	MESSAGE_HANDLERS.changePath({ filePath, anchor })
 })
 
 function updatePageCount() {
@@ -27,14 +33,29 @@ function updatePageCount() {
 }
 
 function updatePageNo(page) {
-	// console.log('updatePageNo', { page, left: pageWidth * currentPage })
-	currentLocation.currentPage = Math.max(0, Math.min(currentLocation.pageCount-1, page))
-	$('main#main>#content').css({left: -currentLocation.pageWidth * currentLocation.currentPage})
+	// console.log('updatePageNo', { page, left: pageWidth * pageNo })
+	currentLocation.pageNo = Math.max(0, Math.min(currentLocation.pageCount-1, page))
+	$('main#main>#content').css({left: -currentLocation.pageWidth * currentLocation.pageNo})
+}
+
+function switchToAnchor(anchor) {
+	let pageNo = 0
+	if (anchor && anchor.length) {
+		if (anchor === '*scroll-to-last-page') {
+			pageNo = currentLocation.pageCount - 1
+		} else {
+			let a = $(anchor)[0]
+			if (a) {
+				pageNo = Math.floor(a.offsetLeft / currentLocation.pageWidth)
+			}
+		}
+	}
+	updatePageNo(pageNo)
 }
 
 $(window).resize(() => {
 	updatePageCount()
-	updatePageNo(currentLocation.currentPage)
+	updatePageNo(currentLocation.pageNo)
 })
 
 $(() => {
@@ -56,34 +77,61 @@ window.addEventListener('message', messageHandler, false)
 
 const MESSAGE_HANDLERS = {
 	changePage({ go }) {
-		console.log('changePage', { go })
-		let page
+		let { pageNo, pageCount, filePath } = currentLocation
+		console.log('changePage', { go, pageNo, pageCount, filePath })
 		if (go === 'prev') {
-			page = currentPage - 1
+			page = pageNo - 1
 		} else if (go === 'next') {
-			page = currentPage + 1
+			page = pageNo + 1
 		}
 
-		if (page === currentPage) {
-			console.log('same page', { page, currentPage })
+		if (page === pageNo) {
+			console.log('same page', { page, pageNo })
 			return
 		}
 
 		if (page < 0 || page >= pageCount) {
-			postWebMessage({ action: 'changePath', go })
-			console.log('changePath', { go })
+			postWebMessage({ action: 'changePath', go, filePath })
+			console.log('changePath', { go, filePath })
 			return
 		}
 
 		updatePageNo(page)
 	},
 
-	changePath({ filePath, toHash }) {
+	changePath({ filePath, anchor }) {
+		if (filePath === currentLocation.filePath) {
+			return
+		}
+
+		console.log('changePath', { filePath, anchor })
+
+		$('main#main').removeClass('show')
 		$.get(`/${filePath}`)
-		.then((html) => {
-			let $html = $(html), $head = $html.find('head')
-			console.log($head)
-			$('main#main>#content').html($html.find('body').children())
+		.then((xhtml) => {
+			let $xhtml = $(xhtml), $head = $('head'), cssLink = $('#css-link')[0], toRemove = []
+			for (let el of $head.find('> *')) {
+				if (el === cssLink)
+					break
+				toRemove.push(el)
+			}
+			_.each(toRemove, (el) => $(el).remove())
+
+			let xhead = $xhtml.find('head'), xbody = $xhtml.find('body')
+
+			xhead.find('script').remove()
+			xbody.find('script').remove()
+			xbody.find('link').appendTo(xhead)
+			xbody.find('style').appendTo(xhead)
+
+			history.pushState({}, '', `/${filePath}`)
+			currentLocation.filePath = filePath
+
+			$head.prepend(xhead.children())
+			$('main#main>#content').html(xbody.children())
+			updatePageCount()
+			switchToAnchor(anchor)
+			$('main#main').addClass('show')
 		})
 	},
 }

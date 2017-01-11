@@ -33,6 +33,7 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
+	console.log('locale:', app.getLocale())
 	createWindow()
 	registerEPubProtocol()
 });
@@ -72,3 +73,5 @@ ipcMain.on('query-doc-path', (event, query) => {
 
 EPub.loadFile('tests/ifs.epub', (epub) => {
 })
+
+console.log(app.getPath('appData'), app.getLocale())

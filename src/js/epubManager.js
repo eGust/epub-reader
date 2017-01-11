@@ -63,11 +63,6 @@ export class EPubManager {
 			doc.fetchFile(item)
 			.then((buff) => {
 				let mimeType = item.mediaType, data = buff
-				if (item.mediaType.indexOf('html') > 0) {
-					mimeType = 'text/html'
-					data = new Buffer(`<!DOCTYPE html>${buff}`)
-				}
-				// console.log(mimeType, data.toString())
 				cb({
 					mimeType,
 					data,
