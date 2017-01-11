@@ -136,17 +136,9 @@ export class EPub extends Doc {
 						item.cached = `<html>
 <head>
 ${$head.html()}
-	<link id="css-link" href="epub://globals/frame.css" rel="stylesheet" type="text/css"/>
-	<script src="epub://globals/lodash.js"></script>
-	<script src="epub://globals/jquery.js"></script>
-	<script src="epub://globals/frame.js"></script>
-	<style id="css-calc">
-	</style>
 </head>
 <body>
-<main id="main"><div id="content">
 ${$body.html()}
-</div></main>
 </body>
 </html>`
 						window.close()

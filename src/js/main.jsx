@@ -61,18 +61,6 @@ class App extends Component {
 		this.currentDoc = {}
 	}
 
-	updateCurrentDoc() {
-		let { hostname, port, pathname, toHash } = document.getElementById('frm-book').contentWindow.location
-		if (hostname === 'doc') {
-			this.currentDoc = {
-				docId: port,
-				filePath: pathname.slice(1),
-				toHash,
-			}
-			console.log('curDoc:', this.currentDoc)
-		}
-	}
-
 	componentWillMount() {
 		updateAppState = (state) => this.setState(state)
 		getAppState = () => this.state
@@ -94,12 +82,13 @@ class App extends Component {
 	onClickedTocMenuItem(event, item) {
 		event.preventDefault()
 		let [ filePath, toHash = '' ] = item.content.split('#')
-		this.setState({ filePath, toHash })
+		postWebMessage({ action: 'changePath', filePath, toHash })
+		// this.setState({ filePath, toHash })
 		console.log('clicked', item, { filePath, toHash })
 	}
 
 	render() {
-		const { tocVisible, docId, filePath, toHash, toc } = this.state
+		const { tocVisible, docId, toc } = this.state
 		return (
 	<div id='main'>
 		<Sidebar as={Menu} direction='top' visible={true} inverted>
@@ -110,15 +99,9 @@ class App extends Component {
 		<Sidebar.Pushable id='menu-toc'>
 			<Sidebar as={Segment} animation='push' width='wide' visible={tocVisible} icon='labeled' vertical inverted>
 				<TocItems items={toc} onClickItem={(e, item) => this.onClickedTocMenuItem(e, item)} />
-			{/*
-				_.map(toc, (item, index) => (
-					<TocItem as={Menu.Item} item={item} prefix={index} key={index} onClickItem={(e, item) => this.onClickedTocMenuItem(e, item)} />
-				))
-				//*/
-			}
 			</Sidebar>
 			<Sidebar.Pusher>
-				<iframe src={docId ? `epub://doc:${docId}/${filePath}${toHash.length ? `#${toHash}` : ''}` : ''} id='frm-book' onLoad={() => this.updateCurrentDoc()}></iframe>
+				<iframe src={docId ? `epub://doc:${docId}/frame.html` : ''} id='frm-book' onLoad={() => postWebMessage({ action: 'changePath', filePath: '', toHash: '' })}></iframe>
 				<a className='page-nav-button left' href='#' onClick={(e) => {e.preventDefault(); this.goPrevPage()}}>
 					<Icon name='chevron left' className='big' />
 				</a>
@@ -148,8 +131,6 @@ function switchDoc(docId) {
 		updateAppState({
 			toc,
 			docId,
-			filePath: '',
-			toHash: '',
 		})
 	})
 }
@@ -162,7 +143,8 @@ ipcRenderer.on('reply-doc-path', (event, data) => {
 	console.log('reply-doc-path', data)
 	if (data.path) {
 		let { go } = data.query, toHash = go === 'prev' ? '#scroll-to-last-page' : ''
-		updateAppState({ filePath: data.path, toHash })
+		postWebMessage({ action: 'changePath', filePath: data.path, toHash })
+		// updateAppState({ filePath: data.path, toHash })
 	}
 })
 

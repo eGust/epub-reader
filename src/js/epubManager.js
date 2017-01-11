@@ -16,12 +16,12 @@ const GLOBAL_RESOURCES = {
 	'lodash.js': {
 		filePath: path.resolve(__dirname, `../../node_modules/lodash/lodash.min.js`),
 		mimeType: 'application/javascript',
-		fetch: fetchStatic
+		fetch: fetchStatic,
 	},
 	'jquery.js': {
 		filePath: path.resolve(__dirname, `../../node_modules/jquery/dist/jquery.min.js`),
 		mimeType: 'application/javascript',
-		fetch: fetchStatic
+		fetch: fetchStatic,
 	},
 	// 'moment.js': {
 	// 	filePath: path.resolve(__dirname, `../../node_modules/moment/min/moment.min.js`),
@@ -31,11 +31,16 @@ const GLOBAL_RESOURCES = {
 	'frame.js': {
 		filePath: path.resolve(__dirname, `restricted/frame.js`),
 		mimeType: 'application/javascript',
-		fetch: fetchStatic
+		fetch: fetchStatic,
 	},
 	'frame.css': {
 		fetch: fetchDynamicCss
 	},
+	'frame.html': {
+		filePath: path.resolve(__dirname, `../frame.html`),
+		mimeType: 'text/html',
+		fetch: fetchStatic,
+	}
 }
 
 export class EPubManager {
@@ -97,6 +102,9 @@ export class EPubManager {
 		try {
 			switch (scope) {
 				case 'doc':
+					if (filePath === 'frame.html') {
+						return this.handleGlobals(filePath, cb)
+					}
 					return this.handleDoc({ doc: this.epubs[id], filePath, method }, cb)
 				case 'toc':
 					return this.handleToc({ doc: this.epubs[id] }, cb)

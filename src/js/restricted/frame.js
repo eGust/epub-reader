@@ -1,5 +1,11 @@
-window.location.toHash = window.location.hash
-window.location.hash = ''
+let currentLocation = {
+	filePath: null,
+	toHash: null,
+	page: 0,
+	pageCount: 1,
+	gapWidth: null,
+	pageWidth: null,
+}
 
 $(document)
 .on('click', 'a', function (event) {
@@ -7,42 +13,33 @@ $(document)
 	// let $el = $(this), target = $el.attr('href')
 })
 
-let pageCount = 1, currentPage = 0, gapWidth, pageWidth
-
 function updatePageCount() {
 	let $m = $('main#main'), $c = $('main#main>#content'), c = $c[0]
-	gapWidth = parseFloat($c.css('column-gap')) || $m.width() * 0.02
-	pageWidth = c.clientWidth + gapWidth
-	pageCount = Math.floor(c.scrollWidth/ pageWidth + 0.7)
+		, gapWidth = parseFloat($c.css('column-gap')) || $m.width() * 0.02
+		, pageWidth = c.clientWidth + gapWidth
+		, pageCount = Math.floor(c.scrollWidth/ pageWidth + 0.7)
+	currentLocation = _.merge(currentLocation, {
+		gapWidth,
+		pageWidth,
+		pageCount,
+	})
 	console.log($c.width(), c.scrollWidth, pageCount)
 }
 
 function updatePageNo(page) {
-	console.log('updatePageNo', { page, left: pageWidth * currentPage })
-	currentPage = Math.max(0, Math.min(pageCount-1, page))
-	$('main#main>#content').css({left: -pageWidth * currentPage})
+	// console.log('updatePageNo', { page, left: pageWidth * currentPage })
+	currentLocation.currentPage = Math.max(0, Math.min(currentLocation.pageCount-1, page))
+	$('main#main>#content').css({left: -currentLocation.pageWidth * currentLocation.currentPage})
 }
 
 $(window).resize(() => {
 	updatePageCount()
-	updatePageNo(currentPage)
+	updatePageNo(currentLocation.currentPage)
 })
 
 $(() => {
-	console.log('frame ready', location.toString())
+	console.log('frame ready', currentLocation)
 	updatePageCount()
-	switch (window.location.toHash) {
-		case '##scroll-to-first-page':
-			updatePageNo(0)
-			break
-		case '##scroll-to-last-page':
-			updatePageNo(pageCount-1)
-			break
-		case '':
-			break
-		default:
-	}
-	$('main#main').addClass('show')
 })
 
 function messageHandler(event) {
@@ -79,6 +76,15 @@ const MESSAGE_HANDLERS = {
 		}
 
 		updatePageNo(page)
+	},
+
+	changePath({ filePath, toHash }) {
+		$.get(`/${filePath}`)
+		.then((html) => {
+			let $html = $(html), $head = $html.find('head')
+			console.log($head)
+			$('main#main>#content').html($html.find('body').children())
+		})
 	},
 }
 
