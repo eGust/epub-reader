@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import path from 'path'
 import fs from 'fs'
-import { EPub } from './epub'
+import { EPub } from './epubDoc'
 import { fetchDynamicCss } from './fetchDynamicCss'
 
 function fetchStatic({ mimeType, filePath, path }, cb) {
 	fs.readFile(filePath, (err, data) => {
 		if (err)
-			return epubManager.handleNull(cb)
+			return docManager.handleNull(cb)
 		cb({ mimeType, data })
 	})
 }
@@ -43,13 +43,13 @@ const GLOBAL_RESOURCES = {
 	}
 }
 
-export class EPubManager {
+export class DocManager {
 	constructor() {
-		this.epubs = {}
+		this.docs = {}
 	}
 
 	addDoc(doc) {
-		this.epubs[doc.id] = doc
+		this.docs[doc.id] = doc
 	}
 
 	handleNull(cb) {
@@ -100,9 +100,9 @@ export class EPubManager {
 					if (filePath === 'frame.html') {
 						return this.handleGlobals(filePath, cb)
 					}
-					return this.handleDoc({ doc: this.epubs[id], filePath, method }, cb)
+					return this.handleDoc({ doc: this.docs[id], filePath, method }, cb)
 				case 'toc':
-					return this.handleToc({ doc: this.epubs[id] }, cb)
+					return this.handleToc({ doc: this.docs[id] }, cb)
 				case 'globals':
 					return this.handleGlobals(filePath, cb)
 			}
@@ -113,7 +113,7 @@ export class EPubManager {
 	}
 
 	queryDocPath({ docId, filePath, go }) {
-		let doc = this.epubs[docId]
+		let doc = this.docs[docId]
 		console.log({ docId, filePath, go }, 'doc:', !!doc)
 		if (!doc) return null
 		let item = filePath === '' ? doc.rootItem : doc.pathToItem(filePath)
@@ -123,4 +123,4 @@ export class EPubManager {
 	}
 }
 
-export const epubManager = new EPubManager
+export const docManager = new DocManager

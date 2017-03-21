@@ -126,7 +126,7 @@ window.$ = $
 function switchDoc(docId) {
 	$.getJSON(`epub://toc:${docId}/`)
 	.done((toc) => {
-		console.log(toc)
+		console.log(window.toc = toc)
 		updateAppState({
 			toc,
 			docId,

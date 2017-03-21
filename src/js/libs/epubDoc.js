@@ -3,9 +3,10 @@ import JSZip from 'jszip'
 import fs from 'fs'
 import path from 'path'
 import { Doc } from './doc'
-import jsdom from 'jsdom'
+import cheerio from 'cheerio'
+// import jsdom from 'jsdom'
 
-let $ = require('jquery')(jsdom.jsdom().defaultView)
+// let $ = require('jquery')(jsdom.jsdom().defaultView)
 
 const IS_WIN = _.startsWith(process.platform, 'win')
 
@@ -13,17 +14,17 @@ export const dirname = IS_WIN ? ((p) => path.dirname(p).replace(/\\/g, '/')) : (
 
 export const resolvePath = IS_WIN ? ((...args) => path.join(...args).replace(/\\/g, '/')) : ((...args) => path.join(...args))
 
-function parseToc(node, currentPath) {
+function parseToc($node, currentPath, $) {
 	let results = []
-	$(node).find('>navPoint').each((index, np) => {
-		let $np = $(np)
+	$node.find('>navPoint').each((index, np) => {
+		const $np = $(np)
 		results.push({
 			index,
 			id: $np.attr('id'),
-			playOrder: parseInt($np.attr('playOrder')),
+			playOrder: $np.attr('playOrder')|0,
 			text: $np.find('>navLabel>text').text(),
 			content: resolvePath(currentPath, $np.find('>content').attr('src')),
-			subItems: parseToc(np, currentPath),
+			subItems: parseToc($np, currentPath, $),
 		})
 	})
 
@@ -35,20 +36,21 @@ export class EPub extends Doc {
 		let opfPath
 		zip.files['META-INF/container.xml'].async('string')
 		.then((container) => {
-			let rootPath = $('rootfiles>rootfile', container).attr('full-path')
+			const $ = cheerio.load(container, { xmlMode: true })
+				, rootPath = $('rootfiles>rootfile').attr('full-path')
 			opfPath = dirname(rootPath)
 			return zip.files[rootPath].async('string')
 		})
 		.then((opf) => {
 			try {
-				let $opf = $(opf)
+				let $ = cheerio.load(opf, { xmlMode: true })
 					, idIndexes = {}
 					, groups = {}
 					, spine = []
 					, items = []
 					, pathIndexes = {}
 
-				$opf.find('manifest>item').each((_, itemNode) => {
+				$('manifest>item').each((_, itemNode) => {
 					let $e = $(itemNode)
 						, id = $e.attr('id'), mt = $e.attr('media-type')
 						, group = (groups[mt] || (groups[mt] = {}))
@@ -60,7 +62,7 @@ export class EPub extends Doc {
 					pathIndexes[item.href] = item
 					idIndexes[id] = group[id] = item
 				})
-				$opf.find('spine>itemref').each((index, ir) => {
+				$('spine>itemref').each((index, ir) => {
 					let id = $(ir).attr('idref'), item = idIndexes[id]
 					spine.push(id)
 					items.push(item)
@@ -92,8 +94,9 @@ export class EPub extends Doc {
 			}
 		})
 		.then((toc) => {
+			const $ = cheerio.load(toc, { xmlMode: true })
 			if (toc) {
-				this.data.toc = parseToc($(toc).find('>navMap'), this.data.tocPath)
+				this.data.toc = parseToc($('navMap'), this.data.tocPath, $)
 			}
 			cb && cb(this)
 		})

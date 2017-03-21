@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { registerEPubProtocol } from './js/epubProtocol'
+import { registerEBookProtocol } from './js/ebookProtocol'
 import { epubManager } from './js/epubManager'
 import { EPub } from './js/epub'
 
@@ -33,9 +33,9 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-	console.log('locale:', app.getLocale())
+	// console.log('locale:', app.getLocale())
 	createWindow()
-	registerEPubProtocol()
+	registerEBookProtocol()
 });
 
 // Quit when all windows are closed.
