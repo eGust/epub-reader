@@ -1,4 +1,4 @@
-import { showSettings, openBookFile, openExistingBook } from '../actions'
+import { showSettings, openBookFiles, openExistingBook } from '../actions'
 import components from './components'
 import { connect } from 'react-redux'
 
@@ -8,7 +8,7 @@ export const ShelfMenu = connect(
 		mapStateToProps,
 		(dispatch) => ({
 			onClickShowSettings: () => dispatch(showSettings()),
-			onOpenBookFile: (file) => dispatch(openBookFile(file)),
+			openBookFiles: (files) => dispatch(openBookFiles(files)),
 		})
 	)(components.ShelfMenu)
 

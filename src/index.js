@@ -1,7 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { registerEBookProtocol } from './js/ebookProtocol'
-import { epubManager } from './js/epubManager'
-import { EPub } from './js/epub'
+import { registerEBookProtocol } from './js/server/ebookProtocol'
+import { registerServices } from './js/services'
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -58,20 +57,6 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
-ipcMain.once('require-setupDevTools', (event, data) => {
-	if (process.env.NODE_ENV !== 'production') {
-		event.sender.send('reply-setupDevTools', 'setup')
-	}
-})
+registerServices()
 
-ipcMain.on('query-doc-path', (event, query) => {
-	event.sender.send('reply-doc-path', {
-		query,
-		path: epubManager.queryDocPath(query)
-	})
-})
-
-EPub.loadFile('tests/ifs.epub', (epub) => {
-})
-
-console.log(app.getPath('appData'), app.getLocale())
+// console.log(app.getPath('appData'), app.getLocale())

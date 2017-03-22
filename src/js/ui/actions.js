@@ -15,22 +15,30 @@ export const showSettings = () => ({
 // shelf
 export
 const OPEN_EXISTING_BOOK = 'OPEN_EXISTING_BOOK'
-	, OPEN_BOOK_FILE = 'OPEN_BOOK_FILE'
+	, OPEN_BOOK_FILES = 'OPEN_BOOK_FILES'
+	, ADD_BOOKS_TO_SHELF = 'ADD_BOOKS_TO_SHELF'
 
 export const openExistingBook = (book) => ({
 	type: OPEN_EXISTING_BOOK,
 	book,
 })
 
-export const openBookFile = (file) => ({
-	type: OPEN_BOOK_FILE,
-	file,
+export const openBookFiles = (files) => ({
+	type: OPEN_BOOK_FILES,
+	files,
+})
+
+export const addBooksToShelf = ({fileIds, open}) => ({
+	type: ADD_BOOKS_TO_SHELF,
+	fileIds,
+	open,
 })
 
 // reader
 export
 const TOGGLE_TOC_PIN = 'TOGGLE_TOC_PIN'
 	, TOGGLE_TOC_OPEN = 'TOGGLE_TOC_OPEN'
+	, CHANGE_CURRENT_BOOK = 'CHANGE_CURRENT_BOOK'
 	, CHANGE_READER_CONTENT_PATH = 'CHANGE_READER_CONTENT_PATH'
 
 export const toggleTocPin = () => ({
@@ -40,6 +48,11 @@ export const toggleTocPin = () => ({
 export const toggleTocOpen = (open = null) => ({
 	type: TOGGLE_TOC_OPEN,
 	open,
+})
+
+export const changeCurrentBook = (book) => ({
+	type: CHANGE_CURRENT_BOOK,
+	book,
 })
 
 export const changeReaderContentPath = (item) => ({

@@ -2,19 +2,23 @@ import _ from 'lodash'
 import React from 'react'
 import { Menu, Sidebar, Icon, Popup, Input, Label } from 'semantic-ui-react'
 
-export const ShelfMenu = ({ onClickShowSettings }) => (
+export const ShelfMenu = ({ onClickShowSettings, openBookFiles }) => (
 	<Sidebar as={Menu} direction='top' visible inverted fluid>
 		<Popup inverted
 			trigger={
 				<Menu.Item>
 					<Icon name='folder open' />
 					<label className='full-size'>
-						<input type='file' multiple className='hide' accept='.epub' />
+						<input type='file' multiple className='hide' accept='.epub' onChange={(e) => {
+							const input = e.currentTarget
+								, files = _.map(input.files, (f) => f.path)
+							input.value = null
+							openBookFiles(files)
+						}} />
 					</label>
 				</Menu.Item>
 			}
 			content='Open EPub files'
-			positioning='bottom right'
 		/>
 		<Popup inverted
 			trigger={
@@ -27,7 +31,6 @@ export const ShelfMenu = ({ onClickShowSettings }) => (
 				</Menu.Item>
 			}
 			on='click'
-			positioning='bottom right'
 		>
 			<Input icon={<Icon name='close' inverted circular link />} placeholder='Search...' />
 		</Popup>
@@ -78,7 +81,6 @@ export const ShelfMenu = ({ onClickShowSettings }) => (
 					</Menu>
 				}
 				on='click'
-				positioning='bottom right'
 			/>
 			<Popup inverted
 				trigger={
@@ -87,7 +89,6 @@ export const ShelfMenu = ({ onClickShowSettings }) => (
 					</Menu.Item>
 				}
 				content='Settings'
-				positioning='bottom right'
 			/>
 		</Menu.Menu>
 	</Sidebar>
@@ -96,12 +97,14 @@ export const ShelfMenu = ({ onClickShowSettings }) => (
 export const ShelfBody = ({ customMargin, viewMargin, bookMargin, bookCovers, onClickOpenBook }) => (
 	<div id='books-shelf' style={ customMargin ? { paddingLeft: viewMargin, paddingRight: viewMargin, } : {} }>
 	{
-		bookCovers.map(({index}) => (
+		bookCovers.map((book = {}, index) => (
 			<div key={index}
 				className='book-cover'
-				onClick={onClickOpenBook}
+				onClick={() => onClickOpenBook(book)}
 				style={ customMargin ? { marginLeft: bookMargin/2, marginRight: bookMargin/2, } : {} }
-			/>
+				>
+				<label className='book-title' title={book.fileName}>{book.title}</label>
+			</div>
 		))
 	}
 	</div>

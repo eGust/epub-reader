@@ -1,5 +1,4 @@
 import { protocol } from 'electron'
-import { EPub } from './epubDoc'
 import Url from 'url'
 import _ from 'lodash'
 import { docManager } from './docManager'

@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import path from 'path'
 import fs from 'fs'
-import { EPub } from './epubDoc'
 import { fetchDynamicCss } from './fetchDynamicCss'
 
 function fetchStatic({ mimeType, filePath, path }, cb) {
@@ -14,22 +13,22 @@ function fetchStatic({ mimeType, filePath, path }, cb) {
 
 const GLOBAL_RESOURCES = {
 	'lodash.js': {
-		filePath: path.resolve(__dirname, `../../node_modules/lodash/lodash.min.js`),
+		filePath: path.resolve(__dirname, `../../../node_modules/lodash/lodash.min.js`),
 		mimeType: 'application/javascript',
 		fetch: fetchStatic,
 	},
 	'jquery.js': {
-		filePath: path.resolve(__dirname, `../../node_modules/jquery/dist/jquery.min.js`),
+		filePath: path.resolve(__dirname, `../../../node_modules/jquery/dist/jquery.min.js`),
 		mimeType: 'application/javascript',
 		fetch: fetchStatic,
 	},
 	// 'moment.js': {
-	// 	filePath: path.resolve(__dirname, `../../node_modules/moment/min/moment.min.js`),
+	// 	filePath: path.resolve(__dirname, `../../../node_modules/moment/min/moment.min.js`),
 	// 	mimeType: 'application/javascript',
 	// 	fetch: fetchStatic
 	// },
 	'frame.js': {
-		filePath: path.resolve(__dirname, `restricted/frame.js`),
+		filePath: path.resolve(__dirname, `../client/frame.js`),
 		mimeType: 'application/javascript',
 		fetch: fetchStatic,
 	},
@@ -37,15 +36,22 @@ const GLOBAL_RESOURCES = {
 		fetch: fetchDynamicCss
 	},
 	'frame.html': {
-		filePath: path.resolve(__dirname, `../frame.html`),
+		filePath: path.resolve(__dirname, `../../frame.html`),
 		mimeType: 'text/html',
 		fetch: fetchStatic,
 	}
 }
 
 export class DocManager {
-	constructor() {
-		this.docs = {}
+	registeredTypes = {}
+	registeredExtNames = {}
+	docs = {}
+
+	registerType(typeName, typeClass, extFileNames) {
+		this.registeredTypes[typeName] = typeClass
+		for (const ext of extFileNames) {
+			this.registeredExtNames[extFileNames] = typeName
+		}
 	}
 
 	addDoc(doc) {
@@ -120,6 +126,21 @@ export class DocManager {
 		if (!item) return null
 		item = doc[`${go}ItemOf`].call(doc, item)
 		return item && item.href
+	}
+
+	loadFile(fileName, cb, typeName = null) {
+		typeName = typeName || this.registeredExtNames[path.extname(fileName).toLowerCase()]
+		const docType = typeName && this.registeredTypes[typeName]
+		console.log({typeName, docType})
+		if (docType) {
+			docType.loadFile(fileName, cb)
+		} else {
+			cb && cb()
+		}
+	}
+
+	getDocument(id) {
+		return this.docs[id]
 	}
 }
 

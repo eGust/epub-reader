@@ -2,17 +2,11 @@ import _ from 'lodash'
 import JSZip from 'jszip'
 import fs from 'fs'
 import path from 'path'
-import { Doc } from './doc'
+import { DocBase, dirname, resolvePath } from './docBase'
 import cheerio from 'cheerio'
 // import jsdom from 'jsdom'
 
 // let $ = require('jquery')(jsdom.jsdom().defaultView)
-
-const IS_WIN = _.startsWith(process.platform, 'win')
-
-export const dirname = IS_WIN ? ((p) => path.dirname(p).replace(/\\/g, '/')) : ((p) => path.dirname(p))
-
-export const resolvePath = IS_WIN ? ((...args) => path.join(...args).replace(/\\/g, '/')) : ((...args) => path.join(...args))
 
 function parseToc($node, currentPath, $) {
 	let results = []
@@ -31,7 +25,77 @@ function parseToc($node, currentPath, $) {
 	return results.sort((a, b) => a.playOrder === b.playOrder ? a.index - b.index : a.playOrder - b.playOrder)
 }
 
-export class EPub extends Doc {
+class EPubDoc extends DocBase {
+	loadToc({zip, toc, cb}) {
+		const $ = cheerio.load(toc, { xmlMode: true })
+		if (toc) {
+			this.data.toc = parseToc($('navMap'), this.data.tocPath, $)
+		}
+		cb && cb(this)
+	}
+
+	loadOpf({zip, opf, cb, opfPath}) {
+		try {
+			let $ = cheerio.load(opf, { xmlMode: true })
+				, idIndexes = {}
+				, groups = {}
+				, spine = []
+				, items = []
+				, pathIndexes = {}
+				, title = $('metadata > dc\\:title').text().trim()
+
+			$('manifest>item').each((__, itemNode) => {
+				let $e = $(itemNode)
+					, id = $e.attr('id'), mt = $e.attr('media-type')
+					, group = (groups[mt] || (groups[mt] = {}))
+				let item = {
+					id,
+					mediaType: mt,
+					href: resolvePath(opfPath, $e.attr('href')),
+				}
+				pathIndexes[item.href] = item
+				idIndexes[id] = group[id] = item
+			})
+			$('spine>itemref').each((index, ir) => {
+				let id = $(ir).attr('idref'), item = idIndexes[id]
+				spine.push(id)
+				items.push(item)
+				item.order = index
+			})
+
+			this.data = {
+				opfPath,
+				opf,
+				items,
+				spine,
+				pathIndexes,
+				groups,
+				zip,
+				title,
+			}
+
+			let toc = groups['application/x-dtbncx+xml']
+			if (toc) {
+				toc = toc[_.keys(toc)[0]]
+				if (toc && toc.href) {
+					this.data.tocPath = dirname(toc.href)
+					toc = zip.files[toc.href]
+					if(toc) {
+						toc.async('string')
+						.then((toc) => {
+							this.loadToc({zip, toc, cb})
+						})
+						return
+					}
+				}
+			}
+
+			cb && cb(this)
+		} catch (ex) {
+			console.log('exception', ex)
+		}
+	}
+
 	loadZip(zip, cb) {
 		let opfPath
 		zip.files['META-INF/container.xml'].async('string')
@@ -39,66 +103,11 @@ export class EPub extends Doc {
 			const $ = cheerio.load(container, { xmlMode: true })
 				, rootPath = $('rootfiles>rootfile').attr('full-path')
 			opfPath = dirname(rootPath)
-			return zip.files[rootPath].async('string')
-		})
-		.then((opf) => {
-			try {
-				let $ = cheerio.load(opf, { xmlMode: true })
-					, idIndexes = {}
-					, groups = {}
-					, spine = []
-					, items = []
-					, pathIndexes = {}
 
-				$('manifest>item').each((_, itemNode) => {
-					let $e = $(itemNode)
-						, id = $e.attr('id'), mt = $e.attr('media-type')
-						, group = (groups[mt] || (groups[mt] = {}))
-					let item = {
-						id,
-						mediaType: mt,
-						href: resolvePath(opfPath, $e.attr('href')),
-					}
-					pathIndexes[item.href] = item
-					idIndexes[id] = group[id] = item
-				})
-				$('spine>itemref').each((index, ir) => {
-					let id = $(ir).attr('idref'), item = idIndexes[id]
-					spine.push(id)
-					items.push(item)
-					item.order = index
-				})
-				this.data = {
-					opfPath,
-					opf,
-					items,
-					spine,
-					pathIndexes,
-					groups,
-					zip,
-				}
-
-				let toc = groups['application/x-dtbncx+xml']
-				if (toc) {
-					toc = toc[_.keys(toc)[0]]
-					if (toc && toc.href) {
-						this.data.tocPath = dirname(toc.href)
-						toc = zip.files[toc.href]
-						if(toc)
-							return toc.async('string')
-					}
-				}
-				return null
-			} catch (ex) {
-				console.log('exception', ex)
-			}
-		})
-		.then((toc) => {
-			const $ = cheerio.load(toc, { xmlMode: true })
-			if (toc) {
-				this.data.toc = parseToc($('navMap'), this.data.tocPath, $)
-			}
-			cb && cb(this)
+			zip.files[rootPath].async('string')
+			.then((opf) => {
+				this.loadOpf({zip, opf, cb, opfPath})
+			})
 		})
 	}
 
@@ -114,6 +123,7 @@ export class EPub extends Doc {
 				console.log('loadFile.error:', err)
 				throw err;
 			}
+
 			JSZip.loadAsync(zipBuff)
 			.then((zip) => {
 				this.loadZip(zip, cb)
@@ -128,6 +138,10 @@ export class EPub extends Doc {
 			})
 		}
 		return this.data.zip.files[item.href].async('nodebuffer').then((buffer) => (item.cached = buffer))
+	}
+
+	get title() {
+		return this.data.title
 	}
 
 	get rootItem() {
@@ -148,7 +162,11 @@ export class EPub extends Doc {
 	}
 
 	static loadFile(fileName, cb) {
-		new EPub().loadFile(fileName, cb)
+		new EPubDoc().loadFile(fileName, cb)
 	}
 
 }
+
+const exp = { register: () => DocBase.register('EPub', EPubDoc, '.epub') }
+
+export default exp

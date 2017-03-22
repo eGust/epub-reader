@@ -59,7 +59,6 @@ export const ReaderMenu = ({ bookName, onClickToggleToc, onClickShowSettings, on
 					</Menu.Item>
 				}
 				content='Show Table of Contents'
-				positioning='bottom right'
 			/>
 		}
 
@@ -75,7 +74,6 @@ export const ReaderMenu = ({ bookName, onClickToggleToc, onClickShowSettings, on
 					</Menu.Item>
 				}
 				content='BookShelf'
-				positioning='bottom right'
 			/>
 			<Popup inverted
 				trigger={
@@ -84,7 +82,6 @@ export const ReaderMenu = ({ bookName, onClickToggleToc, onClickShowSettings, on
 					</Menu.Item>
 				}
 				content='Settings'
-				positioning='bottom right'
 			/>
 		</Menu.Menu>
 	</Sidebar>
@@ -99,7 +96,7 @@ export class ReaderBody extends Component {
 	}
 
 	render() {
-		const { toc, isTocOpen = false, isTocPinned = false, onClickPin, onClickDimmer, onClickTocItem } = this.props
+		const { bookId, toc, isTocOpen = false, isTocPinned = false, onClickPin, onClickDimmer, onClickTocItem } = this.props
 			, { collapse } = this.state
 			, folding = collapse==null ? {} : { collapse }
 		return (
@@ -129,11 +126,8 @@ export class ReaderBody extends Component {
 				</Accordion>
 			</Segment>
 			<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }>
-			{
-				isTocOpen && !isTocPinned ?
-				<div className='reader-dimmer' onClick={onClickDimmer} />
-				: null
-			}
+				<iframe className='full-size' id='frame-book' />
+				<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={onClickDimmer} />
 			</div>
 		</div>
 		)

@@ -65,7 +65,7 @@ $(() => {
 
 function messageHandler(event) {
 	let data = event.data, { channel, action } = data
-	if (channel !== 'epub')
+	if (channel !== 'ebook')
 		return
 
 	_.unset(data, [ 'channel', 'action', ])
@@ -137,11 +137,11 @@ const MESSAGE_HANDLERS = {
 }
 
 function postWebMessage(data) {
-	window.parent.postMessage(_.merge({ channel: 'epub' }, data), '*')
+	window.parent.postMessage(_.merge({ channel: 'ebook' }, data), '*')
 }
 
 function reloadCSSLink() {
-	$('#css-link').replaceWith(`<link id="css-link" href="epub://globals/frame.css?t=${(new Date).toISOString().replace(/\W/g, '')}" rel="stylesheet" type="text/css"/>`)
+	$('#css-link').replaceWith(`<link id="css-link" href="ebook://globals/frame.css?t=${(new Date).toISOString().replace(/\W/g, '')}" rel="stylesheet" type="text/css"/>`)
 }
 
 function updateCSSCalc(css) {

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const FRAME_CSS_PATH = path.resolve(__dirname, `../css/restricted/frame.css`)
+const FRAME_CSS_PATH = path.resolve(__dirname, `../../css/client/frame.css`)
 
 export function fetchDynamicCss({ path }, cb) {
 	console.log('fetchDynamicCss', path)

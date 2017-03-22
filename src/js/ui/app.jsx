@@ -6,8 +6,6 @@ import { ReaderMenu, ReaderBody } from './reader/containers'
 import { Settings } from './settings/containers'
 import { connect } from 'react-redux'
 
-import '../App.css'
-
 let droot
 
 class AppUi extends Component {
