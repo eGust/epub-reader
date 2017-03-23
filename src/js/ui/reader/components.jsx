@@ -45,7 +45,7 @@ class TocItem extends Component {
 	}
 }
 
-export const ReaderMenu = ({ bookName, onClickToggleToc, onClickShowSettings, onClickShowShelf, isTocOpen }) => (
+export const ReaderMenu = ({ bookName, chapterTitle, onClickToggleToc, onClickShowSettings, onClickShowShelf, isTocOpen }) => (
 	<Sidebar as={Menu} direction='top' visible inverted fluid>
 		{
 			isTocOpen ?
@@ -63,7 +63,7 @@ export const ReaderMenu = ({ bookName, onClickToggleToc, onClickShowSettings, on
 		}
 
 		<Menu.Item className='title-middle-bar'>
-			<label>{ bookName }</label>
+			<label>{ chapterTitle && chapterTitle.length ? `${bookName} - ${chapterTitle}` : bookName }</label>
 		</Menu.Item>
 
 		<Menu.Menu position='right'>
@@ -96,19 +96,20 @@ export class ReaderBody extends Component {
 	}
 
 	render() {
-		const { bookId, toc, isTocOpen = false, isTocPinned = false, onClickPin, onClickDimmer, onClickTocItem } = this.props
+		const { bookId, chapterPath, toc, isTocOpen = false, isTocPinned = false, opening,
+				onClickPin, onClickDimmer, onClickTocItem, onClickPagePrev, onClickPageNext } = this.props
 			, { collapse } = this.state
 			, folding = collapse==null ? {} : { collapse }
 		return (
 		<div id='book-reader' as={Menu}>
-			<Segment id='toc-container' inverted className={isTocOpen ? 'toc-slide-in' : 'toc-slide-out' }>
+			<Segment id='toc-container' inverted className={opening ? 'hide' : (isTocOpen ? 'toc-slide-in' : 'toc-slide-out') }>
 				<List className='collapse-toggle' horizontal size='mini'>
 					<List.Item onClick={() => this.foldToc(true)}>
-						<Icon name='folder open' color='teal'title='Unfold All'/>
+						<Icon name='folder open' color='teal' title='Unfold All'/>
 						<List.Content>Unfold All</List.Content>
 					</List.Item>
 					<List.Item onClick={() => this.foldToc(false)}>
-						<Icon name='folder' color='blue'title='Fold All'/>
+						<Icon name='folder' color='blue' title='Fold All'/>
 						<List.Content>Fold All</List.Content>
 					</List.Item>
 				</List>
@@ -126,7 +127,15 @@ export class ReaderBody extends Component {
 				</Accordion>
 			</Segment>
 			<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }>
-				<iframe className='full-size' id='frame-book' />
+				<iframe className={bookId ? 'full-size' : 'hide'} id='frame-book' src={`ebook://doc:${bookId || ''}/frame.html`} />
+				<div className='page-navigator prev-page' onClick={onClickPagePrev}>
+					<Icon name='angle left' size='large' title='Previous Page' />
+				</div>
+				<div className='page-navigator next-page' onClick={onClickPageNext}>
+					<Icon name='angle right' size='large' title='Next Page' />
+				</div>
+				<div className='page-status'>
+				</div>
 				<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={onClickDimmer} />
 			</div>
 		</div>

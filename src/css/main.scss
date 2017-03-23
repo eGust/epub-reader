@@ -44,7 +44,7 @@ body {
 }
 
 .hide {
-	display: none;
+	display: none !important;
 }
 
 .title-middle-bar {
@@ -120,6 +120,7 @@ body {
 	border: 1px solid #222;
 	box-shadow: 3px 3px 10px 10px #444;
 	margin: 20px 25px 50px 25px;
+	cursor: pointer;
 }
 
 /* Small Devices, Tablets */
@@ -222,10 +223,31 @@ body {
 	min-width: 51%;
 }
 
-.reader-dimmer {
+.dimmer-base {
 	position: absolute;
 	width: 100%;
 	height: 100%;
+}
+
+.waiting-dimmer {
+	@extend .dimmer-base;
+	cursor: wait;
+	background-color: rgba(0, 0, 0, 0.6);
+	top: 0;
+	left: 0;
+	z-index: 999;
+
+	.header {
+		color: white;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+}
+
+.reader-dimmer {
+	@extend .dimmer-base;
 	cursor: pointer;
 
     animation-name: reader-dimmer-in;
@@ -235,7 +257,14 @@ body {
     animation-fill-mode: forwards;
 }
 
+#frame-book {
+	border: none;
+	padding: 20px 50px 50px 50px;
+}
+
 #book-container {
+	$outline-margin: 15px;
+
 	display: inline-block;
 	width: 100%;
 	height: 100%;
@@ -243,7 +272,56 @@ body {
 	overflow: hidden;
 
 	outline: 3px solid #DDD;
-	outline-offset: -15px;
+	outline-offset: -$outline-margin;
+
+	$page-navigator-margin: $outline-margin + 3;
+
+	.page-navigator {
+		position: absolute;
+		height: 60vh;
+		width: 30px;
+		top: calc(50% - 30vh);
+		cursor: pointer;
+
+		background-color: transparent;
+		border: 1px solid #DDD;
+		color: #CCC;
+
+		i {
+			display: block;
+			margin-top: calc(30vh - 10px);
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		&.prev-page {
+			border-top-left-radius: 8px;
+			border-bottom-left-radius: 8px;
+			left: $page-navigator-margin;
+		}
+
+		&.next-page {
+			border-top-right-radius: 8px;
+			border-bottom-right-radius: 8px;
+			right: $page-navigator-margin;
+		}
+
+		&:hover {
+			background-color: #BBB;
+			border-color: #888;
+			color: white;
+		}
+	}
+
+	.page-status {
+		position: absolute;
+		bottom: $page-navigator-margin;
+		left: calc(50% - 120px);
+		width: 240px;
+		height: 30px;
+		border: 1px solid #CCC;
+		border-radius: 8px;
+	}
 }
 
 .ui.styled.accordion.inverted, .ui.styled.accordion.inverted .accordion {
@@ -346,7 +424,7 @@ body {
         display: block;
     }
     100% {
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.4);
     }
 }
 
@@ -361,7 +439,3 @@ body {
 	margin: 3px 3px 0 9px !important;
 }
 
-#frame-book {
-	border: none;
-	padding: 20px;
-}

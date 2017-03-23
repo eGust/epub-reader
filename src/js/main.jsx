@@ -4,25 +4,26 @@ import ReactDOM from 'react-dom'
 import { applyMiddleware, createStore } from 'redux'
 import { Provider } from 'react-redux'
 import createLogger from 'redux-logger'
+import thunk from 'redux-thunk'
 
 import _ from 'lodash'
 
 import Api from './js/mainInterface'
 import App from './js/ui/app'
-import { getReducer } from './js/ui/reducers'
+import { reducer, setDefaultState } from './js/ui/reducers'
 
 Api.registerServiceApi()
 
-const logger = createLogger()
-	, store = createStore(getReducer(Api, storeDispatch), Api.getSavedState(), applyMiddleware(logger))
+setDefaultState(Api.DEFAULT_STATE)
 
-function storeDispatch(action) {
-	return store.dispatch(action)
-}
+const docRoot = document.getElementById('root')
+	// , logger = createLogger()
+	// , store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk, logger))
+	, store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk))
 
 ReactDOM.render(
 	<Provider store={store}>
 		<App />
 	</Provider>,
-	document.getElementById('root')
+	docRoot
 )

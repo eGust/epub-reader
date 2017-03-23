@@ -2,12 +2,13 @@ import _ from 'lodash'
 import path from 'path'
 import fs from 'fs'
 import { fetchDynamicCss } from './fetchDynamicCss'
+import { absoluteFileName } from './docBase'
 
 function fetchStatic({ mimeType, filePath, path }, cb) {
 	fs.readFile(filePath, (err, data) => {
 		if (err)
 			return docManager.handleNull(cb)
-		cb({ mimeType, data })
+		cb && cb({ mimeType, data })
 	})
 }
 
@@ -46,6 +47,7 @@ export class DocManager {
 	registeredTypes = {}
 	registeredExtNames = {}
 	docs = {}
+	fileNames = {}
 
 	registerType(typeName, typeClass, extFileNames) {
 		this.registeredTypes[typeName] = typeClass
@@ -54,12 +56,15 @@ export class DocManager {
 		}
 	}
 
-	addDoc(doc) {
+	addDoc(doc, fileName) {
 		this.docs[doc.id] = doc
+		if (fileName && fileName.length) {
+			this.fileNames[this.getAbsoluteFileName(fileName)] = doc
+		}
 	}
 
 	handleNull(cb) {
-		cb({ mimeType: null, data: null })
+		cb && cb({ mimeType: null, data: null })
 	}
 
 	handleDoc({ doc, filePath, method }, cb) {
@@ -86,15 +91,14 @@ export class DocManager {
 
 	handleToc({ doc }, cb) {
 		if (doc) {
-			let toc = JSON.stringify(doc.toc)
-			cb({ mimeType: 'application/json', data: new Buffer(toc) })
-			return
+			const toc = JSON.stringify(doc.toc)
+			return cb && cb({ mimeType: 'application/json', data: new Buffer(toc) })
 		}
 		this.handleNull(cb)
 	}
 
 	handleGlobals(path, cb) {
-		let item = GLOBAL_RESOURCES[path]
+		const item = GLOBAL_RESOURCES[path]
 		item ? item.fetch({ ...item, path }, cb) : this.handleNull(cb)
 	}
 
@@ -129,6 +133,11 @@ export class DocManager {
 	}
 
 	loadFile(fileName, cb, typeName = null) {
+		const doc = this.getDocumentByFileName(fileName)
+		if (doc) {
+			return cb && cb(doc)
+		}
+
 		typeName = typeName || this.registeredExtNames[path.extname(fileName).toLowerCase()]
 		const docType = typeName && this.registeredTypes[typeName]
 		console.log({typeName, docType})
@@ -139,8 +148,16 @@ export class DocManager {
 		}
 	}
 
-	getDocument(id) {
+	getDocumentById(id) {
 		return this.docs[id]
+	}
+
+	getAbsoluteFileName(fileName) {
+		return absoluteFileName(fileName)
+	}
+
+	getDocumentByFileName(fileName) {
+		return this.fileNames[this.getAbsoluteFileName(fileName)]
 	}
 }
 

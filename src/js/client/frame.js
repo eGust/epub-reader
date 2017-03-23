@@ -1,5 +1,5 @@
-function log() {
-	console.log.call(console, '[frame]')
+function log(...args) {
+	console.log.call(console, '[frame]', ...args)
 }
 
 let currentLocation = {
@@ -29,11 +29,10 @@ function updatePageCount() {
 		pageWidth,
 		pageCount,
 	})
-	console.log($c.width(), c.scrollWidth, pageCount)
 }
 
 function updatePageNo(page) {
-	// console.log('updatePageNo', { page, left: pageWidth * pageNo })
+	// log('updatePageNo', { page, left: pageWidth * pageNo })
 	currentLocation.pageNo = Math.max(0, Math.min(currentLocation.pageCount-1, page))
 	$('main#main>#content').css({left: -currentLocation.pageWidth * currentLocation.pageNo})
 }
@@ -59,17 +58,18 @@ $(window).resize(() => {
 })
 
 $(() => {
-	console.log('frame ready', currentLocation)
+	log('frame ready', currentLocation)
 	updatePageCount()
 })
 
 function messageHandler(event) {
-	let data = event.data, { channel, action } = data
+	const data = event.data, { channel, action } = data
 	if (channel !== 'ebook')
 		return
 
-	_.unset(data, [ 'channel', 'action', ])
-	console.log('[frame]', { action, data })
+	delete data.channel
+	delete data.action
+	log('receive', { action, data })
 	MESSAGE_HANDLERS[action] && MESSAGE_HANDLERS[action](data)
 }
 
@@ -78,7 +78,7 @@ window.addEventListener('message', messageHandler, false)
 const MESSAGE_HANDLERS = {
 	changePage({ go }) {
 		let { pageNo, pageCount, filePath } = currentLocation
-		console.log('changePage', { go, pageNo, pageCount, filePath })
+		log('changePage', { go, pageNo, pageCount, filePath })
 		if (go === 'prev') {
 			page = pageNo - 1
 		} else if (go === 'next') {
@@ -86,13 +86,13 @@ const MESSAGE_HANDLERS = {
 		}
 
 		if (page === pageNo) {
-			console.log('same page', { page, pageNo })
+			log('same page', { page, pageNo })
 			return
 		}
 
 		if (page < 0 || page >= pageCount) {
 			postWebMessage({ action: 'changePath', go, filePath })
-			console.log('changePath', { go, filePath })
+			log('changePath', { go, filePath })
 			return
 		}
 
@@ -104,7 +104,7 @@ const MESSAGE_HANDLERS = {
 			return
 		}
 
-		console.log('changePath', { filePath, anchor })
+		log('changePath', { filePath, anchor })
 
 		$('main#main').removeClass('show')
 		$.get(`/${filePath}`)
@@ -137,6 +137,7 @@ const MESSAGE_HANDLERS = {
 }
 
 function postWebMessage(data) {
+	log('send', data)
 	window.parent.postMessage(_.merge({ channel: 'ebook' }, data), '*')
 }
 

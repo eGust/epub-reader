@@ -36,7 +36,7 @@ const services = {
 	[serviceMessages.openBook]: ({book, apiCallId}, reply) => {
 		const {fileName, id: bookId, title: bookName} = book
 		if (bookId) {
-			const toc = docManager.getDocument(bookId).toc
+			const toc = docManager.getDocumentById(bookId).toc
 			return reply({bookId, bookName, toc, apiCallId})
 		}
 
@@ -62,7 +62,7 @@ export function registerServices() {
 		ipcMain.on(`s-${msg}`, (event, data) => {
 			console.log(`[S.RECEIVE] ${msg}`, {event, data})
 			services[msg](data, (data) => {
-				console.log(`[S.REPLY] ${msg}`, data)
+				console.log(`[S.REPLY] ${msg}`, Object.keys(data))
 				event.sender.send(`r-${msg}`, data)
 			})
 		})

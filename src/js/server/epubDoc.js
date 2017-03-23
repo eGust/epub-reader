@@ -117,11 +117,11 @@ class EPubDoc extends DocBase {
 
 	loadFile(fileName, cb) {
 		let fileBuff
-		this.fileName = path.resolve(fileName)
+		this.setFileName(fileName)
 		fs.readFile(fileName, (err, zipBuff) => {
 			if (err) {
 				console.log('loadFile.error:', err)
-				throw err;
+				throw err
 			}
 
 			JSZip.loadAsync(zipBuff)

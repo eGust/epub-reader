@@ -1,12 +1,21 @@
 import _ from 'lodash'
 import React, { Component } from 'react'
-import { Icon, Modal } from 'semantic-ui-react'
+import { Icon, Header, Modal } from 'semantic-ui-react'
 import { ShelfMenu, ShelfBody } from './shelf/containers'
 import { ReaderMenu, ReaderBody } from './reader/containers'
 import { Settings } from './settings/containers'
 import { connect } from 'react-redux'
 
 let droot
+
+const Dimmer = ({show, content}) => (
+	<div className={show ? 'waiting-dimmer' : 'waiting-dimmer hide'}>
+		<Header as='h1'>
+			<Icon loading name='spinner' size='massive' />
+			{content}
+		</Header>
+	</div>
+)
 
 class AppUi extends Component {
 	state = {
@@ -41,7 +50,7 @@ class AppUi extends Component {
 
 	render() {
 		const { dragging, ...margins } = this.state
-			, { routing, showSettings } = this.props
+			, { routing, showSettings, reader, shelf } = this.props
 		// customMargin, viewMargin, bookMargin, bookCovers,
 
 		const onPreventDefault = (e) => {
@@ -64,11 +73,13 @@ class AppUi extends Component {
 				<div className={routing === 'shelf' ? 'full-size' : 'hide'} >
 					<ShelfMenu />
 					<ShelfBody {...margins} />
+					<Dimmer show={shelf.opening} content='Opening...' />
 				</div>
 
 				<div className={routing === 'reader' ? 'full-size' : 'hide'} >
 					<ReaderMenu />
 					<ReaderBody />
+					<Dimmer show={reader.opening} content='Opening...' />
 				</div>
 
 				<Modal dimmer='blurring' open={showSettings}>

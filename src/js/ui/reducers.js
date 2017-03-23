@@ -39,32 +39,36 @@ const combinedReducer = combineReducers({
 		let toMerge = null
 		switch (action.type) {
 			case OPEN_BOOK_FILES:
-				Api.openFiles(action.files, (fileIds) => {
-					dispatch(addBooksToShelf({fileIds, open: Object.keys(fileIds).length === 1}))
-				})
 				toMerge = { opening: true }
 				break
 			case ADD_BOOKS_TO_SHELF:
-				const covers = _.map(action.fileIds, ({id, title}, fileName) => ({id, title, fileName}))
-				if (action.open && covers.length) {
-					delayDispatch(openExistingBook(covers[0]))
-				}
-				toMerge = { bookCovers: covers.concat(state.bookCovers), opening: false }
-				console.log(toMerge)
+				const covers = [], books = {}
+				_.each(action.fileIds, ({id, title}, fileName) => {
+					if (state.books[id])
+						return
+					covers.push(books[id] = {id, title, fileName})
+				})
+				toMerge = { bookCovers: covers.concat(state.bookCovers), books, opening: false }
 				break
 			default:
 		}
-		return toMerge ? _.merge({}, state, toMerge)  : state
+		return toMerge ? _.merge({}, state, toMerge) : state
 	},
 	reader(state = {}, action) {
 		switch (action.type) {
 			case OPEN_EXISTING_BOOK:
-				state = Api.DEFAULT_STATE.reader
+				state = DEFAULT_STATE.reader
 				break
 			case CHANGE_CURRENT_BOOK:
-				state = _.merge({}, Api.DEFAULT_STATE.reader, action.book)
+				state = _.merge({}, DEFAULT_STATE.reader, action.book)
 				break
 			case CHANGE_READER_CONTENT_PATH:
+				break
+			case TOGGLE_TOC_PIN:
+				state = { ...state, isTocPinned: !state.isTocPinned }
+				break
+			case TOGGLE_TOC_OPEN:
+				state = { ...state, isTocOpen: action.open == null ? !state.isTocOpen : action.open }
 				break
 			default:
 		}
@@ -76,19 +80,13 @@ const combinedReducer = combineReducers({
 			case UPDATE_SETTINGS:
 				toMerge = action.settings
 				break
-			case TOGGLE_TOC_PIN:
-				toMerge = { reader: { isTocPinned: !state.reader.isTocPinned } }
-				break
-			case TOGGLE_TOC_OPEN:
-				toMerge = { reader: { isTocOpen: action.open == null ? !state.reader.isTocOpen : action.open } }
-				break
 			default:
 		}
 		return toMerge ? _.merge({}, state, toMerge)  : state
 	},
 })
 
-const reducer = (state, action) => {
+export const reducer = (state, action) => {
 	switch (action.type) {
 		case SHOW_SETTINGS:
 			state = {
@@ -105,27 +103,14 @@ const reducer = (state, action) => {
 				backupSettings: null,
 			}
 			break
-		case OPEN_EXISTING_BOOK:
-			Api.openBook(action.book, (book) => {
-				dispatch(changeCurrentBook(book))
-			})
-			break
 		default:
 			state = combinedReducer(state, action)
 	}
 	return state
 }
 
-let Api, dispatch
+let DEFAULT_STATE
 
-function delayDispatch(action) {
-	setTimeout(() => {
-		dispatch(action)
-	}, 1)
-}
-
-export function getReducer(api, storeDispatch) {
-	Api = api
-	dispatch = storeDispatch
-	return reducer
+export function setDefaultState(state) {
+	DEFAULT_STATE = state
 }

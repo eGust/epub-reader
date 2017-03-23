@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron'
 import $ from 'jquery'
 import { serviceMessages } from './serviceMessages'
+import { installApi } from './ui/actions'
 
 window.$ = $
 
@@ -8,14 +9,15 @@ function messageHandler(event) {
 	let { channel, action, ...data } = event.data
 	if (channel !== 'ebook')
 		return
-	console.log('[main]', { action, data })
+	console.log('[main] receive:', { action, data })
 	MESSAGE_HANDLERS[action] && MESSAGE_HANDLERS[action](data)
 }
 
 window.addEventListener('message', messageHandler, false)
 
 function postWebMessage(data) {
-	document.getElementById('frm-book').contentWindow.postMessage({ ...data, channel: 'ebook', }, '*')
+	console.log('[main] send:', data)
+	document.getElementById('frame-book').contentWindow.postMessage({ ...data, channel: 'ebook', }, '*')
 }
 
 function sendServiceMessage(msg, data) {
@@ -48,16 +50,20 @@ const DEFAULT_STATE = {
 	showSettings: false,
 	shelf: {
 		bookCovers: [],
+		books: {},
 		opening: false,
 	},
 	reader: {
 		bookName: null,
 		bookId: null,
+		opening: true,
 		toc: [],
 		chapterTitle: null,
 		chapterPath: null,
 		pageIndex: null,
 		pageCount: null,
+		isTocPinned: false,
+		isTocOpen: false,
 	},
 	settings: {
 		globals: {
@@ -66,6 +72,7 @@ const DEFAULT_STATE = {
 		reader: {
 			isTocPinned: false,
 			isTocOpen: false,
+			opening: false,
 		},
 	}
 }
@@ -93,6 +100,7 @@ const apiCallbacks = {}
 	},
 
 	registerServiceApi() {
+		installApi(Api)
 		for (const msg in onReceiveServiceMessages) {
 			ipcRenderer.on(`r-${msg}`, (event, data) => {
 				console.log(`[A.RECEIVE] ${msg}`, {event, data})
