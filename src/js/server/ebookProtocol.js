@@ -8,15 +8,17 @@ protocol.registerStandardSchemes(['ebook'])
 export const registerEBookProtocol = () => {
 	protocol.registerBufferProtocol('ebook',
 		({ url, referrer, method }, callback) => {
-			console.log('epub request', { referrer, url, method })
+			console.log('[EBOOK REQ]', { referrer, url, method })
 			url = Url.parse(url)
-			let scope = url.hostname, id = url.port, filePath = url.pathname.slice(1)
+			const scope = url.hostname.split('.', 1)[0]
+				, id = url.hostname.slice(scope.length+1)
+				, filePath = url.pathname.slice(1)
 			docManager.handle({ scope, url, method, id, filePath }, callback)
 		},
 		(err) => {
 			if (!err)
 				return
-			console.log('epub request error:', err)
+			console.log('[EBOOK REQ] error:', err)
 		}
 	)
 }

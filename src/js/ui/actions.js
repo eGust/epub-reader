@@ -20,8 +20,8 @@ const OPEN_EXISTING_BOOK = 'OPEN_EXISTING_BOOK'
 
 export const openExistingBook = (book) => (
 	(dispatch) => {
-		Api.openBook(book, (book) => {
-			dispatch(changeCurrentBook(book))
+		Api.openBook(book, (bookInfo) => {
+			dispatch(changeCurrentBook(bookInfo))
 		})
 		dispatch({
 			type: OPEN_EXISTING_BOOK,
@@ -64,6 +64,7 @@ const TOGGLE_TOC_PIN = 'TOGGLE_TOC_PIN'
 	, CHANGE_CURRENT_BOOK = 'CHANGE_CURRENT_BOOK'
 	, CHANGE_READER_CONTENT_PATH = 'CHANGE_READER_CONTENT_PATH'
 	, CHANGE_READER_PAGE = 'CHANGE_READER_PAGE'
+	, CHANGE_READER_CHAPTER = 'CHANGE_READER_CHAPTER'
 
 export const toggleTocPin = () => ({
 	type: TOGGLE_TOC_PIN,
@@ -74,22 +75,28 @@ export const toggleTocOpen = (open = null) => ({
 	open,
 })
 
-export const changeCurrentBook = (book) => (
+export const changeCurrentBook = (bookInfo) => (
 	(dispatch, getState) => {
+		const state = getState()
+			, bookInfo = { ...bookInfo, ...state.settings.reader }
+		console.log(bookInfo)
 		dispatch({
 			type: CHANGE_CURRENT_BOOK,
-			book: { ...book, ...getState().settings.reader },
+			bookInfo,
+		})
+
+		Api.onClientReady(() => {
+			const { chapterPath: path = '', pageNo = null, pageCount = null } = bookInfo.progress || {}
+			console.log({ path, pageNo, pageCount, state, })
+			Api.setClientPath({path, pageNo, pageCount})
 		})
 	}
 )
 
-export const changeReaderContentPath = (item) => (
-	(dispatch, getState) => {
-		console.log(CHANGE_READER_CONTENT_PATH, {item}, getState())
-		dispatch({
-			type: CHANGE_READER_CONTENT_PATH,
-			item,
-		})
+export const changeReaderContentPath = (path) => (
+	(dispatch) => {
+		console.log(CHANGE_READER_CONTENT_PATH, {path})
+		Api.setClientPath(Api.decodeDocumentPath(path))
 	}
 )
 
@@ -98,6 +105,16 @@ export const changeReaderPage = (delta) => (
 		console.log(CHANGE_READER_PAGE, {delta})
 		dispatch({
 			type: CHANGE_READER_PAGE,
+			delta,
+		})
+	}
+)
+
+export const changeReaderChapter = (delta) => (
+	(dispatch) => {
+		console.log(CHANGE_READER_CHAPTER, {delta})
+		dispatch({
+			type: CHANGE_READER_CHAPTER,
 			delta,
 		})
 	}

@@ -57,10 +57,10 @@ const combinedReducer = combineReducers({
 	reader(state = {}, action) {
 		switch (action.type) {
 			case OPEN_EXISTING_BOOK:
-				state = DEFAULT_STATE.reader
+				state = _.merge({}, DEFAULT_STATE.reader)
 				break
 			case CHANGE_CURRENT_BOOK:
-				state = _.merge({}, DEFAULT_STATE.reader, action.book)
+				state = { ...state, ...action.bookInfo }
 				break
 			case CHANGE_READER_CONTENT_PATH:
 				break

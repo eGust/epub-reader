@@ -4,16 +4,27 @@ import path from 'path'
 let docId = 0
 
 export class DocBase {
-	constructor() {
-		this.id = `${++docId}`
+	loaded = false
+
+	constructor(params = {}) {
+		const { fileName = null, id = null } = params
+		if (fileName) {
+			this.setFileName(fileName, id)
+		} else {
+			this.id = id
+		}
 	}
 
 	get toc() {
-		return {}
+		return []
 	}
 
-	setFileName(fileName) {
+	setFileName(fileName, id) {
+		if (this.fileName)
+			return this
+		this.id = id || `${Date.now().toString(36)}.${++docId}`
 		docManager.addDoc(this, this.fileName = path.resolve(fileName))
+		return this
 	}
 
 	static register(typeName, typeClass, ...extFileNames) {

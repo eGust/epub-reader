@@ -259,7 +259,7 @@ body {
 
 #frame-book {
 	border: none;
-	padding: 20px 50px 50px 50px;
+	padding: 20px 50px 60px 50px;
 }
 
 #book-container {
@@ -316,11 +316,24 @@ body {
 	.page-status {
 		position: absolute;
 		bottom: $page-navigator-margin;
-		left: calc(50% - 120px);
-		width: 240px;
-		height: 30px;
-		border: 1px solid #CCC;
-		border-radius: 8px;
+		left: calc(50% - 180px);
+		width: 360px;
+		height: 38px;
+		text-align: center;
+		opacity: 0.2;
+
+		label {
+			color: black;
+			font-weight: bold;
+		}
+
+		&:hover {
+			opacity: 1;
+		}
+
+		.ui.menu .dropdown.item .menu {
+			border-radius: 4px 4px 0 0;
+		}
 	}
 }
 

@@ -68,12 +68,14 @@ export class DocManager {
 	}
 
 	handleDoc({ doc, filePath, method }, cb) {
+		console.log('[DocManager.handleDoc]', Object.keys(this.docs), {doc, filePath, method})
 		if (doc) {
 			let item = doc.pathToItem(filePath) || doc.rootItem
-			// console.log('item:', item)
+			console.log('item:', item)
 			doc.fetchFile(item)
 			.then((buff) => {
 				let mimeType = item.mediaType, data = buff
+				console.log('[fetched]', {mimeType, data})
 				cb({
 					mimeType,
 					data,
@@ -103,7 +105,7 @@ export class DocManager {
 	}
 
 	handle({ scope, url, method, id, filePath }, cb) {
-		console.log('handle', { scope, url, method, id, filePath })
+		console.log('[DocManager]', { scope, method, id, filePath })
 		try {
 			switch (scope) {
 				case 'doc':
@@ -133,19 +135,27 @@ export class DocManager {
 	}
 
 	loadFile(fileName, cb, typeName = null) {
-		const doc = this.getDocumentByFileName(fileName)
+		const doc = this.getFileInstance(fileName, typeName)
 		if (doc) {
-			return cb && cb(doc)
-		}
-
-		typeName = typeName || this.registeredExtNames[path.extname(fileName).toLowerCase()]
-		const docType = typeName && this.registeredTypes[typeName]
-		console.log({typeName, docType})
-		if (docType) {
-			docType.loadFile(fileName, cb)
+			if (doc.loaded) {
+				cb && cb(doc)
+			} else {
+				doc.loadFile(cb)
+			}
 		} else {
 			cb && cb()
 		}
+	}
+
+	getFileInstance(fileName, typeName, id = null) {
+		const doc = this.getDocumentByFileName(fileName)
+		if (doc) {
+			return doc
+		}
+
+		typeName = typeName || this.registeredExtNames[path.extname(fileName).toLowerCase()]
+		const Type = typeName && this.registeredTypes[typeName]
+		return Type ? new Type({fileName, id}) : null
 	}
 
 	getDocumentById(id) {

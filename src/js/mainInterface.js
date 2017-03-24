@@ -5,6 +5,14 @@ import { installApi } from './ui/actions'
 
 window.$ = $
 
+let onClientReadyEvent
+
+const MESSAGE_HANDLERS = {
+	ready: () => {
+		onClientReadyEvent && onClientReadyEvent()
+	},
+}
+
 function messageHandler(event) {
 	let { channel, action, ...data } = event.data
 	if (channel !== 'ebook')
@@ -39,9 +47,9 @@ const onReceiveServiceMessages = {
 		cb && cb(fileIds)
 	},
 
-	[serviceMessages.openBook]: ({bookId = null, bookName = null, toc = [], apiCallId}) => {
+	[serviceMessages.openBook]: ({book, toc = [], apiCallId}) => {
 		const cb = popApiCallbak(apiCallId)
-		cb && cb({bookId, bookName, toc})
+		cb && cb({book, toc})
 	},
 }
 
@@ -54,16 +62,22 @@ const DEFAULT_STATE = {
 		opening: false,
 	},
 	reader: {
-		bookName: null,
-		bookId: null,
+		book: {
+			title: null,
+			id: null,
+			fileName: null,
+		},
 		opening: true,
 		toc: [],
-		chapterTitle: null,
-		chapterPath: null,
-		pageIndex: null,
-		pageCount: null,
 		isTocPinned: false,
 		isTocOpen: false,
+		progress: {
+			chapterPath: null,
+			chapterTitle: null,
+			pageNo: 0,
+			pageCount: 0,
+			anchor: null,
+		},
 	},
 	settings: {
 		globals: {
@@ -103,7 +117,7 @@ const apiCallbacks = {}
 		installApi(Api)
 		for (const msg in onReceiveServiceMessages) {
 			ipcRenderer.on(`r-${msg}`, (event, data) => {
-				console.log(`[A.RECEIVE] ${msg}`, {event, data})
+				console.log(`[A.RECEIVE] ${msg}`, {data})
 				onReceiveServiceMessages[msg](data)
 			})
 		}
@@ -115,6 +129,20 @@ const apiCallbacks = {}
 
 	openBook(book, cb) {
 		sendServiceMessage(serviceMessages.openBook, { book, apiCallId: getApiCallbackId(cb) })
+	},
+
+	setClientPath(params) {
+		postWebMessage({ action: 'setPath', params })
+	},
+
+	decodeDocumentPath(path) {
+		const p = path.split('#', 1)[0]
+			, h = path.slice(p.length+1)
+		return { path: p, anchor: h.length ? h : null }
+	},
+
+	onClientReady(cb) {
+		onClientReadyEvent = cb
 	},
 }
 

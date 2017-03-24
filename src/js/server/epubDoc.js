@@ -31,7 +31,7 @@ class EPubDoc extends DocBase {
 		if (toc) {
 			this.data.toc = parseToc($('navMap'), this.data.tocPath, $)
 		}
-		cb && cb(this)
+		cb('success', this)
 	}
 
 	loadOpf({zip, opf, cb, opfPath}) {
@@ -65,13 +65,13 @@ class EPubDoc extends DocBase {
 
 			this.data = {
 				opfPath,
-				opf,
 				items,
 				spine,
 				pathIndexes,
 				groups,
 				zip,
 				title,
+				toc: [],
 			}
 
 			let toc = groups['application/x-dtbncx+xml']
@@ -90,7 +90,7 @@ class EPubDoc extends DocBase {
 				}
 			}
 
-			cb && cb(this)
+			cb('success', this)
 		} catch (ex) {
 			console.log('exception', ex)
 		}
@@ -115,10 +115,10 @@ class EPubDoc extends DocBase {
 		return this.data.toc
 	}
 
-	loadFile(fileName, cb) {
+	loadFile(cb) {
 		let fileBuff
-		this.setFileName(fileName)
-		fs.readFile(fileName, (err, zipBuff) => {
+		this.loaded = 'failed'
+		fs.readFile(this.fileName, (err, zipBuff) => {
 			if (err) {
 				console.log('loadFile.error:', err)
 				throw err
@@ -126,7 +126,10 @@ class EPubDoc extends DocBase {
 
 			JSZip.loadAsync(zipBuff)
 			.then((zip) => {
-				this.loadZip(zip, cb)
+				this.loadZip(zip, (status, ...args) => {
+					this.loaded = status
+					cb && cb(...args)
+				})
 			})
 		})
 	}
@@ -159,10 +162,6 @@ class EPubDoc extends DocBase {
 
 	nextItemOf(item) {
 		return this.data.items[item.order+1]
-	}
-
-	static loadFile(fileName, cb) {
-		new EPubDoc().loadFile(fileName, cb)
 	}
 
 }

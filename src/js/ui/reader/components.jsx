@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { Component } from 'react'
-import { Menu, Sidebar, Icon, Popup, Segment, Accordion, List } from 'semantic-ui-react'
+import { Menu, Sidebar, Icon, Popup, Segment, Accordion, List, Dropdown } from 'semantic-ui-react'
 
 class TocItem extends Component {
 	state = { active: false }
@@ -45,7 +45,7 @@ class TocItem extends Component {
 	}
 }
 
-export const ReaderMenu = ({ bookName, chapterTitle, onClickToggleToc, onClickShowSettings, onClickShowShelf, isTocOpen }) => (
+export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettings, onClickShowShelf, isTocOpen }) => (
 	<Sidebar as={Menu} direction='top' visible inverted fluid>
 		{
 			isTocOpen ?
@@ -63,7 +63,7 @@ export const ReaderMenu = ({ bookName, chapterTitle, onClickToggleToc, onClickSh
 		}
 
 		<Menu.Item className='title-middle-bar'>
-			<label>{ chapterTitle && chapterTitle.length ? `${bookName} - ${chapterTitle}` : bookName }</label>
+			<label>{ progress.chapterTitle && progress.chapterTitle.length ? `${book.title} - ${progress.chapterTitle}` : book.title }</label>
 		</Menu.Item>
 
 		<Menu.Menu position='right'>
@@ -96,8 +96,9 @@ export class ReaderBody extends Component {
 	}
 
 	render() {
-		const { bookId, chapterPath, toc, isTocOpen = false, isTocPinned = false, opening,
-				onClickPin, onClickDimmer, onClickTocItem, onClickPagePrev, onClickPageNext } = this.props
+		const { book, progress, toc, isTocOpen = false, isTocPinned = false, opening,
+				onClickPin, onClickDimmer, onClickTocItem,
+				onClickPagePrev, onClickPageNext, onClickChapterPrev, onClickChapterNext } = this.props
 			, { collapse } = this.state
 			, folding = collapse==null ? {} : { collapse }
 		return (
@@ -127,14 +128,43 @@ export class ReaderBody extends Component {
 				</Accordion>
 			</Segment>
 			<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }>
-				<iframe className={bookId ? 'full-size' : 'hide'} id='frame-book' src={`ebook://doc:${bookId || ''}/frame.html`} />
+				<iframe className={book.id ? 'full-size' : 'hide'} id='frame-book' src={`ebook://doc.${book.id}/frame.html`} />
 				<div className='page-navigator prev-page' onClick={onClickPagePrev}>
-					<Icon name='angle left' size='large' title='Previous Page' />
+					<Icon name='chevron left' size='large' title='Previous Page' />
 				</div>
 				<div className='page-navigator next-page' onClick={onClickPageNext}>
-					<Icon name='angle right' size='large' title='Next Page' />
+					<Icon name='chevron right' size='large' title='Next Page' />
 				</div>
 				<div className='page-status'>
+					<Menu icon size='small' color='brown' inverted>
+						<Menu.Item title='Previous Chapter' onClick={onClickChapterPrev}>
+							<Icon name='step backward' />
+						</Menu.Item>
+						<Menu.Item title='Previous Page' onClick={onClickPagePrev}>
+							<Icon name='caret left' />
+						</Menu.Item>
+
+						<Dropdown text={progress.pageNo ? progress.pageNo : '-'} className='link item upward'>
+							<Dropdown.Menu>
+							{
+								_.times(progress.pageCount, (i) => (<Dropdown.Item>{i+1}</Dropdown.Item>))
+							}
+							</Dropdown.Menu>
+						</Dropdown>
+
+						<Menu.Item className='title-middle-bar'>
+							<label>{progress.pageCount ? ` of ${progress.pageCount}` : '-'}</label>
+						</Menu.Item>
+
+						<Menu.Menu position='right'>
+							<Menu.Item title='Next Page' onClick={onClickPageNext}>
+								<Icon name='caret right' />
+							</Menu.Item>
+							<Menu.Item title='Next Chapter' onClick={onClickChapterNext}>
+								<Icon name='step forward' />
+							</Menu.Item>
+						</Menu.Menu>
+					</Menu>
 				</div>
 				<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={onClickDimmer} />
 			</div>
@@ -142,6 +172,15 @@ export class ReaderBody extends Component {
 		)
 	}
 }
+
+/*
+					<Button.Group color='grey'>
+						<Button icon='step backward' title='Previous Chapter' />
+						<Button icon='caret left' title='Next Page' />
+						<Button icon='caret right' title='Previous Page' />
+						<Button icon='step forward' title='Next Chapter' />
+					</Button.Group>
+*/
 
 const exported = {
 	ReaderMenu,

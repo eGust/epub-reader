@@ -5,11 +5,12 @@ import {
 	toggleTocOpen,
 	changeReaderContentPath,
 	changeReaderPage,
+	changeReaderChapter,
 } from '../actions'
 import components from './components'
 import { connect } from 'react-redux'
 
-const mapStateToProps = ({reader}, ownProps) => ({...reader, ...ownProps})
+const mapStateToProps = ({reader, settings}, ownProps) => ({...reader, progresses: settings.progresses, ...ownProps})
 
 export const ReaderMenu = connect(
 		mapStateToProps,
@@ -28,6 +29,9 @@ export const ReaderBody = connect(
 			onClickTocItem: (item) => dispatch(changeReaderContentPath(item)),
 			onClickPagePrev: () => dispatch(changeReaderPage(-1)),
 			onClickPageNext: () => dispatch(changeReaderPage(+1)),
+			onClickChapterPrev: () => dispatch(changeReaderChapter(-1)),
+			onClickChapterNext: () => dispatch(changeReaderChapter(+1)),
+			onChangePageNumber: (pageNo) => dispatch(changeReaderContentPath({pageNo})),
 		})
 	)(components.ReaderBody)
 
