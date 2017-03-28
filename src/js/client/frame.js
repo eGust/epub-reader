@@ -1,5 +1,9 @@
 function log(...args) {
-	console.log.call(console, '[frame]', ...args)
+	console.log.call(console, `[frame] ${now()}`, ...args)
+}
+
+function now() {
+	return (new Date).toISOString()
 }
 
 let currentPosition = {
@@ -33,9 +37,11 @@ function updatePageCount() {
 }
 
 function setPageNo(page) {
+	page = isNaN(page) ? 1 : page
 	// log('setPageNo', { page, left: pageWidth * pageNo })
-	currentPosition.pageNo = Math.max(1, Math.min(currentPosition.pageCount, page))
+	currentPosition.pageNo = Math.max(1, Math.min(currentPosition.pageCount, page || 1))
 	$('main#main>#content').css({left: -currentPosition.pageWidth * (currentPosition.pageNo-1)})
+	updateProgress()
 }
 
 function goToPage({ anchor, pageNo, pageCount }) {
@@ -53,15 +59,21 @@ function goToPage({ anchor, pageNo, pageCount }) {
 	setPageNo(toPage)
 }
 
+function updateProgress() {
+	// log(currentPosition)
+	const { chapterPath, anchor, pageNo, pageCount } = currentPosition
+	postWebMessage({ action: 'updateProgress', progress: { chapterPath, anchor, pageNo, pageCount } })
+}
+
 $(window).resize(() => {
 	updatePageCount()
 	setPageNo(currentPosition.pageNo)
 })
 
 $(() => {
-	log('frame ready', currentPosition)
+	// log('frame ready', currentPosition)
 	updatePageCount()
-	postWebMessage({action: 'ready'})
+	postWebMessage({action: 'ready', bookId: location.hostname.slice(4)})
 })
 
 function messageHandler(event) {
@@ -71,14 +83,15 @@ function messageHandler(event) {
 
 	delete data.channel
 	delete data.action
-	log('receive', { action, data })
+	// log('receive', { action, data })
 	MESSAGE_HANDLERS[action] && MESSAGE_HANDLERS[action](data)
 }
 
 window.addEventListener('message', messageHandler, false)
 
 const MESSAGE_HANDLERS = {
-	setPath({ path: chapterPath, anchor, pageNo, pageCount }) {
+	setPath({ chapterPath, anchor, pageNo, pageCount }) {
+		// log('setPath', {chapterPath})
 		if (chapterPath === currentPosition.chapterPath) {
 			goToPage({anchor, pageNo, pageCount})
 			return
@@ -87,15 +100,15 @@ const MESSAGE_HANDLERS = {
 		$('main#main').removeClass('show')
 		$.get(`/${chapterPath}`)
 		.then((xhtml) => {
-			let $xhtml = $(xhtml), $head = $('head'), cssLink = $('#css-link')[0], toRemove = []
-			for (let el of $head.find('> *')) {
+			const $xhtml = $(xhtml), $head = $('head'), cssLink = $('#css-link')[0], toRemove = []
+			for (const el of $head.find('> *')) {
 				if (el === cssLink)
 					break
 				toRemove.push(el)
 			}
 			_.each(toRemove, (el) => $(el).remove())
 
-			let xhead = $xhtml.find('head'), xbody = $xhtml.find('body')
+			const xhead = $xhtml.find('head'), xbody = $xhtml.find('body')
 
 			xhead.find('script').remove()
 			xbody.find('script').remove()
@@ -113,73 +126,19 @@ const MESSAGE_HANDLERS = {
 		})
 	},
 
-	changePage({ go }) {
-		let { pageNo, pageCount, chapterPath } = currentPosition
-		log('changePage', { go, pageNo, pageCount, chapterPath })
-		if (go === 'prev') {
-			page = pageNo - 1
-		} else if (go === 'next') {
-			page = pageNo + 1
-		}
-
-		if (page === pageNo) {
-			log('same page', { page, pageNo })
-			return
-		}
-
-		if (page < 0 || page >= pageCount) {
-			postWebMessage({ action: 'changePath', go, chapterPath })
-			log('changePath', { go, chapterPath })
-			return
-		}
-
+	setPage({page}) {
 		setPageNo(page)
 	},
 
-	changePath({ chapterPath, anchor }) {
-		if (chapterPath === currentPosition.chapterPath) {
-			return
-		}
-
-		log('changePath', { chapterPath, anchor })
-
-		$('main#main').removeClass('show')
-		$.get(`/${chapterPath}`)
-		.then((xhtml) => {
-			let $xhtml = $(xhtml), $head = $('head'), cssLink = $('#css-link')[0], toRemove = []
-			for (let el of $head.find('> *')) {
-				if (el === cssLink)
-					break
-				toRemove.push(el)
-			}
-			_.each(toRemove, (el) => $(el).remove())
-
-			let xhead = $xhtml.find('head'), xbody = $xhtml.find('body')
-
-			xhead.find('script').remove()
-			xbody.find('script').remove()
-			xbody.find('link').appendTo(xhead)
-			xbody.find('style').appendTo(xhead)
-
-			history.pushState({}, '', `/${chapterPath}`)
-			currentPosition.chapterPath = chapterPath
-
-			$head.prepend(xhead.children())
-			$('main#main>#content').html(xbody.children())
-			updatePageCount()
-			switchToAnchor(anchor)
-			$('main#main').addClass('show')
-		})
-	},
 }
 
 function postWebMessage(data) {
-	log('send', data)
+	// log('send', data)
 	window.parent.postMessage(_.merge({ channel: 'ebook' }, data), '*')
 }
 
 function reloadCSSLink() {
-	$('#css-link').replaceWith(`<link id="css-link" href="ebook://globals/frame.css?t=${(new Date).toISOString().replace(/\W/g, '')}" rel="stylesheet" type="text/css"/>`)
+	$('#css-link').replaceWith(`<link id="css-link" href="ebook://globals/frame.css?t=${(now()).toISOString().replace(/\W/g, '')}" rel="stylesheet" type="text/css"/>`)
 }
 
 function updateCSSCalc(css) {

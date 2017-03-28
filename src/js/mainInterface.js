@@ -5,11 +5,19 @@ import { installApi } from './ui/actions'
 
 window.$ = $
 
-let onClientReadyEvent
+function now() {
+	return (new Date).toISOString()
+}
+
+let onClientReadyEvent, onUpdateProgressEvent
 
 const MESSAGE_HANDLERS = {
 	ready: () => {
 		onClientReadyEvent && onClientReadyEvent()
+	},
+
+	updateProgress: (progress) => {
+		onUpdateProgressEvent && onUpdateProgressEvent(progress)
 	},
 }
 
@@ -17,29 +25,26 @@ function messageHandler(event) {
 	let { channel, action, ...data } = event.data
 	if (channel !== 'ebook')
 		return
-	console.log('[main] receive:', { action, data })
+	// console.log(`[main] receive ${now()}:`, { action, data })
 	MESSAGE_HANDLERS[action] && MESSAGE_HANDLERS[action](data)
 }
 
 window.addEventListener('message', messageHandler, false)
 
 function postWebMessage(data) {
-	console.log('[main] send:', data)
+	// console.log(`[main] send ${now()}:`, data)
 	document.getElementById('frame-book').contentWindow.postMessage({ ...data, channel: 'ebook', }, '*')
 }
 
 function sendServiceMessage(msg, data) {
-	console.log(`[A.SEND] ${msg}`, data)
+	// console.log(`[A.SEND] ${now()} ${msg}`, data)
 	ipcRenderer.send(`s-${msg}`, data)
 }
 
 const onReceiveServiceMessages = {
-	[serviceMessages.docPath]: (data) => {
-		if (data.path) {
-			let { go } = data.query, anchor = go === 'prev' ? '*scroll-to-last-page' : ''
-			postWebMessage({ action: 'changePath', filePath: data.path, anchor })
-			// updateAppState({ filePath: data.path, anchor })
-		}
+	[serviceMessages.queryDocPath]: ({chapterPath, apiCallId}) => {
+		const cb = popApiCallbak(apiCallId)
+		cb && cb(chapterPath)
 	},
 
 	[serviceMessages.openFiles]: ({fileIds, apiCallId}) => {
@@ -117,7 +122,7 @@ const apiCallbacks = {}
 		installApi(Api)
 		for (const msg in onReceiveServiceMessages) {
 			ipcRenderer.on(`r-${msg}`, (event, data) => {
-				console.log(`[A.RECEIVE] ${msg}`, {data})
+				// console.log(`[A.RECEIVE] ${msg} ${now()}`, data)
 				onReceiveServiceMessages[msg](data)
 			})
 		}
@@ -132,17 +137,29 @@ const apiCallbacks = {}
 	},
 
 	setClientPath(params) {
-		postWebMessage({ action: 'setPath', params })
+		postWebMessage({ action: 'setPath', ...params })
+	},
+
+	setClientPage(page) {
+		postWebMessage({ action: 'setPage', page })
 	},
 
 	decodeDocumentPath(path) {
 		const p = path.split('#', 1)[0]
 			, h = path.slice(p.length+1)
-		return { path: p, anchor: h.length ? h : null }
+		return { chapterPath: p, anchor: h.length ? h : null }
+	},
+
+	queryDocPath({docId, chapterPath, go}, cb) {
+		sendServiceMessage(serviceMessages.queryDocPath, { docId, chapterPath, go, apiCallId: getApiCallbackId(cb) })
 	},
 
 	onClientReady(cb) {
 		onClientReadyEvent = cb
+	},
+
+	onUpdateProgress(cb) {
+		onUpdateProgressEvent = cb
 	},
 }
 

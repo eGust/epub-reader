@@ -68,21 +68,21 @@ export class DocManager {
 	}
 
 	handleDoc({ doc, filePath, method }, cb) {
-		console.log('[DocManager.handleDoc]', Object.keys(this.docs), {doc, filePath, method})
+		// console.log('[DocManager.handleDoc]', Object.keys(this.docs), {doc, filePath, method})
 		if (doc) {
 			let item = doc.pathToItem(filePath) || doc.rootItem
-			console.log('item:', item)
+			// console.log('item:', item)
 			doc.fetchFile(item)
 			.then((buff) => {
 				let mimeType = item.mediaType, data = buff
-				console.log('[fetched]', {mimeType, data})
+				// console.log('[fetched]', {mimeType, data})
 				cb({
 					mimeType,
 					data,
 				})
 			})
 			.catch((r) => {
-				console.log(`[fetch failed] ${JSON.stringify(url)}\n${r}`)
+				// console.log(`[fetch failed] ${JSON.stringify(url)}\n${r}`)
 				cb({ mimeType: null, data: null })
 			})
 			return
@@ -105,7 +105,7 @@ export class DocManager {
 	}
 
 	handle({ scope, url, method, id, filePath }, cb) {
-		console.log('[DocManager]', { scope, method, id, filePath })
+		// console.log('[DocManager]', { scope, method, id, filePath })
 		try {
 			switch (scope) {
 				case 'doc':
@@ -119,18 +119,22 @@ export class DocManager {
 					return this.handleGlobals(filePath, cb)
 			}
 		} catch (ex) {
-			console.log('handle request failed:', ex)
+			// console.log('handle request failed:', ex)
 		}
 		this.handleNull(cb)
 	}
 
-	queryDocPath({ docId, filePath, go }) {
-		let doc = this.docs[docId]
-		console.log({ docId, filePath, go }, 'doc:', !!doc)
+	queryDocPath({ docId, chapterPath, go }) {
+		const doc = this.docs[docId]
+		// console.log('DocManager.queryDocPath', { docId, chapterPath, go }, 'doc:', !!doc)
 		if (!doc) return null
-		let item = filePath === '' ? doc.rootItem : doc.pathToItem(filePath)
+
+		let item = chapterPath == null || chapterPath === '' ? doc.rootItem : doc.pathToItem(chapterPath)
+		// console.log('DocManager.queryDocPath from', { item })
 		if (!item) return null
+
 		item = doc[`${go}ItemOf`].call(doc, item)
+		// console.log('DocManager.queryDocPath to', { item })
 		return item && item.href
 	}
 

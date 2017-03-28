@@ -25,6 +25,7 @@ export const openExistingBook = (book) => (
 		})
 		dispatch({
 			type: OPEN_EXISTING_BOOK,
+			book,
 		})
 	}
 )
@@ -63,8 +64,7 @@ const TOGGLE_TOC_PIN = 'TOGGLE_TOC_PIN'
 	, TOGGLE_TOC_OPEN = 'TOGGLE_TOC_OPEN'
 	, CHANGE_CURRENT_BOOK = 'CHANGE_CURRENT_BOOK'
 	, CHANGE_READER_CONTENT_PATH = 'CHANGE_READER_CONTENT_PATH'
-	, CHANGE_READER_PAGE = 'CHANGE_READER_PAGE'
-	, CHANGE_READER_CHAPTER = 'CHANGE_READER_CHAPTER'
+	, UPDATE_READER_PROGRESS = 'UPDATE_READER_PROGRESS'
 
 export const toggleTocPin = () => ({
 	type: TOGGLE_TOC_PIN,
@@ -78,8 +78,7 @@ export const toggleTocOpen = (open = null) => ({
 export const changeCurrentBook = (bookInfo) => (
 	(dispatch, getState) => {
 		const state = getState()
-			, bookInfo = { ...bookInfo, ...state.settings.reader }
-		console.log(bookInfo)
+		bookInfo = { ...bookInfo, ...state.settings.reader }
 		dispatch({
 			type: CHANGE_CURRENT_BOOK,
 			bookInfo,
@@ -87,35 +86,71 @@ export const changeCurrentBook = (bookInfo) => (
 
 		Api.onClientReady(() => {
 			const { chapterPath: path = '', pageNo = null, pageCount = null } = bookInfo.progress || {}
-			console.log({ path, pageNo, pageCount, state, })
+			// console.log({ path, pageNo, pageCount, state, })
 			Api.setClientPath({path, pageNo, pageCount})
+		})
+
+		Api.onUpdateProgress(({progress}) => {
+			dispatch({
+				type: UPDATE_READER_PROGRESS,
+				progress,
+			})
 		})
 	}
 )
 
 export const changeReaderContentPath = (path) => (
 	(dispatch) => {
-		console.log(CHANGE_READER_CONTENT_PATH, {path})
-		Api.setClientPath(Api.decodeDocumentPath(path))
+		// console.log(CHANGE_READER_CONTENT_PATH, {path})
+		Api.setClientPath(Api.decodeDocumentPath(path.content))
 	}
 )
 
 export const changeReaderPage = (delta) => (
-	(dispatch) => {
-		console.log(CHANGE_READER_PAGE, {delta})
-		dispatch({
-			type: CHANGE_READER_PAGE,
-			delta,
+	(dispatch, getState) => {
+		const { reader: { book, progress } } = getState()
+		// console.log('action.changeReaderPage', {progress, delta})
+		if (delta < 0 && progress.pageNo <= 1) {
+			Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: -1 }, (chapterPath) => {
+				Api.setClientPath({ chapterPath, pageNo: -1 })
+			})
+		} else if (delta > 0 && progress.pageNo >= progress.pageCount) {
+			Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: +1 }, (chapterPath) => {
+				Api.setClientPath({ chapterPath })
+			})
+		} else {
+			const pageNo = progress.pageNo+delta
+			Api.setClientPage(pageNo)
+		}
+	}
+)
+
+export const doChangeReaderPage = ({ book, progress, delta}) => {
+	if (delta < 0 && progress.pageNo <= 1) {
+		Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: -1 }, (chapterPath) => {
+			Api.setClientPath({ chapterPath, pageNo: -1 })
 		})
+	} else if (delta > 0 && progress.pageNo >= progress.pageCount) {
+		Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: +1 }, (chapterPath) => {
+			Api.setClientPath({ chapterPath })
+		})
+	} else {
+		const pageNo = progress.pageNo+delta
+		Api.setClientPage(pageNo)
+	}
+}
+
+export const changeReaderPageNo = (pageNo) => (
+	() => {
+		Api.setClientPage(pageNo)
 	}
 )
 
 export const changeReaderChapter = (delta) => (
-	(dispatch) => {
-		console.log(CHANGE_READER_CHAPTER, {delta})
-		dispatch({
-			type: CHANGE_READER_CHAPTER,
-			delta,
+	(dispatch, getState) => {
+		const { reader: { book, progress } } = getState()
+		Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: delta }, (chapterPath) => {
+			Api.setClientPath({ chapterPath })
 		})
 	}
 )

@@ -12,11 +12,7 @@ import {
 	OPEN_BOOK_FILES,
 	ADD_BOOKS_TO_SHELF,
 	CHANGE_CURRENT_BOOK,
-
-	addBooksToShelf,
-	changeRouting,
-	openExistingBook,
-	changeCurrentBook,
+	UPDATE_READER_PROGRESS,
 } from './actions'
 
 const combinedReducer = combineReducers({
@@ -57,10 +53,10 @@ const combinedReducer = combineReducers({
 	reader(state = {}, action) {
 		switch (action.type) {
 			case OPEN_EXISTING_BOOK:
-				state = _.merge({}, DEFAULT_STATE.reader)
+				state = _.merge({}, DEFAULT_STATE.reader, { book: action.book })
 				break
 			case CHANGE_CURRENT_BOOK:
-				state = { ...state, ...action.bookInfo }
+				state = _.merge({}, state, action.bookInfo)
 				break
 			case CHANGE_READER_CONTENT_PATH:
 				break
@@ -70,6 +66,9 @@ const combinedReducer = combineReducers({
 			case TOGGLE_TOC_OPEN:
 				state = { ...state, isTocOpen: action.open == null ? !state.isTocOpen : action.open }
 				break
+			case UPDATE_READER_PROGRESS:
+				const { progress, ...others } = state
+				state = { ...others, progress: { ...progress, ...action.progress } }
 			default:
 		}
 		return state

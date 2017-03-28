@@ -4,8 +4,10 @@ import {
 	toggleTocPin,
 	toggleTocOpen,
 	changeReaderContentPath,
-	changeReaderPage,
+	// changeReaderPage,
 	changeReaderChapter,
+	changeReaderPageNo,
+	doChangeReaderPage,
 } from '../actions'
 import components from './components'
 import { connect } from 'react-redux'
@@ -27,11 +29,12 @@ export const ReaderBody = connect(
 			onClickPin: () => dispatch(toggleTocPin()),
 			onClickDimmer: () => dispatch(toggleTocOpen(false)),
 			onClickTocItem: (item) => dispatch(changeReaderContentPath(item)),
-			onClickPagePrev: () => dispatch(changeReaderPage(-1)),
-			onClickPageNext: () => dispatch(changeReaderPage(+1)),
+			// onClickPagePrev: () => dispatch(changeReaderPage(-1)),
+			// onClickPageNext: () => dispatch(changeReaderPage(+1)),
+			onClickPageGoDelta: (data) => doChangeReaderPage(data),
 			onClickChapterPrev: () => dispatch(changeReaderChapter(-1)),
 			onClickChapterNext: () => dispatch(changeReaderChapter(+1)),
-			onChangePageNumber: (pageNo) => dispatch(changeReaderContentPath({pageNo})),
+			onChangePageNo: (pageNo) => dispatch(changeReaderPageNo(pageNo)),
 		})
 	)(components.ReaderBody)
 

@@ -5,8 +5,10 @@ import { docManager } from './server/docManager'
 import EPub from './server/epubDoc'
 
 const services = {
-	[serviceMessages.docPath]: (data, reply) => {
-		reply({path: docManager.queryDocPath(data)})
+	[serviceMessages.queryDocPath]: ({docId, chapterPath, go, apiCallId}, reply) => {
+		go = go > 0 ? 'next' : 'prev'
+		chapterPath = docManager.queryDocPath({docId, chapterPath, go})
+		reply({chapterPath, apiCallId})
 	},
 
 	[serviceMessages.openFiles]: ({files, apiCallId}, reply) => {
@@ -16,7 +18,7 @@ const services = {
 			return () => {
 				docManager.loadFile(fileName, (doc) => {
 					doc && (fileIds[fileName] = { id: doc.id, title: doc.title })
-					console.log({files, apiCallId, index})
+					// console.log({files, apiCallId, index})
 					if (index >= files.length) {
 						reply({fileIds, apiCallId})
 					} else {
@@ -54,9 +56,9 @@ export function registerServices() {
 
 	for (const msg in services) {
 		ipcMain.on(`s-${msg}`, (event, data) => {
-			console.log(`[S.RECEIVE] ${msg}`, {data})
+			// console.log(`[S.RECEIVE] ${msg}`, data)
 			services[msg](data, (data) => {
-				console.log(`[S.REPLY] ${msg}`, Object.keys(data))
+				// console.log(`[S.REPLY] ${msg}`, Object.keys(data))
 				event.sender.send(`r-${msg}`, data)
 			})
 		})

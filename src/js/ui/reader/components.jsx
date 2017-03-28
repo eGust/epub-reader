@@ -97,8 +97,9 @@ export class ReaderBody extends Component {
 
 	render() {
 		const { book, progress, toc, isTocOpen = false, isTocPinned = false, opening,
-				onClickPin, onClickDimmer, onClickTocItem,
-				onClickPagePrev, onClickPageNext, onClickChapterPrev, onClickChapterNext } = this.props
+				onClickPin, onClickDimmer, onClickTocItem, onClickPageGoDelta,
+				// onClickPagePrev, onClickPageNext,
+				onClickChapterPrev, onClickChapterNext, onChangePageNo } = this.props
 			, { collapse } = this.state
 			, folding = collapse==null ? {} : { collapse }
 		return (
@@ -128,11 +129,11 @@ export class ReaderBody extends Component {
 				</Accordion>
 			</Segment>
 			<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }>
-				<iframe className={book.id ? 'full-size' : 'hide'} id='frame-book' src={`ebook://doc.${book.id}/frame.html`} />
-				<div className='page-navigator prev-page' onClick={onClickPagePrev}>
+				<iframe className={book.id ? 'full-size' : 'hide'} id='frame-book' src={`ebook://doc.${book.id || ''}/frame.html`} />
+				<div className='page-navigator prev-page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
 					<Icon name='chevron left' size='large' title='Previous Page' />
 				</div>
-				<div className='page-navigator next-page' onClick={onClickPageNext}>
+				<div className='page-navigator next-page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
 					<Icon name='chevron right' size='large' title='Next Page' />
 				</div>
 				<div className='page-status'>
@@ -140,14 +141,16 @@ export class ReaderBody extends Component {
 						<Menu.Item title='Previous Chapter' onClick={onClickChapterPrev}>
 							<Icon name='step backward' />
 						</Menu.Item>
-						<Menu.Item title='Previous Page' onClick={onClickPagePrev}>
+						<Menu.Item title='Previous Page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
 							<Icon name='caret left' />
 						</Menu.Item>
 
-						<Dropdown text={progress.pageNo ? progress.pageNo : '-'} className='link item upward'>
+						<Dropdown text={progress.pageNo ? `${progress.pageNo}` : '-'} className='link item upward'>
 							<Dropdown.Menu>
 							{
-								_.times(progress.pageCount, (i) => (<Dropdown.Item>{i+1}</Dropdown.Item>))
+								_.times(progress.pageCount, (i) => (
+									<Dropdown.Item key={`${i}`} onClick={() => onChangePageNo(i+1)}>{i+1}</Dropdown.Item>
+								))
 							}
 							</Dropdown.Menu>
 						</Dropdown>
@@ -157,7 +160,7 @@ export class ReaderBody extends Component {
 						</Menu.Item>
 
 						<Menu.Menu position='right'>
-							<Menu.Item title='Next Page' onClick={onClickPageNext}>
+							<Menu.Item title='Next Page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
 								<Icon name='caret right' />
 							</Menu.Item>
 							<Menu.Item title='Next Chapter' onClick={onClickChapterNext}>
@@ -172,15 +175,6 @@ export class ReaderBody extends Component {
 		)
 	}
 }
-
-/*
-					<Button.Group color='grey'>
-						<Button icon='step backward' title='Previous Chapter' />
-						<Button icon='caret left' title='Next Page' />
-						<Button icon='caret right' title='Previous Page' />
-						<Button icon='step forward' title='Next Chapter' />
-					</Button.Group>
-*/
 
 const exported = {
 	ReaderMenu,
