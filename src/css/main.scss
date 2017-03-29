@@ -218,9 +218,13 @@ body {
 	max-height: calc(100% - 20px);
 }
 
-.toc-item {
+.ui.inverted.list .toc-item.item {
 	display: inline-block;
 	min-width: 51%;
+	&.active, &.active a:not(.ui) {
+		color: yellow !important;
+		font-weight: bold;
+	}
 }
 
 .dimmer-base {

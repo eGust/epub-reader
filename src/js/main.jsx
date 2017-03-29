@@ -17,9 +17,9 @@ Api.registerServiceApi()
 setDefaultState(Api.DEFAULT_STATE)
 
 const docRoot = document.getElementById('root')
-	// , logger = createLogger()
-	// , store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk, logger))
-	, store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk))
+	, logger = createLogger()
+	, store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk, logger))
+	// , store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk))
 
 ReactDOM.render(
 	<Provider store={store}>

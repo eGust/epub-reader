@@ -35,7 +35,7 @@ class TocItem extends Component {
 				</Accordion.Content>
 			</div>
 			:
-			<List.Item className='toc-item'>
+			<List.Item className={item.active ? 'toc-item active' : 'toc-item'}>
 				<List.Icon name='file' />
 				<List.Content>
 					<a href={item.content} onClick={(e) => { e.preventDefault(); onClickTocItem(item) }}>{item.text}</a>

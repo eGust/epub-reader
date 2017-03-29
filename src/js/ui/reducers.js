@@ -15,6 +15,25 @@ import {
 	UPDATE_READER_PROGRESS,
 } from './actions'
 
+function updateTocItem(items, path) {
+	let chapterTitle = null
+	function updateEachItem(items) {
+		return items.map((item) => {
+			let { active, subItems, ...others } = item
+			active = false
+			subItems = updateEachItem(item.subItems)
+
+			if (item.content === path) {
+				active = true
+				chapterTitle = item.text
+			}
+			return { active, subItems, ...others }
+		})
+	}
+	const results = updateEachItem(items)
+	return { items: results, chapterTitle }
+}
+
 const combinedReducer = combineReducers({
 	routing(state = 'shelf', action) {
 		switch (action.type) {
@@ -67,8 +86,9 @@ const combinedReducer = combineReducers({
 				state = { ...state, isTocOpen: action.open == null ? !state.isTocOpen : action.open }
 				break
 			case UPDATE_READER_PROGRESS:
-				const { progress, ...others } = state
-				state = { ...others, progress: { ...progress, ...action.progress } }
+				const { progress, toc, ...others } = state
+					, { chapterTitle, items } = updateTocItem(toc, action.progress.chapterPath)
+				state = { ...others, toc: items, progress: { ...progress, ...action.progress, chapterTitle } }
 			default:
 		}
 		return state
