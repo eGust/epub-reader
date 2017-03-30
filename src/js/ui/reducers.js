@@ -5,33 +5,87 @@ import {
 	UPDATE_SETTINGS,
 	TOGGLE_TOC_PIN,
 	TOGGLE_TOC_OPEN,
+	TOGGLE_TOC_ITEM_OPEN,
 	SHOW_SETTINGS,
 	CLOSE_SETTINGS,
 	CHANGE_ROUTING,
 	OPEN_EXISTING_BOOK,
 	OPEN_BOOK_FILES,
-	ADD_BOOKS_TO_SHELF,
+	UPDATE_SHELF_BOOKS,
+	UPDATE_FILTER,
+	UPDATE_SORTING,
 	CHANGE_CURRENT_BOOK,
 	UPDATE_READER_PROGRESS,
 } from './actions'
 
-function updateTocItem(items, path) {
+function updateSelectedTocItem(items, path, progress) {
+	if (path === progress.chapterPath) {
+		return { items, chapterTitle: progress.chapterTitle }
+	}
+
 	let chapterTitle = null
 	function updateEachItem(items) {
 		return items.map((item) => {
-			let { active, subItems, ...others } = item
-			active = false
+			let { isSelected, subItems, ...others } = item
+			isSelected = false
 			subItems = updateEachItem(item.subItems)
 
 			if (item.content === path) {
-				active = true
+				isSelected = true
 				chapterTitle = item.text
+			} else {
+				isSelected = !!subItems.find(({isSelected}) => isSelected)
 			}
-			return { active, subItems, ...others }
+			return { isSelected, subItems, ...others }
 		})
 	}
 	const results = updateEachItem(items)
 	return { items: results, chapterTitle }
+}
+
+function toggleTocItemOpen(items, itemOrAllOpen) {
+	if (itemOrAllOpen === true || itemOrAllOpen === false) {
+		const isOpen = itemOrAllOpen
+
+		function toggleOpen(items) {
+			return items.map(({isOpen: _, subItems, ...others}) => {
+				return { subItems: toggleOpen(subItems), ...others, isOpen }
+			})
+		}
+
+		return toggleOpen(items)
+	}
+
+	function toggleItemOpenEq(items) {
+		return items.map((item) => {
+			const { isOpen, subItems, ...others } = item
+			return item === target ? { isOpen: !isOpen, subItems, ...others } : { isOpen, subItems: toggleItemOpenEq(subItems), ...others }
+		})
+	}
+
+	const target = itemOrAllOpen
+	return toggleItemOpenEq(items)
+}
+
+function filterBookCovers(covers, { filter, sorting }) {
+	let sorter
+	switch (sorting.method) {
+		case 'Title':
+			sorter = sorting.order === 'ascending' ? (a, b) => (a.title > b.title ? 1 : -1) : (a, b) => (a.title < b.title ? 1 : -1)
+			break
+		case 'Last Read':
+			sorter = sorting.order === 'ascending' ? (a, b) => (a.lastRead > b.lastRead ? 1 : -1) : (a, b) => (a.lastRead < b.lastRead ? 1 : -1)
+			break
+		default:
+			sorter = (a, b) => (a.title > b.title ? 1 : -1)
+	}
+
+	if (filter) {
+		filter.trim().toLowerCase().split(/\s+/).forEach((f) => {
+			covers = covers.filter(({ lower }) => lower.indexOf(f) >= 0)
+		})
+	}
+	return covers.sort(sorter)
 }
 
 const combinedReducer = combineReducers({
@@ -51,23 +105,29 @@ const combinedReducer = combineReducers({
 	showSettings: (state = false) => state,
 	backupSettings: (state = null) => state,
 	shelf(state = {}, action) {
-		let toMerge = null
+		let toMerge = null, newBookCovers = null
 		switch (action.type) {
 			case OPEN_BOOK_FILES:
 				toMerge = { opening: true }
 				break
-			case ADD_BOOKS_TO_SHELF:
-				const covers = [], books = {}
-				_.each(action.fileIds, ({id, title}, fileName) => {
-					if (state.books[id])
-						return
-					covers.push(books[id] = {id, title, fileName})
-				})
-				toMerge = { bookCovers: covers.concat(state.bookCovers), books, opening: false }
+			case UPDATE_SHELF_BOOKS:
+				toMerge = { books: action.books, opening: false }
+				newBookCovers = filterBookCovers(_.values(action.books), state)
+				break
+			case UPDATE_FILTER:
+				toMerge = { filter: action.filter }
+				newBookCovers = filterBookCovers(_.values(state.books), { filter: action.filter, sorting: state.sorting })
+				break
+			case UPDATE_SORTING:
+				toMerge = { sorting: action.order }
+				newBookCovers = filterBookCovers(_.values(state.books), { filter: state.filter, sorting: _.merge({}, state.sorting, action.order) })
 				break
 			default:
 		}
-		return toMerge ? _.merge({}, state, toMerge) : state
+		state = toMerge ? _.merge({}, state, toMerge) : state
+		if (newBookCovers)
+			state.bookCovers = newBookCovers
+		return state
 	},
 	reader(state = {}, action) {
 		switch (action.type) {
@@ -85,9 +145,12 @@ const combinedReducer = combineReducers({
 			case TOGGLE_TOC_OPEN:
 				state = { ...state, isTocOpen: action.open == null ? !state.isTocOpen : action.open }
 				break
+			case TOGGLE_TOC_ITEM_OPEN:
+				state = { ...state, toc: toggleTocItemOpen(state.toc, action.itemOrAllOpen) }
+				break
 			case UPDATE_READER_PROGRESS:
 				const { progress, toc, ...others } = state
-					, { chapterTitle, items } = updateTocItem(toc, action.progress.chapterPath)
+					, { chapterTitle, items } = updateSelectedTocItem(toc, action.progress.chapterPath, progress)
 				state = { ...others, toc: items, progress: { ...progress, ...action.progress, chapterTitle } }
 			default:
 		}

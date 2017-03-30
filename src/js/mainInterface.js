@@ -2,6 +2,7 @@ import { ipcRenderer } from 'electron'
 import $ from 'jquery'
 import { serviceMessages } from './serviceMessages'
 import { installApi } from './ui/actions'
+import log from './logger'
 
 window.$ = $
 
@@ -25,23 +26,28 @@ function messageHandler(event) {
 	let { channel, action, ...data } = event.data
 	if (channel !== 'ebook')
 		return
-	// console.log(`[main] receive ${now()}:`, { action, data })
+	log(`[main] receive`, { action, data })
 	MESSAGE_HANDLERS[action] && MESSAGE_HANDLERS[action](data)
 }
 
 window.addEventListener('message', messageHandler, false)
 
 function postWebMessage(data) {
-	// console.log(`[main] send ${now()}:`, data)
+	log(`[main] send`, data)
 	document.getElementById('frame-book').contentWindow.postMessage({ ...data, channel: 'ebook', }, '*')
 }
 
 function sendServiceMessage(msg, data) {
-	// console.log(`[A.SEND] ${now()} ${msg}`, data)
+	log(`[A.SEND]`, msg, data)
 	ipcRenderer.send(`s-${msg}`, data)
 }
 
 const onReceiveServiceMessages = {
+	[serviceMessages.queryDocRoot]: ({rootItem, apiCallId}) => {
+		const cb = popApiCallbak(apiCallId)
+		cb && cb(rootItem)
+	},
+
 	[serviceMessages.queryDocPath]: ({chapterPath, apiCallId}) => {
 		const cb = popApiCallbak(apiCallId)
 		cb && cb(chapterPath)
@@ -56,6 +62,11 @@ const onReceiveServiceMessages = {
 		const cb = popApiCallbak(apiCallId)
 		cb && cb({book, toc})
 	},
+
+	[serviceMessages.getDbValue]: ({values, apiCallId}) => {
+		const cb = popApiCallbak(apiCallId)
+		cb && cb(values)
+	},
 }
 
 const DEFAULT_STATE = {
@@ -65,12 +76,16 @@ const DEFAULT_STATE = {
 		bookCovers: [],
 		books: {},
 		opening: false,
+		filter: '',
+		sorting: {
+			method: 'Title',
+			order: 'ascending',
+		},
 	},
 	reader: {
 		book: {
 			title: null,
 			id: null,
-			fileName: null,
 		},
 		opening: true,
 		toc: [],
@@ -122,7 +137,7 @@ const apiCallbacks = {}
 		installApi(Api)
 		for (const msg in onReceiveServiceMessages) {
 			ipcRenderer.on(`r-${msg}`, (event, data) => {
-				// console.log(`[A.RECEIVE] ${msg} ${now()}`, data)
+				log(`[A.RECEIVE]`, msg, data)
 				onReceiveServiceMessages[msg](data)
 			})
 		}
@@ -150,6 +165,10 @@ const apiCallbacks = {}
 		return { chapterPath: p, anchor: h.length ? h : null }
 	},
 
+	queryDocRoot(docId, cb) {
+		sendServiceMessage(serviceMessages.queryDocRoot, { docId, apiCallId: getApiCallbackId(cb) })
+	},
+
 	queryDocPath({docId, chapterPath, go}, cb) {
 		sendServiceMessage(serviceMessages.queryDocPath, { docId, chapterPath, go, apiCallId: getApiCallbackId(cb) })
 	},
@@ -160,6 +179,14 @@ const apiCallbacks = {}
 
 	onUpdateProgress(cb) {
 		onUpdateProgressEvent = cb
+	},
+
+	saveSettings(key, values) {
+		sendServiceMessage(serviceMessages.setDbValue, { path: key, values })
+	},
+
+	loadSettings(key, cb) {
+		sendServiceMessage(serviceMessages.getDbValue, { path: key, apiCallId: getApiCallbackId(cb) })
 	},
 }
 

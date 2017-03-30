@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React from 'react'
 import { Menu, Sidebar, Icon, Popup, Input, Label } from 'semantic-ui-react'
 
-export const ShelfMenu = ({ onClickShowSettings, openBookFiles }) => (
+export const ShelfMenu = ({ filter, sorting, onClickShowSettings, openBookFiles, changeFilter, changeOrder }) => (
 	<Sidebar as={Menu} direction='top' visible inverted fluid>
 		<Popup inverted
 			trigger={
@@ -24,15 +24,23 @@ export const ShelfMenu = ({ onClickShowSettings, openBookFiles }) => (
 			trigger={
 				<Menu.Item>
 					<Icon name='filter' />
-					<Label color='blue'>
-						Filter
-						<Icon name='close' />
-					</Label>
+					{
+						filter && filter.length ? (
+						<Label color='blue' className='text-lowercase'>
+							{filter}
+							<Icon name='close' onClick={() => changeFilter()} />
+						</Label>
+						) : 'Filter'
+					}
 				</Menu.Item>
 			}
 			on='click'
 		>
-			<Input icon={<Icon name='close' inverted circular link />} placeholder='Search...' />
+			<Input
+				value={filter}
+				onChange={(e) => changeFilter(e.target.value)}
+				icon={<Icon name='close' inverted circular link onClick={() => changeFilter()} />}
+				placeholder='Search...' />
 		</Popup>
 
 		<Menu.Item className='title-middle-bar'>
@@ -43,10 +51,10 @@ export const ShelfMenu = ({ onClickShowSettings, openBookFiles }) => (
 			<Popup inverted
 				trigger={
 					<Menu.Item>
-						<Label color='brown'>
-							TITLE
+						<Label color='brown' className='text-uppercase'>
+							{sorting.method}
 							<Label.Detail>
-								<Icon name='sort content descending' />
+								<Icon name={`sort content ${sorting.order}`} />
 							</Label.Detail>
 						</Label>
 						<Icon name='dropdown' />
@@ -57,25 +65,28 @@ export const ShelfMenu = ({ onClickShowSettings, openBookFiles }) => (
 						<Menu.Item>
 							<Menu.Header>Sort by:</Menu.Header>
 							<Menu.Menu>
-								<Menu.Item active>
-									Title
-									<Icon name='check' />
+							{
+								['Title', 'Last Read'].map((title, index) => (
+								<Menu.Item active={title === sorting.method} key={index} onClick={() => changeOrder({method: title})}>
+									{title}
+									{
+										title === sorting.method ? (<Icon name='check' />) : null
+									}
 								</Menu.Item>
-								<Menu.Item>
-									Last Read
-								</Menu.Item>
+								))
+							}
 							</Menu.Menu>
 						</Menu.Item>
 						<Menu.Item>
 							<Menu.Menu>
-								<Menu.Item>
-									Ascending
-									<Icon name='sort content ascending' />
+							{
+								['ascending', 'descending'].map((title, index) => (
+								<Menu.Item className='text-capitalize' active={title === sorting.order} key={index} onClick={() => changeOrder({order: title})}>
+									{title}
+									<Icon name={`sort content ${title}`} />
 								</Menu.Item>
-								<Menu.Item active>
-									Descending
-									<Icon name='sort content descending' />
-								</Menu.Item>
+								))
+							}
 							</Menu.Menu>
 						</Menu.Item>
 					</Menu>

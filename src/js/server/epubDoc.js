@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import JSZip from 'jszip'
 import fs from 'fs'
+import crypto from 'crypto'
 import path from 'path'
 import { DocBase, dirname, resolvePath } from './docBase'
 import cheerio from 'cheerio'
@@ -122,6 +123,15 @@ class EPubDoc extends DocBase {
 			if (err) {
 				console.log('loadFile.error:', err)
 				throw err
+			}
+
+			const hash = crypto.createHash('sha256')
+			hash.update(zipBuff)
+
+			this.fileInfo = {
+				path: this.fileName,
+				size: zipBuff.length,
+				hash: hash.digest('hex'),
 			}
 
 			JSZip.loadAsync(zipBuff)

@@ -2,49 +2,6 @@ import _ from 'lodash'
 import React, { Component } from 'react'
 import { Menu, Sidebar, Icon, Popup, Segment, Accordion, List, Dropdown } from 'semantic-ui-react'
 
-class TocItem extends Component {
-	state = { active: false }
-
-	componentWillReceiveProps(nextProps) {
-		const { collapse } = nextProps
-		if (collapse == null || collapse === this.props.collapse)
-			return
-		this.setState({ active: collapse })
-	}
-
-	render() {
-		const { item, onClickTocItem, collapse } = this.props
-			, { active } = this.state
-			, folding = collapse==null ? {} : { collapse }
-		return (
-			item.subItems && item.subItems.length ?
-			<div className='toc-item'>
-				<Accordion.Title key='title' active={active} onClick={() => this.setState({ active: !active })}>
-					<Icon name={active ? 'folder open' : 'folder'} />
-					{item.text}
-					<Icon name='dropdown' />
-				</Accordion.Title>
-				<Accordion.Content key='index' active={active}>
-					<Accordion styled exclusive={false} fluid className='list divided relaxed' inverted>
-					{
-						item.subItems.map((item, index) => (
-							<TocItem item={item} key={index} onClickTocItem={onClickTocItem} {...folding} />
-						))
-					}
-					</Accordion>
-				</Accordion.Content>
-			</div>
-			:
-			<List.Item className={item.active ? 'toc-item active' : 'toc-item'}>
-				<List.Icon name='file' />
-				<List.Content>
-					<a href={item.content} onClick={(e) => { e.preventDefault(); onClickTocItem(item) }}>{item.text}</a>
-				</List.Content>
-			</List.Item>
-		)
-	}
-}
-
 export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettings, onClickShowShelf, isTocOpen }) => (
 	<Sidebar as={Menu} direction='top' visible inverted fluid>
 		{
@@ -87,94 +44,118 @@ export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettin
 	</Sidebar>
 )
 
-export class ReaderBody extends Component {
-	state = { collapse: null }
+const TocItem = ({ item, onClickTocItem, onToggleTocFolding }) => {
+	const { subItems, isOpen, isSelected, content, text } = item
+	return subItems && subItems.length ? (
+	<div className='toc-item'>
+		<Accordion.Title key='title' className={isSelected ? 'selected' : ''} active={isOpen} onClick={() => onToggleTocFolding(item)}>
+			<Icon name={isOpen ? 'folder open' : 'folder'} />
+			{text}
+			<Icon name='dropdown' />
+		</Accordion.Title>
+		<Accordion.Content key='index' active={isOpen}>
+			<Accordion styled exclusive={false} fluid className='list divided relaxed' inverted>
+			{
+				isOpen ?
+				subItems.map((item, index) => (
+					<TocItem item={item} key={index} onClickTocItem={onClickTocItem} onToggleTocFolding={onToggleTocFolding} />
+				))
+				: null
+			}
+			</Accordion>
+		</Accordion.Content>
+	</div>
+	) : (
+	<List.Item className={isSelected ? 'toc-item selected' : 'toc-item'} as='a'  href={content} onClick={(e) => { e.preventDefault(); onClickTocItem(item) }}>
+		<List.Icon name='file' />
+		<List.Content> {text} </List.Content>
+	</List.Item>
+	)
+}
 
-	foldToc(collapse) {
-		this.setState({collapse})
-		setTimeout(() => this.setState({collapse: null}), 0)
-	}
+const TocContainer = ({toc, isTocOpen = false, isTocPinned = false, opening, onClickPin, onClickTocItem, onToggleTocFolding}) => (
+	<Segment id='toc-container' inverted className={opening ? 'hide' : (isTocOpen ? 'toc-slide-in' : 'toc-slide-out') }>
+		<List className='collapse-toggle' horizontal size='mini'>
+			<List.Item onClick={() => onToggleTocFolding(true)}>
+				<Icon name='folder open' color='teal' title='Unfold All'/>
+				<List.Content>Unfold All</List.Content>
+			</List.Item>
+			<List.Item onClick={() => onToggleTocFolding(false)}>
+				<Icon name='folder' color='blue' title='Fold All'/>
+				<List.Content>Fold All</List.Content>
+			</List.Item>
+		</List>
+		<div className='pin-toggle' onClick={onClickPin}>
+			<span style={{ fontSize: '.78rem', marginRight: 5 }}>{isTocPinned ? 'Pinned' : 'Unpinned'}</span>
+			<Icon name={isTocPinned ? 'toggle on' : 'toggle off'} color={isTocPinned ? 'green' : 'red'} />
+		</div>
 
-	render() {
-		const { book, progress, toc, isTocOpen = false, isTocPinned = false, opening,
-				onClickPin, onClickDimmer, onClickTocItem, onClickPageGoDelta,
-				// onClickPagePrev, onClickPageNext,
-				onClickChapterPrev, onClickChapterNext, onChangePageNo } = this.props
-			, { collapse } = this.state
-			, folding = collapse==null ? {} : { collapse }
-		return (
-		<div id='book-reader' as={Menu}>
-			<Segment id='toc-container' inverted className={opening ? 'hide' : (isTocOpen ? 'toc-slide-in' : 'toc-slide-out') }>
-				<List className='collapse-toggle' horizontal size='mini'>
-					<List.Item onClick={() => this.foldToc(true)}>
-						<Icon name='folder open' color='teal' title='Unfold All'/>
-						<List.Content>Unfold All</List.Content>
-					</List.Item>
-					<List.Item onClick={() => this.foldToc(false)}>
-						<Icon name='folder' color='blue' title='Fold All'/>
-						<List.Content>Fold All</List.Content>
-					</List.Item>
-				</List>
-				<div className='pin-toggle' onClick={onClickPin}>
-					<span style={{ fontSize: '.78rem', marginRight: 5 }}>{isTocPinned ? 'Pinned' : 'Unpinned'}</span>
-					<Icon name={isTocPinned ? 'toggle on' : 'toggle off'} color={isTocPinned ? 'green' : 'red'} />
-				</div>
+		<Accordion id='toc-menu' styled exclusive={false} fluid className='list divided relaxed' inverted>
+		{
+			toc.map((item, index) => (
+				<TocItem item={item} key={index} onClickTocItem={onClickTocItem} onToggleTocFolding={onToggleTocFolding} />
+			))
+		}
+		</Accordion>
+	</Segment>
+)
 
-				<Accordion id='toc-menu' styled exclusive={false} fluid className='list divided relaxed' inverted>
+const PageStatus = ({book, progress, onClickChapterPrev, onClickChapterNext, onClickPageGoDelta, onChangePageNo}) => (
+	<div className='page-status'>
+		<Menu icon size='small' color='brown' inverted>
+			<Menu.Item title='Previous Chapter' onClick={onClickChapterPrev}>
+				<Icon name='step backward' />
+			</Menu.Item>
+			<Menu.Item title='Previous Page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
+				<Icon name='caret left' />
+			</Menu.Item>
+
+			<Dropdown text={progress.pageNo ? `${progress.pageNo}` : '-'} className='link item upward'>
+				<Dropdown.Menu>
 				{
-					toc.map((item, index) => (
-						<TocItem item={item} key={index} onClickTocItem={onClickTocItem} {...folding} />
+					_.times(progress.pageCount, (i) => (
+						<Dropdown.Item key={`${i}`} onClick={() => onChangePageNo(i+1)}>{i+1}</Dropdown.Item>
 					))
 				}
-				</Accordion>
-			</Segment>
-			<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }>
-				<iframe className={book.id ? 'full-size' : 'hide'} id='frame-book' src={`ebook://doc.${book.id || ''}/frame.html`} />
-				<div className='page-navigator prev-page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
-					<Icon name='chevron left' size='large' title='Previous Page' />
-				</div>
-				<div className='page-navigator next-page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
-					<Icon name='chevron right' size='large' title='Next Page' />
-				</div>
-				<div className='page-status'>
-					<Menu icon size='small' color='brown' inverted>
-						<Menu.Item title='Previous Chapter' onClick={onClickChapterPrev}>
-							<Icon name='step backward' />
-						</Menu.Item>
-						<Menu.Item title='Previous Page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
-							<Icon name='caret left' />
-						</Menu.Item>
+				</Dropdown.Menu>
+			</Dropdown>
 
-						<Dropdown text={progress.pageNo ? `${progress.pageNo}` : '-'} className='link item upward'>
-							<Dropdown.Menu>
-							{
-								_.times(progress.pageCount, (i) => (
-									<Dropdown.Item key={`${i}`} onClick={() => onChangePageNo(i+1)}>{i+1}</Dropdown.Item>
-								))
-							}
-							</Dropdown.Menu>
-						</Dropdown>
+			<Menu.Item className='title-middle-bar'>
+				<label>{progress.pageCount ? ` of ${progress.pageCount}` : '-'}</label>
+			</Menu.Item>
 
-						<Menu.Item className='title-middle-bar'>
-							<label>{progress.pageCount ? ` of ${progress.pageCount}` : '-'}</label>
-						</Menu.Item>
+			<Menu.Menu position='right'>
+				<Menu.Item title='Next Page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
+					<Icon name='caret right' />
+				</Menu.Item>
+				<Menu.Item title='Next Chapter' onClick={onClickChapterNext}>
+					<Icon name='step forward' />
+				</Menu.Item>
+			</Menu.Menu>
+		</Menu>
+	</div>
+)
 
-						<Menu.Menu position='right'>
-							<Menu.Item title='Next Page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
-								<Icon name='caret right' />
-							</Menu.Item>
-							<Menu.Item title='Next Chapter' onClick={onClickChapterNext}>
-								<Icon name='step forward' />
-							</Menu.Item>
-						</Menu.Menu>
-					</Menu>
-				</div>
-				<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={onClickDimmer} />
-			</div>
+const BookContainer = ({isTocOpen, isTocPinned, book, progress, onClickDimmer, onClickPageGoDelta, ...events}) => (
+	<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }>
+		<iframe className={book.id ? 'full-size' : 'hide'} id='frame-book' src={`ebook://doc.${book.id || ''}/frame.html`} />
+		<div className='page-navigator prev-page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
+			<Icon name='chevron left' size='large' title='Previous Page' />
 		</div>
-		)
-	}
-}
+		<div className='page-navigator next-page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
+			<Icon name='chevron right' size='large' title='Next Page' />
+		</div>
+		<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={onClickDimmer} />
+		<PageStatus book={book} progress={progress} onClickPageGoDelta={onClickPageGoDelta} {...events} />
+	</div>
+)
+
+export const ReaderBody = (props) => (
+	<div id='book-reader' as={Menu}>
+		<TocContainer {...props} />
+		<BookContainer {...props} />
+	</div>
+)
 
 const exported = {
 	ReaderMenu,

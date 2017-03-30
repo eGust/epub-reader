@@ -1,5 +1,5 @@
 function log(...args) {
-	console.log.call(console, `[frame] ${now()}`, ...args)
+	// console.log(`[frame] ${(new Date).toISOString()}`, ...args)
 }
 
 function now() {
@@ -20,8 +20,7 @@ $(document)
 .on('click', 'a', function (event) {
 	event.preventDefault()
 	let a = $(this)[0], chapterPath = a.pathname.slice(1), anchor = a.hash
-	// console.log($el[0])
-	MESSAGE_HANDLERS.changePath({ chapterPath, anchor })
+	MESSAGE_HANDLERS.setPath({ chapterPath, anchor })
 })
 
 function updatePageCount() {
@@ -38,7 +37,7 @@ function updatePageCount() {
 
 function setPageNo(page) {
 	page = isNaN(page) ? 1 : page
-	// log('setPageNo', { page, left: pageWidth * pageNo })
+	log('setPageNo', { page })
 	currentPosition.pageNo = Math.max(1, Math.min(currentPosition.pageCount, page || 1))
 	$('main#main>#content').css({left: -currentPosition.pageWidth * (currentPosition.pageNo-1)})
 	updateProgress()
@@ -60,7 +59,7 @@ function goToPage({ anchor, pageNo, pageCount }) {
 }
 
 function updateProgress() {
-	// log(currentPosition)
+	log('updateProgress', currentPosition)
 	const { chapterPath, anchor, pageNo, pageCount } = currentPosition
 	postWebMessage({ action: 'updateProgress', progress: { chapterPath, anchor, pageNo, pageCount } })
 }
@@ -71,7 +70,7 @@ $(window).resize(() => {
 })
 
 $(() => {
-	// log('frame ready', currentPosition)
+	log('frame ready', currentPosition)
 	updatePageCount()
 	postWebMessage({action: 'ready', bookId: location.hostname.slice(4)})
 })
@@ -83,7 +82,7 @@ function messageHandler(event) {
 
 	delete data.channel
 	delete data.action
-	// log('receive', { action, data })
+	log('receive', { action, data })
 	MESSAGE_HANDLERS[action] && MESSAGE_HANDLERS[action](data)
 }
 
@@ -91,7 +90,7 @@ window.addEventListener('message', messageHandler, false)
 
 const MESSAGE_HANDLERS = {
 	setPath({ chapterPath, anchor, pageNo, pageCount }) {
-		// log('setPath', {chapterPath})
+		log('setPath', {chapterPath})
 		if (chapterPath === currentPosition.chapterPath) {
 			goToPage({anchor, pageNo, pageCount})
 			return
@@ -133,7 +132,7 @@ const MESSAGE_HANDLERS = {
 }
 
 function postWebMessage(data) {
-	// log('send', data)
+	log('send', data)
 	window.parent.postMessage(_.merge({ channel: 'ebook' }, data), '*')
 }
 

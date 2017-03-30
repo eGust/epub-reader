@@ -2,19 +2,51 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { registerEBookProtocol } from './js/server/ebookProtocol'
 import { registerServices } from './js/services'
 import { getMainWindowSettings, saveMainWindowSettings, closeDB } from './js/db'
+import log from './js/logger'
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
-function setupUpdateWindowSizeEvents(mainWindow, initialSizePosition, initialMaximized, updateSettings) {
-	let sizePosition = initialSizePosition, maximized = initialMaximized, sizePositionStack = [ initialSizePosition ]
+function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
+	const DELAY_INTERVAL = 1000
+	let   { sizePosition, maximized, fullscreen } = initial
+		, sizePositionStack = [ sizePosition ]
+		, lastNormalSizePosition = sizePosition
+		, pendingTimer = false
+		, firedWhilePending = false
+
+	function onUpdateSettings() {
+		if (firedWhilePending) {
+			pendingTimer = true
+			firedWhilePending = false
+			setTimeout(onUpdateSettings, DELAY_INTERVAL)
+			return
+		}
+		pendingTimer = false
+		updateSettings({sizePosition, maximized, fullscreen})
+		sizePositionStack = [ sizePosition ]
+	}
+
+	function delayUpdateSettings(eventName) {
+		// log(eventName, {sizePosition, maximized, fullscreen})
+		if (pendingTimer) {
+			firedWhilePending = true
+		} else {
+			pendingTimer = true
+			firedWhilePending = false
+			setTimeout(onUpdateSettings, DELAY_INTERVAL)
+		}
+	}
 
 	function getLastSizePosition() {
 		return sizePositionStack[sizePositionStack.length - 1]
 	}
 
 	mainWindow.on('resize', () => {
+		if (maximized || fullscreen)
+			return
+
 		const [ newWidth, newHeight ] = mainWindow.getSize()
 			, { x, y, width, height } = getLastSizePosition()
 
@@ -22,7 +54,7 @@ function setupUpdateWindowSizeEvents(mainWindow, initialSizePosition, initialMax
 			return
 
 		sizePositionStack.push(sizePosition = { x, y, width: newWidth, height: newHeight })
-		updateSettings({sizePosition, maximized})
+		delayUpdateSettings('resize')
 	})
 
 	mainWindow.on('move', () => {
@@ -33,32 +65,86 @@ function setupUpdateWindowSizeEvents(mainWindow, initialSizePosition, initialMax
 			return
 
 		sizePositionStack.push(sizePosition = { x: nX, y: nY, width, height })
-		updateSettings({sizePosition, maximized})
+		delayUpdateSettings('move')
 	})
 
+	function popPositionStackUntilNotEq({width, height}) {
+		while (sizePositionStack.length) {
+			const { width: w, height: h } = sizePosition = sizePositionStack[sizePositionStack.length - 1]
+			if (w !== width || h !== height)
+				break
+			sizePositionStack.pop()
+		}
+		lastNormalSizePosition = sizePosition
+	}
+
 	mainWindow.on('maximize', () => {
-		// console.log({sizePositionStack})
-		sizePosition = sizePositionStack[sizePositionStack.length - 3]
 		maximized = true
-		updateSettings({sizePosition, maximized})
+		if (fullscreen) {
+			sizePosition = lastNormalSizePosition
+		} else {
+			popPositionStackUntilNotEq(sizePosition)
+		}
+		delayUpdateSettings('maximize')
+	})
+
+	mainWindow.on('enter-full-screen', () => {
+		fullscreen = true
+		if (maximized) {
+			sizePosition = lastNormalSizePosition
+		} else {
+			popPositionStackUntilNotEq(sizePosition)
+		}
+		delayUpdateSettings('enter-full-screen')
 	})
 
 	mainWindow.on('unmaximize', () => {
 		maximized = false
-		updateSettings({sizePosition, maximized})
+		if (fullscreen) {
+			sizePosition = lastNormalSizePosition
+		} else {
+			popPositionStackUntilNotEq(sizePosition)
+		}
+		delayUpdateSettings('unmaximize')
+	})
+
+	mainWindow.on('leave-full-screen', () => {
+		fullscreen = false
+		if (maximized) {
+			sizePosition = lastNormalSizePosition
+		} else {
+			popPositionStackUntilNotEq(sizePosition)
+		}
+		delayUpdateSettings('leave-full-screen')
 	})
 
 	mainWindow.on('restore', () => {
-		sizePosition = sizePositionStack[sizePositionStack.length - 2]
-		updateSettings({sizePosition, maximized})
+		if (maximized || fullscreen) {
+			sizePosition = lastNormalSizePosition
+		}
+		delayUpdateSettings('restore')
+	})
+
+	let savedBeforeClosing = false
+
+	mainWindow.on('close', (e) => {
+		if (savedBeforeClosing)
+			return
+
+		e.preventDefault()
+		updateSettings({sizePosition, maximized, fullscreen})
+		closeDB(() => {
+			savedBeforeClosing = true
+			mainWindow.close()
+		})
 	})
 }
 
 const createWindow = () => {
 
-	getMainWindowSettings(({ maximized = false, sizePosition = { width: 800, height: 600 } }) => {
+	getMainWindowSettings(({ maximized = false, sizePosition = { width: 800, height: 600 }, fullscreen = false }) => {
 		// Create the browser window.
-		mainWindow = new BrowserWindow(sizePosition)
+		mainWindow = new BrowserWindow({...sizePosition, fullscreen})
 		if (maximized) {
 			mainWindow.maximize()
 		}
@@ -77,7 +163,7 @@ const createWindow = () => {
 			mainWindow = null;
 		});
 
-		setupUpdateWindowSizeEvents(mainWindow, sizePosition, maximized, (settings) => {
+		setupUpdateWindowSizeEvents(mainWindow, {sizePosition, maximized, fullscreen}, (settings) => {
 			saveMainWindowSettings(settings)
 		})
 	})

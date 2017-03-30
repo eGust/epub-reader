@@ -16,7 +16,9 @@ export const showSettings = () => ({
 export
 const OPEN_EXISTING_BOOK = 'OPEN_EXISTING_BOOK'
 	, OPEN_BOOK_FILES = 'OPEN_BOOK_FILES'
-	, ADD_BOOKS_TO_SHELF = 'ADD_BOOKS_TO_SHELF'
+	, UPDATE_SHELF_BOOKS = 'UPDATE_SHELF_BOOKS'
+	, UPDATE_FILTER = 'UPDATE_FILTER'
+	, UPDATE_SORTING = 'UPDATE_SORTING'
 
 export const openExistingBook = (book) => (
 	(dispatch) => {
@@ -43,25 +45,46 @@ export const openBookFiles = (files) => (
 )
 
 export const addBooksToShelf = ({fileIds, open}) => (
-	(dispatch) => {
+	(dispatch, getState) => {
+		const books = { ...getState().shelf.books }
+		for (const bookId in fileIds) {
+			const book = fileIds[bookId]
+			books[book.id] = { ...book, lower: book.title.toLowerCase() }
+			Api.saveSettings({ scope: 'lastRead', bookId: book.id }, book.lastRead)
+		}
 		dispatch({
-			type: ADD_BOOKS_TO_SHELF,
-			fileIds,
+			type: UPDATE_SHELF_BOOKS,
+			books,
 		})
+		Api.saveSettings('books', Object.keys(books).map((k) => {
+			const { lower, lastRead, ...book } = books[k]
+			return book
+		}))
+
 		if (open) {
 			const keys = Object.keys(fileIds)
 			if (keys.length) {
-				const {id, title} = fileIds[keys[0]]
-				dispatch(openExistingBook({id, title, fileName: keys[0]}))
+				dispatch(openExistingBook(fileIds[keys[0]]))
 			}
 		}
 	}
 )
 
+export const updateFilter = (filter = '') => ({
+	type: UPDATE_FILTER,
+	filter,
+})
+
+export const updateSorting = (order) => ({
+	type: UPDATE_SORTING,
+	order,
+})
+
 // reader
 export
 const TOGGLE_TOC_PIN = 'TOGGLE_TOC_PIN'
 	, TOGGLE_TOC_OPEN = 'TOGGLE_TOC_OPEN'
+	, TOGGLE_TOC_ITEM_OPEN = 'TOGGLE_TOC_ITEM_OPEN'
 	, CHANGE_CURRENT_BOOK = 'CHANGE_CURRENT_BOOK'
 	, CHANGE_READER_CONTENT_PATH = 'CHANGE_READER_CONTENT_PATH'
 	, UPDATE_READER_PROGRESS = 'UPDATE_READER_PROGRESS'
@@ -75,6 +98,11 @@ export const toggleTocOpen = (open = null) => ({
 	open,
 })
 
+export const toggleTocItemOpen = (itemOrAllOpen) => ({
+	type: TOGGLE_TOC_ITEM_OPEN,
+	itemOrAllOpen,
+})
+
 export const changeCurrentBook = (bookInfo) => (
 	(dispatch, getState) => {
 		const state = getState()
@@ -85,16 +113,40 @@ export const changeCurrentBook = (bookInfo) => (
 		})
 
 		Api.onClientReady(() => {
-			const { chapterPath: path = '', pageNo = null, pageCount = null } = bookInfo.progress || {}
-			// console.log({ path, pageNo, pageCount, state, })
-			Api.setClientPath({path, pageNo, pageCount})
+			const { chapterPath = null, pageNo = null, pageCount = null } = bookInfo.progress || {}
+			if (chapterPath && chapterPath.length) {
+				Api.setClientPath({chapterPath, pageNo, pageCount})
+			} else {
+				Api.queryDocRoot(bookInfo.book.id, ({href: chapterPath}) => {
+					// console.log('queryDocRoot', { chapterPath, pageNo, pageCount, state, })
+					Api.setClientPath({chapterPath, pageNo, pageCount})
+				})
+			}
+			// console.log({ chapterPath, pageNo, pageCount, state, })
 		})
 
 		Api.onUpdateProgress(({progress}) => {
+			const lastRead = (new Date).toISOString()
+				, books = {}
+				, oldBooks = getState().shelf.books
+			for (const bookId in oldBooks) {
+				const book = oldBooks[bookId]
+				if (bookId === bookInfo.book.id) {
+					books[bookId] = { ...book, lastRead }
+				} else {
+					books[bookId] = book
+				}
+			}
+			dispatch({
+				type: UPDATE_SHELF_BOOKS,
+				books,
+			})
 			dispatch({
 				type: UPDATE_READER_PROGRESS,
 				progress,
 			})
+			Api.saveSettings({ scope: 'progress', 'bookId': bookInfo.book.id }, progress)
+			Api.saveSettings({ scope: 'lastRead', 'bookId': bookInfo.book.id }, lastRead)
 		})
 	}
 )

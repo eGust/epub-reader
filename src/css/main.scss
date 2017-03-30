@@ -216,14 +216,29 @@ body {
 	overflow-x: hidden;
 	overflow-y: auto;
 	max-height: calc(100% - 20px);
+	width: 100%;
 }
 
-.ui.inverted.list .toc-item.item {
+.ui.inverted.list .list > a.toc-item.item {
 	display: inline-block;
 	min-width: 51%;
-	&.active, &.active a:not(.ui) {
-		color: yellow !important;
+
+	&:hover {
+		color: #FFECB3;
+	}
+
+	& > i.icon, & > .icon+.content {
+		vertical-align: middle;
+	}
+	&.selected > i.icon {
+		color: #B2FF59 !important;
+	}
+	&.selected > .icon+.content {
+		color: #B2FF59 !important;
 		font-weight: bold;
+	}
+	&.selected:hover > * {
+		color: #FFF9C4 !important;
 	}
 }
 
@@ -341,15 +356,36 @@ body {
 	}
 }
 
+.text-capitalize {
+	text-transform: capitalize !important;
+}
+
+.text-uppercase {
+	text-transform: uppercase !important;
+}
+
+.text-lowercase {
+	text-transform: lowercase !important;
+}
+
 .ui.styled.accordion.inverted, .ui.styled.accordion.inverted .accordion {
 	background-color: #181818;
 }
 
-.ui.styled.accordion.inverted .accordion .active.title, .ui.styled.accordion.inverted .active.title {
-	color: #EEE;
+.ui.styled.accordion .accordion .title, .ui.styled.accordion .title {
+	&.selected {
+		color: #B2EBF2;
+	}
 }
 
-.ui.styled.accordion.inverted .accordion .active.title, .ui.styled.accordion.inverted .accordion .title:hover, .ui.styled.accordion.inverted .active.title, .ui.styled.accordion.inverted .title:hover {
+.ui.styled.accordion.inverted .accordion .active.title, .ui.styled.accordion.inverted .active.title {
+	color: #EEE;
+	&.selected {
+		color: #80DEEA;
+	}
+}
+
+.ui.styled.accordion.inverted .accordion .active.title:hover, .ui.styled.accordion.inverted .accordion .title:hover, .ui.styled.accordion.inverted .active.title, .ui.styled.accordion.inverted .title:hover {
 	color: #CCC;
 }
 

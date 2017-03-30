@@ -17,7 +17,7 @@ Api.registerServiceApi()
 setDefaultState(Api.DEFAULT_STATE)
 
 const docRoot = document.getElementById('root')
-	, logger = createLogger()
+	, logger = createLogger({ collapsed: true, duration: true, diff: true })
 	, store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk, logger))
 	// , store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk))
 

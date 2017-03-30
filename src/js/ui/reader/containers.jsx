@@ -3,6 +3,7 @@ import {
 	changeRouting,
 	toggleTocPin,
 	toggleTocOpen,
+	toggleTocItemOpen,
 	changeReaderContentPath,
 	// changeReaderPage,
 	changeReaderChapter,
@@ -35,6 +36,7 @@ export const ReaderBody = connect(
 			onClickChapterPrev: () => dispatch(changeReaderChapter(-1)),
 			onClickChapterNext: () => dispatch(changeReaderChapter(+1)),
 			onChangePageNo: (pageNo) => dispatch(changeReaderPageNo(pageNo)),
+			onToggleTocFolding: (itemOrAllOpen) => dispatch(toggleTocItemOpen(itemOrAllOpen)),
 		})
 	)(components.ReaderBody)
 
