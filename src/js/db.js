@@ -3,8 +3,9 @@ import Datastore from 'nedb'
 import log from './logger'
 
 const db = new Datastore({ filename: `${app.getPath('appData')}/epub-reader/settings.db` })
+	, TRIM_LIMITATION = 200
 
-let dbOpen = false
+let dbOpen = false, untrimed = 0
 
 export function openDB(cb) {
 	if (dbOpen) {
@@ -16,6 +17,7 @@ export function openDB(cb) {
 			db.persistence.setAutocompactionInterval(1000*60*30)
 		})
 		db.on('compaction.done', () => {
+			untrimed = 0
 			cbCloseDB && cbCloseDB()
 		})
 	}
@@ -35,6 +37,9 @@ export function setDbValue(path, value) {
 		path = typeof(path) === 'string' ? { path } : path
 		console.log('setDbValue', { path, value })
 		db.update(path, { ...path, value}, { upsert: true })
+		if (++untrimed === TRIM_LIMITATION) {
+			db.persistence.compactDatafile()
+		}
 	})
 }
 

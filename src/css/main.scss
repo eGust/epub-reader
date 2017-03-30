@@ -219,7 +219,7 @@ body {
 	width: 100%;
 }
 
-.ui.inverted.list .list > a.toc-item.item {
+.ui.inverted.list a.toc-item.item {
 	display: inline-block;
 	min-width: 51%;
 
@@ -237,7 +237,7 @@ body {
 		color: #B2FF59 !important;
 		font-weight: bold;
 	}
-	&.selected:hover > * {
+	&.selected:hover > .icon+.content {
 		color: #FFF9C4 !important;
 	}
 }
