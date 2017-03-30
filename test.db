@@ -1,7 +1,0 @@
-{"path":"books.test","_id":"OPiYiiIUMzvAJ4X5"}
-{"path":"books.test","value":"xyz","_id":"OPiYiiIUMzvAJ4X5"}
-{"path":"books.test","value":"xyz","_id":"pTcewbMv4y8OpCmM"}
-{"book":{"test":{"data":{"xyz":123}}},"_id":"BmHKtluDgsAY3io8"}
-{"book":{"test":{"data":{"xyz":123}}},"_id":"BSoLALjGl0irSorD"}
-{"books":{"test":{"data":{"xyz":123}}},"_id":"SC5XjEQl61zMhYNx"}
-{"books":{"test":{"data":{"xyz":123}}},"_id":"3oZURwhUZDh7zZpv"}
