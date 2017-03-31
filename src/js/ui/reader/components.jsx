@@ -136,17 +136,50 @@ const PageStatus = ({book, progress, onClickChapterPrev, onClickChapterNext, onC
 	</div>
 )
 
-const BookContainer = ({isTocOpen, isTocPinned, book, progress, onClickDimmer, onClickPageGoDelta, ...events}) => (
-	<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }>
-		<iframe className={book.id ? 'full-size' : 'hide'} id='frame-book' src={`ebook://doc.${book.id || ''}/frame.html`} />
-		<div className='page-navigator prev-page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
+const ProgressBar = ({ pageNo = 1, pageCount = 0, onChangePageNo }) => (
+	<div className='progress-bar'>
+	{
+		_.times(pageCount, (index) => (
+			<span key={index}
+				className={index+1 === pageNo ? "current item" : index < pageNo ? 'past item' : 'future item'}
+				title={`Page ${index+1}`}
+				onClick={() => { index+1 !== pageNo && onChangePageNo(index+1) }}
+				/>
+		))
+	}
+	</div>
+)
+
+const BookContainer = ({isTocOpen, isTocPinned, book, progress, ...events}) => (
+	<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }
+		onKeyUp={(e) => {
+			switch (e.which) {
+				case 33: // page up
+				case 38: // up
+				case 37: // left
+					events.onClickPageGoDelta({book, progress, delta: -1})
+					break
+				case 34: // page down
+				case 40: // down
+				case 39: // right
+					events.onClickPageGoDelta({book, progress, delta: +1})
+					break
+			}
+		}}>
+		<iframe
+			className={book.id ? 'full-size' : 'hide'}
+			id='frame-book'
+			src={`ebook://doc.${book.id || ''}/frame.html`}
+			/>
+		<ProgressBar pageNo={progress.pageNo} pageCount={progress.pageCount} onChangePageNo={events.onChangePageNo} />
+		<div className='page-navigator prev-page' onClick={() => events.onClickPageGoDelta({book, progress, delta: -1})}>
 			<Icon name='chevron left' size='large' title='Previous Page' />
 		</div>
-		<div className='page-navigator next-page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
+		<div className='page-navigator next-page' onClick={() => events.onClickPageGoDelta({book, progress, delta: +1})}>
 			<Icon name='chevron right' size='large' title='Next Page' />
 		</div>
-		<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={onClickDimmer} />
-		<PageStatus book={book} progress={progress} onClickPageGoDelta={onClickPageGoDelta} {...events} />
+		<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={events.onClickDimmer} />
+		<PageStatus book={book} progress={progress} onClickPageGoDelta={events.onClickPageGoDelta} {...events} />
 	</div>
 )
 

@@ -26,7 +26,7 @@ export function openDB(cb) {
 export function getDbValue(path, cb) {
 	openDB(() => {
 		path = typeof(path) === 'string' ? { path } : path
-		db.find(path, (err, [ { value } ]) => {
+		db.find(path, (err, [ { value = null } = {} ] = []) => {
 			cb(value)
 		})
 	})

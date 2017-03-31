@@ -1,16 +1,16 @@
 import { ipcRenderer } from 'electron'
-import $ from 'jquery'
+import _ from 'lodash'
 import { serviceMessages } from './serviceMessages'
 import { installApi } from './ui/actions'
 import log from './logger'
 
-window.$ = $
+window.$ = require('jquery')
 
 function now() {
 	return (new Date).toISOString()
 }
 
-let onClientReadyEvent, onUpdateProgressEvent
+let onClientReadyEvent, onUpdateProgressEvent, onSwitchPageEvent
 
 const MESSAGE_HANDLERS = {
 	ready: () => {
@@ -19,6 +19,10 @@ const MESSAGE_HANDLERS = {
 
 	updateProgress: (progress) => {
 		onUpdateProgressEvent && onUpdateProgressEvent(progress)
+	},
+
+	switchPage: (delta) => {
+		onSwitchPageEvent && onSwitchPageEvent(delta)
 	},
 }
 
@@ -58,9 +62,9 @@ const onReceiveServiceMessages = {
 		cb && cb(fileIds)
 	},
 
-	[serviceMessages.openBook]: ({book, toc = [], apiCallId}) => {
+	[serviceMessages.openBook]: ({book, toc = [], progress = null, apiCallId}) => {
 		const cb = popApiCallbak(apiCallId)
-		cb && cb({book, toc})
+		cb && cb({book, toc, progress})
 	},
 
 	[serviceMessages.getDbValue]: ({values, apiCallId}) => {
@@ -129,8 +133,29 @@ const apiCallbacks = {}
 	, Api = {
 	DEFAULT_STATE,
 
-	getSavedState() {
-		return DEFAULT_STATE
+	getSavedState(prepare, cb) {
+		const r = _.merge({}, DEFAULT_STATE)
+		Api.loadSettings('books', (savedBooks) => {
+			const books = {}
+			for (const book of savedBooks) {
+				books[book.id] = book
+				Api.loadSettings({ scope: 'lastRead', 'bookId': book.id }, (lastRead) => {
+					book.lastRead = lastRead
+				})
+			}
+			r.shelf.books = books
+			Api.loadSettings('settings', (settings) => {
+				if (settings) {
+					r.settings = _.merge({}, r.settings, settings)
+				}
+				Api.loadSettings('shelf.sorting', (sorting) => {
+					if (sorting) {
+						r.shelf.sorting = _.merge({}, r.shelf.sorting, sorting)
+					}
+					cb && cb(prepare(r))
+				})
+			})
+		})
 	},
 
 	registerServiceApi() {
@@ -179,6 +204,10 @@ const apiCallbacks = {}
 
 	onUpdateProgress(cb) {
 		onUpdateProgressEvent = cb
+	},
+
+	onSwitchPage(cb) {
+		onSwitchPageEvent = cb
 	},
 
 	saveSettings(key, values) {

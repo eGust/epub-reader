@@ -14,20 +14,64 @@ export const showSettings = () => ({
 
 // shelf
 export
-const OPEN_EXISTING_BOOK = 'OPEN_EXISTING_BOOK'
-	, OPEN_BOOK_FILES = 'OPEN_BOOK_FILES'
+const OPEN_BOOK_FILES = 'OPEN_BOOK_FILES'
 	, UPDATE_SHELF_BOOKS = 'UPDATE_SHELF_BOOKS'
 	, UPDATE_FILTER = 'UPDATE_FILTER'
 	, UPDATE_SORTING = 'UPDATE_SORTING'
 
 export const openExistingBook = (book) => (
-	(dispatch) => {
+	(dispatch, getState) => {
+		const state = getState()
 		Api.openBook(book, (bookInfo) => {
-			dispatch(changeCurrentBook(bookInfo))
-		})
-		dispatch({
-			type: OPEN_EXISTING_BOOK,
-			book,
+			bookInfo = { ...bookInfo, ...state.settings.reader }
+
+			Api.onClientReady(() => {
+				document.getElementById('frame-book').focus()
+				const { chapterPath = null, pageNo = null, pageCount = null } = bookInfo.progress || {}
+				if (chapterPath && chapterPath.length) {
+					Api.setClientPath({chapterPath, pageNo, pageCount})
+				} else {
+					Api.queryDocRoot(bookInfo.book.id, ({href: chapterPath}) => {
+						// console.log('queryDocRoot', { chapterPath, pageNo, pageCount, state, })
+						Api.setClientPath({chapterPath, pageNo, pageCount})
+					})
+				}
+				// console.log({ chapterPath, pageNo, pageCount, state, })
+			})
+
+			Api.onUpdateProgress(({progress}) => {
+				const lastRead = (new Date).toISOString()
+					, books = {}
+					, oldBooks = getState().shelf.books
+				for (const bookId in oldBooks) {
+					const book = oldBooks[bookId]
+					if (bookId === bookInfo.book.id) {
+						books[bookId] = { ...book, lastRead }
+					} else {
+						books[bookId] = book
+					}
+				}
+				dispatch({
+					type: UPDATE_SHELF_BOOKS,
+					books,
+				})
+				dispatch({
+					type: UPDATE_READER_PROGRESS,
+					progress,
+				})
+				Api.saveSettings({ scope: 'progress', 'bookId': bookInfo.book.id }, progress)
+				Api.saveSettings({ scope: 'lastRead', 'bookId': bookInfo.book.id }, lastRead)
+			})
+
+			Api.onSwitchPage(({delta}) => {
+				const { book, progress } = getState().reader
+				doChangeReaderPage({ book, progress, delta })
+			})
+
+			dispatch({
+				type: CHANGE_CURRENT_BOOK,
+				bookInfo,
+			})
 		})
 	}
 )
@@ -103,54 +147,6 @@ export const toggleTocItemOpen = (itemOrAllOpen) => ({
 	itemOrAllOpen,
 })
 
-export const changeCurrentBook = (bookInfo) => (
-	(dispatch, getState) => {
-		const state = getState()
-		bookInfo = { ...bookInfo, ...state.settings.reader }
-		dispatch({
-			type: CHANGE_CURRENT_BOOK,
-			bookInfo,
-		})
-
-		Api.onClientReady(() => {
-			const { chapterPath = null, pageNo = null, pageCount = null } = bookInfo.progress || {}
-			if (chapterPath && chapterPath.length) {
-				Api.setClientPath({chapterPath, pageNo, pageCount})
-			} else {
-				Api.queryDocRoot(bookInfo.book.id, ({href: chapterPath}) => {
-					// console.log('queryDocRoot', { chapterPath, pageNo, pageCount, state, })
-					Api.setClientPath({chapterPath, pageNo, pageCount})
-				})
-			}
-			// console.log({ chapterPath, pageNo, pageCount, state, })
-		})
-
-		Api.onUpdateProgress(({progress}) => {
-			const lastRead = (new Date).toISOString()
-				, books = {}
-				, oldBooks = getState().shelf.books
-			for (const bookId in oldBooks) {
-				const book = oldBooks[bookId]
-				if (bookId === bookInfo.book.id) {
-					books[bookId] = { ...book, lastRead }
-				} else {
-					books[bookId] = book
-				}
-			}
-			dispatch({
-				type: UPDATE_SHELF_BOOKS,
-				books,
-			})
-			dispatch({
-				type: UPDATE_READER_PROGRESS,
-				progress,
-			})
-			Api.saveSettings({ scope: 'progress', 'bookId': bookInfo.book.id }, progress)
-			Api.saveSettings({ scope: 'lastRead', 'bookId': bookInfo.book.id }, lastRead)
-		})
-	}
-)
-
 export const changeReaderContentPath = (path) => (
 	(dispatch) => {
 		// console.log(CHANGE_READER_CONTENT_PATH, {path})
@@ -158,26 +154,7 @@ export const changeReaderContentPath = (path) => (
 	}
 )
 
-export const changeReaderPage = (delta) => (
-	(dispatch, getState) => {
-		const { reader: { book, progress } } = getState()
-		// console.log('action.changeReaderPage', {progress, delta})
-		if (delta < 0 && progress.pageNo <= 1) {
-			Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: -1 }, (chapterPath) => {
-				Api.setClientPath({ chapterPath, pageNo: -1 })
-			})
-		} else if (delta > 0 && progress.pageNo >= progress.pageCount) {
-			Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: +1 }, (chapterPath) => {
-				Api.setClientPath({ chapterPath })
-			})
-		} else {
-			const pageNo = progress.pageNo+delta
-			Api.setClientPage(pageNo)
-		}
-	}
-)
-
-export const doChangeReaderPage = ({ book, progress, delta}) => {
+export const doChangeReaderPage = ({ book, progress, delta }) => {
 	if (delta < 0 && progress.pageNo <= 1) {
 		Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: -1 }, (chapterPath) => {
 			Api.setClientPath({ chapterPath, pageNo: -1 })
@@ -217,10 +194,17 @@ export const updateSettings = (settings) => ({
 	settings,
 })
 
-export const closeSettings = ({save}) => ({
-	type: CLOSE_SETTINGS,
-	save,
-})
+export const closeSettings = ({save}) => (
+	(dispatch, getState) => {
+		dispatch({
+			type: CLOSE_SETTINGS,
+			save,
+		})
+		if (!save) return
+
+		Api.saveSettings('settings', getState().settings)
+	}
+)
 
 let Api
 

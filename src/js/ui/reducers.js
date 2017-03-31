@@ -9,7 +9,6 @@ import {
 	SHOW_SETTINGS,
 	CLOSE_SETTINGS,
 	CHANGE_ROUTING,
-	OPEN_EXISTING_BOOK,
 	OPEN_BOOK_FILES,
 	UPDATE_SHELF_BOOKS,
 	UPDATE_FILTER,
@@ -95,7 +94,6 @@ const combinedReducer = combineReducers({
 				state = action.routing
 				break
 			case CHANGE_CURRENT_BOOK:
-			case OPEN_EXISTING_BOOK:
 				state = 'reader'
 				break
 			default:
@@ -131,9 +129,6 @@ const combinedReducer = combineReducers({
 	},
 	reader(state = {}, action) {
 		switch (action.type) {
-			case OPEN_EXISTING_BOOK:
-				state = _.merge({}, DEFAULT_STATE.reader, { book: action.book })
-				break
 			case CHANGE_CURRENT_BOOK:
 				state = _.merge({}, state, action.bookInfo)
 				break
@@ -195,4 +190,9 @@ let DEFAULT_STATE
 
 export function setDefaultState(state) {
 	DEFAULT_STATE = state
+}
+
+export function prepareSavedState(state) {
+	state.shelf.bookCovers = filterBookCovers(_.values(state.shelf.books), { sorting: state.shelf.sorting })
+	return state
 }

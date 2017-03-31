@@ -62,6 +62,7 @@ function updateProgress() {
 	log('updateProgress', currentPosition)
 	const { chapterPath, anchor, pageNo, pageCount } = currentPosition
 	postWebMessage({ action: 'updateProgress', progress: { chapterPath, anchor, pageNo, pageCount } })
+	$('#main').focus()
 }
 
 $(window).resize(() => {
@@ -69,10 +70,50 @@ $(window).resize(() => {
 	setPageNo(currentPosition.pageNo)
 })
 
+function switchPage(delta) {
+	let page = (currentPosition.pageNo|0) + delta
+	if (page < 1 || page > currentPosition.pageCount) {
+		postWebMessage({ action: 'switchPage', delta })
+	} else {
+		setPageNo(page)
+	}
+}
+
+function pageUp() {
+	switchPage(-1)
+}
+
+function pageDown() {
+	switchPage(+1)
+}
+
 $(() => {
 	log('frame ready', currentPosition)
 	updatePageCount()
 	postWebMessage({action: 'ready', bookId: location.hostname.slice(4)})
+
+	$('body')
+	.on('mousewheel', (e) => {
+		if (e.originalEvent.wheelDelta > 0) {
+			pageUp()
+		} else if (e.originalEvent.wheelDelta < 0) {
+			pageDown()
+		}
+	})
+	.on('keyup', (e) => {
+		switch (e.which) {
+			case 33: // page up
+			case 38: // up
+			case 37: // left
+				pageUp()
+				break
+			case 34: // page down
+			case 40: // down
+			case 39: // right
+				pageDown()
+				break
+		}
+	})
 })
 
 function messageHandler(event) {
@@ -119,9 +160,11 @@ const MESSAGE_HANDLERS = {
 
 			$head.prepend(xhead.children())
 			$('main#main>#content').html(xbody.children())
-			updatePageCount()
-			goToPage({anchor, pageNo, pageCount})
-			$('main#main').addClass('show')
+			setTimeout(() => {
+				updatePageCount()
+				goToPage({anchor, pageNo, pageCount})
+				$('main#main').addClass('show')
+			}, 1)
 		})
 	},
 

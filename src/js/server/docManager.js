@@ -151,6 +151,19 @@ export class DocManager {
 		}
 	}
 
+	openBook(fileName, bookId, cb) {
+		const doc = this.getFileInstance(fileName, null, bookId)
+		if (doc) {
+			if (doc.loaded) {
+				cb && cb(doc)
+			} else {
+				doc.loadFile(cb)
+			}
+		} else {
+			cb && cb()
+		}
+	}
+
 	getFileInstance(fileName, typeName, id = null) {
 		const doc = this.getDocumentByFileName(fileName)
 		if (doc) {

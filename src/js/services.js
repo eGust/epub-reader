@@ -9,6 +9,7 @@ import log from './logger'
 const services = {
 	[serviceMessages.queryDocRoot]: ({docId, apiCallId}, reply) => {
 		const doc = docManager.getDocumentById(docId)
+		log('queryDocRoot', {doc, rootItem: doc && doc.rootItem})
 		reply({rootItem: doc && doc.rootItem, apiCallId})
 	},
 
@@ -44,10 +45,12 @@ const services = {
 	},
 
 	[serviceMessages.openBook]: ({book, apiCallId}, reply) => {
-		docManager.loadFile(book.fileInfo.path, (doc) => {
+		docManager.openBook(book.fileInfo.path, book.id, (doc) => {
 			if (!doc)
 				return reply({apiCallId})
-			return reply({book, toc: doc.toc, apiCallId})
+			getDbValue({ scope: 'progress', 'bookId': book.id }, (progress) => {
+				reply({book, toc: doc.toc, progress, apiCallId})
+			})
 		})
 	},
 

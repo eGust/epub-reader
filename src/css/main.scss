@@ -278,7 +278,7 @@ body {
 
 #frame-book {
 	border: none;
-	padding: 20px 50px 60px 50px;
+	padding: 20px 50px 65px 50px;
 }
 
 #book-container {
@@ -339,7 +339,7 @@ body {
 		width: 360px;
 		height: 38px;
 		text-align: center;
-		opacity: 0.2;
+		opacity: 0.6;
 
 		label {
 			color: black;
@@ -352,6 +352,56 @@ body {
 
 		.ui.menu .dropdown.item .menu {
 			border-radius: 4px 4px 0 0;
+		}
+	}
+
+	.progress-bar {
+		display: flex;
+		position: absolute;
+		height: 8px;
+		bottom: $page-navigator-margin + 40px;
+		left: 50px;
+		right: 50px;
+		border-bottom-left-radius: 5px;
+		border-bottom-right-radius: 5px;
+		justify-content: space-around;
+		align-items: stretch;
+		overflow: hidden;
+		opacity: 0.6;
+
+		&:hover {
+			opacity: 1;
+		}
+
+		.past {
+			background-color: #CCC;
+		}
+
+		.current {
+			background-color: #444;
+		}
+
+		.future {
+			background-color: #EEE;
+		}
+
+		.item {
+			width: 100%;
+			flex-grow: 1;
+
+			&:not(.current) {
+				cursor: pointer;
+				border-top: 1px solid white;
+
+				&:not(:last-child) {
+					border-right: 1px solid white;
+				}
+
+				&:hover {
+					border: 1px dotted #444;
+					background-color: yellow;
+				}
+			}
 		}
 	}
 }

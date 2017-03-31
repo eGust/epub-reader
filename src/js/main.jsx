@@ -10,7 +10,7 @@ import _ from 'lodash'
 
 import Api from './js/mainInterface'
 import App from './js/ui/app'
-import { reducer, setDefaultState } from './js/ui/reducers'
+import { reducer, setDefaultState, prepareSavedState } from './js/ui/reducers'
 
 Api.registerServiceApi()
 
@@ -18,12 +18,17 @@ setDefaultState(Api.DEFAULT_STATE)
 
 const docRoot = document.getElementById('root')
 	, logger = createLogger({ collapsed: true, duration: true, diff: true })
-	, store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk, logger))
-	// , store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk))
 
-ReactDOM.render(
-	<Provider store={store}>
-		<App />
-	</Provider>,
-	docRoot
-)
+let store
+Api.getSavedState(prepareSavedState, (initialState) => {
+	store = createStore(reducer, initialState, applyMiddleware(thunk, logger))
+	// store = createStore(reducer, Api.getSavedState(), applyMiddleware(thunk))
+
+	ReactDOM.render(
+		<Provider store={store}>
+			<App />
+		</Provider>,
+		docRoot
+	)
+
+})
