@@ -1,6 +1,14 @@
 import _ from 'lodash'
 import React, { Component } from 'react'
 import { Menu, Icon, Modal, Segment, Checkbox, Dropdown, Form } from 'semantic-ui-react'
+import { SwatchesPicker } from 'react-color'
+
+class FontSelector extends Component {
+	state = { fonts: [] }
+}
+
+class ColorPickerBox extends Component {
+}
 
 const GlobalSettings = ({ settings: { fontName, fontSize, fontStyles, fontColor, backgroundColor }, systemFonts, onUpdateSettings }) => (
 	<Segment attached className='setting-panel'>
@@ -9,10 +17,13 @@ const GlobalSettings = ({ settings: { fontName, fontSize, fontStyles, fontColor,
 				<Form.Field inline>
 					<label>Font:</label>
 					<Dropdown placeholder='Select Font ...' selection options={['font 1', 'font 2'].map((k) => ({ text: k, value: k, }))} />
+					<SwatchesPicker width='100%' height='150px' />
 				</Form.Field>
 			</Segment>
-			<Segment>
-				<label>Background Color:</label>
+			<Segment as={Form}>
+				<Form.Field inline>
+					<label>Background Color:</label>
+				</Form.Field>
 			</Segment>
 		</Segment.Group>
 	</Segment>
