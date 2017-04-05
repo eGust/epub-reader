@@ -1,36 +1,71 @@
 import _ from 'lodash'
 import React, { Component } from 'react'
-import { Menu, Icon, Modal, Segment, Checkbox, Dropdown, Form } from 'semantic-ui-react'
-import { SwatchesPicker } from 'react-color'
+import { Menu, Icon, Modal, Segment, Checkbox, Dropdown, Form, Grid } from 'semantic-ui-react'
+import { FontPicker } from './fontPicker'
+import { ColorPicker } from './colorPicker'
+import Slider from 'rc-slider'
 
-class FontSelector extends Component {
-	state = { fonts: [] }
+function mapToFontSize(value) {
+	let fontSize
+	if (value < 40) {
+		fontSize = 6 + value / 2
+	} else if (value < 80) {
+		fontSize = 26 + value-40
+	} else {
+		fontSize = 66 + (value-80) * 2
+	}
+	console.log(value, '=>', fontSize)
 }
 
-class ColorPickerBox extends Component {
-}
-
-const GlobalSettings = ({ settings: { fontName, fontSize, fontStyles, fontColor, backgroundColor }, systemFonts, onUpdateSettings }) => (
+const GlobalSettings = ({ show, systemFonts, onUpdateSettings, settings: { fontName, fontSize, fontStyles, fontColor, backgroundColor,isTocOpen, isTocPinned } }) => (
+	show ? (
 	<Segment attached className='setting-panel'>
 		<Segment.Group>
-			<Segment as={Form}>
-				<Form.Field inline>
-					<label>Font:</label>
-					<Dropdown placeholder='Select Font ...' selection options={['font 1', 'font 2'].map((k) => ({ text: k, value: k, }))} />
-					<SwatchesPicker width='100%' height='150px' />
-				</Form.Field>
+			<Segment>
+				<h4>Looking:</h4>
 			</Segment>
 			<Segment as={Form}>
-				<Form.Field inline>
-					<label>Background Color:</label>
-				</Form.Field>
+				<Grid columns={2}>
+					<Grid.Column>
+						<Form.Field inline>
+							<label>Primery Font:</label>
+							<FontPicker />
+						</Form.Field>
+					</Grid.Column>
+					<Grid.Column>
+						<Form.Field inline>
+							<label>Secondary Font:</label>
+							<FontPicker />
+						</Form.Field>
+					</Grid.Column>
+				</Grid>
 			</Segment>
-		</Segment.Group>
-	</Segment>
-)
 
-const ReaderSettings = ({ settings: { isTocOpen, isTocPinned }, onUpdateSettings }) => (
-	<Segment attached className='setting-panel'>
+			<Segment as={Form}>
+				<Grid>
+					<Grid.Column width={4}>
+						<Form.Field inline>
+							<label>Text Color:</label>
+							<ColorPicker />
+						</Form.Field>
+					</Grid.Column>
+					<Grid.Column width={8}>
+						<Form.Field inline>
+							<label>Size:</label>
+							<Slider min={0} max={100} className='font-size-slider' onChange={(v) => mapToFontSize(v)} />
+						</Form.Field>
+					</Grid.Column>
+					<Grid.Column width={4} textAlign='right'>
+						<Form.Field inline>
+							<label>Background:</label>
+							<ColorPicker />
+						</Form.Field>
+					</Grid.Column>
+				</Grid>
+			</Segment>
+
+		</Segment.Group>
+
 		<Segment.Group>
 			<Segment>
 				<h4>When Open a Book:</h4>
@@ -49,6 +84,7 @@ const ReaderSettings = ({ settings: { isTocOpen, isTocPinned }, onUpdateSettings
 			</Segment>
 		</Segment.Group>
 	</Segment>
+	) : null
 )
 
 export class Settings extends Component {
@@ -66,11 +102,7 @@ export class Settings extends Component {
 					[
 						{
 							name: 'global',
-							title: 'Font & Color',
-						},
-						{
-							name: 'reader',
-							title: 'Reader',
+							title: 'Settings',
 						},
 					].map(({ name, title }) => (
 					<Menu.Item key={name} active={activeTab === name} onClick={() => {this.setState({activeTab: name})}}>
@@ -85,22 +117,10 @@ export class Settings extends Component {
 					</Menu.Menu>
 				</Menu>
 
-				{
-					(() => {
-						switch (activeTab ) {
-							case 'global':
-								return (
-									<GlobalSettings settings={globals} onUpdateSettings={(attrs) => onUpdateSettings({ globals: attrs })} />
-								)
-							case 'reader':
-								return (
-									<ReaderSettings settings={reader} onUpdateSettings={(attrs) => onUpdateSettings({ reader: attrs })} />
-								)
-							default:
-								return null
-						}
-					})()
-				}
+				<GlobalSettings
+					show={activeTab==='global'}
+					settings={globals}
+					onUpdateSettings={(attrs) => onUpdateSettings({ globals: attrs })} />
 
 			</Modal.Content>
 		)

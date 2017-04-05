@@ -82,7 +82,7 @@ class AppUi extends Component {
 					<Dimmer show={reader.opening} content='Opening...' />
 				</div>
 
-				<Modal dimmer='blurring' open={showSettings}>
+				<Modal open={showSettings}>
 					<Settings />
 				</Modal>
 
