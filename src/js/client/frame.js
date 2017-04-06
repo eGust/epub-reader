@@ -16,6 +16,9 @@ let currentPosition = {
 	pageWidth: null,
 }
 
+const DEBOUNCE_DELAY = 150
+let skipWheelEvent = false
+
 $(document)
 .on('click', 'a', function (event) {
 	event.preventDefault()
@@ -63,14 +66,18 @@ function updateProgress() {
 	const { chapterPath, anchor, pageNo, pageCount } = currentPosition
 	postWebMessage({ action: 'updateProgress', progress: { chapterPath, anchor, pageNo, pageCount } })
 	$('#main').focus()
+	setTimeout(() => {
+		skipWheelEvent = false
+	}, DEBOUNCE_DELAY)
 }
 
-$(window).resize(() => {
+$(window).resize(_.debounce(() => {
 	updatePageCount()
 	setPageNo(currentPosition.pageNo)
-})
+}, DEBOUNCE_DELAY))
 
 function switchPage(delta) {
+	skipWheelEvent = true
 	let page = (currentPosition.pageNo|0) + delta
 	if (page < 1 || page > currentPosition.pageCount) {
 		postWebMessage({ action: 'switchPage', delta })
@@ -92,13 +99,20 @@ $(() => {
 	updatePageCount()
 	postWebMessage({action: 'ready', bookId: location.hostname.slice(4)})
 
-	$('body')
-	.on('mousewheel', (e) => {
-		if (e.originalEvent.wheelDelta > 0) {
+	const debouncedOnWheel = _.debounce((delta) => {
+		if (delta > 0) {
 			pageUp()
-		} else if (e.originalEvent.wheelDelta < 0) {
+		} else if (delta < 0) {
 			pageDown()
 		}
+	}, DEBOUNCE_DELAY, { leading: true, trailing: false })
+
+	$('body')
+	.on('mousewheel', (e) => {
+		if (skipWheelEvent)
+			return
+		e.preventDefault()
+		debouncedOnWheel(e.originalEvent.wheelDelta)
 	})
 	.on('keyup', (e) => {
 		switch (e.which) {

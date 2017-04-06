@@ -105,7 +105,9 @@ const DEFAULT_STATE = {
 	},
 	settings: {
 		globals: {
-			//
+			fontFamily: ['Arial', 'Microsoft YaHei'],
+			color: '#000000',
+			backgroundColor: '#FFFFFF',
 		},
 		reader: {
 			isTocPinned: false,

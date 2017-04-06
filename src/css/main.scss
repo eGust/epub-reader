@@ -1,7 +1,7 @@
 body {
 	margin: 0;
 	padding: 0;
-	font-family: sans-serif;
+	font-family: 'Arial', 'Microsoft YaHei';
 }
 
 #root {
@@ -531,15 +531,33 @@ body {
     }
 }
 
+.settings-menu-group {
+	display: inline-block;
+	width: 180px;
+	vertical-align: top;
+	padding-right: 10px;
+}
+
+.settings-menu-items {
+	display: inline-block;
+	width: calc(100% - 180px);
+	vertical-align: top;
+}
+
 .setting-panel {
 	height: 480px;
 	overflow-x: hidden;
 	overflow-y: auto;
-	.rc-slider.font-size-slider {
+	.rc-slider {
 		display: inline-block;
-		width: 300px;
-		padding-top: 16px;
+		padding-top: 10px;
 		margin-left: 5px;
+		&.font-size-slider {
+			width: 200px;
+		}
+		&.spacing-slider {
+			width: 100px;
+		}
 	}
 }
 
@@ -554,6 +572,7 @@ body {
 	border-radius: 3px;
 	box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 0px 1px;
 	cursor: pointer;
+	min-width: 64px;
 	.color-box {
 		display: inline-block;
 		width: 36px;

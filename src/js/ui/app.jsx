@@ -82,9 +82,7 @@ class AppUi extends Component {
 					<Dimmer show={reader.opening} content='Opening...' />
 				</div>
 
-				<Modal open={showSettings}>
-					<Settings />
-				</Modal>
+				<Settings showSettings={showSettings} />
 
 				<div className={dragging ? 'dragging-wrap' : 'hide'}>
 					<Icon name='file text' className='file-icon' style={{color: 'gray'}} />

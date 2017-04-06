@@ -17,45 +17,73 @@ function mapToFontSize(value) {
 	console.log(value, '=>', fontSize)
 }
 
-const GlobalSettings = ({ show, systemFonts, onUpdateSettings, settings: { fontName, fontSize, fontStyles, fontColor, backgroundColor,isTocOpen, isTocPinned } }) => (
-	show ? (
-	<Segment attached className='setting-panel'>
+const Looking = ({ show, onUpdateSettings, settings: { fontName, fontSize, fontStyles, fontColor, backgroundColor } }) => (
+	<Form className={show ? 'setting-panel' : 'hide'}>
 		<Segment.Group>
 			<Segment>
-				<h4>Looking:</h4>
-			</Segment>
-			<Segment as={Form}>
 				<Grid columns={2}>
 					<Grid.Column>
-						<Form.Field inline>
-							<label>Primery Font:</label>
+						<Form.Field>
+							<label>
+								<Icon name='font' />
+								Primery Font:
+							</label>
 							<FontPicker />
 						</Form.Field>
 					</Grid.Column>
 					<Grid.Column>
-						<Form.Field inline>
-							<label>Secondary Font:</label>
+						<Form.Field>
+							<label>
+								<Icon name='font' />
+								Secondary Font:
+							</label>
 							<FontPicker />
 						</Form.Field>
 					</Grid.Column>
 				</Grid>
 			</Segment>
 
-			<Segment as={Form}>
+			<Segment>
 				<Grid>
+					<Grid.Column width={8}>
+						<Form.Field>
+							<label>
+								<Icon name='text height' />
+								Font Size:
+							</label>
+							<Slider min={0} max={100} className='font-size-slider' onChange={(v) => mapToFontSize(v)} />
+						</Form.Field>
+					</Grid.Column>
 					<Grid.Column width={4}>
+						<Form.Field>
+							<label>
+								<Icon name='resize vertical' />
+								Line Height:
+							</label>
+							<Slider min={0} max={100} className='spacing-slider' onChange={(v) => mapToFontSize(v)} />
+						</Form.Field>
+					</Grid.Column>
+					<Grid.Column width={4}>
+						<Form.Field>
+							<label>
+								<Icon name='resize horizontal' />
+								Letter Spacing:
+							</label>
+							<Slider min={0} max={100} className='spacing-slider' onChange={(v) => mapToFontSize(v)} />
+						</Form.Field>
+					</Grid.Column>
+				</Grid>
+			</Segment>
+
+			<Segment>
+				<Grid>
+					<Grid.Column width={8}>
 						<Form.Field inline>
 							<label>Text Color:</label>
 							<ColorPicker />
 						</Form.Field>
 					</Grid.Column>
 					<Grid.Column width={8}>
-						<Form.Field inline>
-							<label>Size:</label>
-							<Slider min={0} max={100} className='font-size-slider' onChange={(v) => mapToFontSize(v)} />
-						</Form.Field>
-					</Grid.Column>
-					<Grid.Column width={4} textAlign='right'>
 						<Form.Field inline>
 							<label>Background:</label>
 							<ColorPicker />
@@ -66,6 +94,18 @@ const GlobalSettings = ({ show, systemFonts, onUpdateSettings, settings: { fontN
 
 		</Segment.Group>
 
+		<Segment.Group>
+			<Segment>
+				<h4>Preview:</h4>
+			</Segment>
+			<Segment>
+			</Segment>
+		</Segment.Group>
+	</Form>
+)
+
+const Behavior = ({ show, onUpdateSettings, settings: { isTocOpen, isTocPinned } }) => (
+	<div className={show ? 'setting-panel' : 'hide'}>
 		<Segment.Group>
 			<Segment>
 				<h4>When Open a Book:</h4>
@@ -83,46 +123,63 @@ const GlobalSettings = ({ show, systemFonts, onUpdateSettings, settings: { fontN
 					checked={isTocPinned} />
 			</Segment>
 		</Segment.Group>
-	</Segment>
-	) : null
+	</div>
 )
 
 export class Settings extends Component {
-	state = { activeTab: 'global' }
+	state = { activeTab: 'looking' }
 
 	render() {
 		const { activeTab } = this.state
-			, { reader, globals, onUpdateSettings, onClose } = this.props
+			, { reader, showSettings, globals, onUpdateSettings, onClose } = this.props
 
 		return (
+		<Modal open={showSettings}>
+			<Modal.Header>
+				<Grid>
+					<Grid.Column floated='left' width={7}>
+						<h2>Settings</h2>
+					</Grid.Column>
+					<Grid.Column floated='right' className='right aligned' width={7}>
+						<Icon name='checkmark' className='settings-action' size='large' color='green' onClick={() => onClose({save: true})} />
+						<Icon name='close' className='settings-action' size='large' color='red' onClick={onClose} />
+					</Grid.Column>
+				</Grid>
+			</Modal.Header>
+
 			<Modal.Content>
-
-				<Menu attached='top' tabular>
-				{
-					[
-						{
-							name: 'global',
-							title: 'Settings',
-						},
-					].map(({ name, title }) => (
-					<Menu.Item key={name} active={activeTab === name} onClick={() => {this.setState({activeTab: name})}}>
-					{ title }
-					</Menu.Item>
-					))
-				}
-
-					<Menu.Menu position='right'>
-						<Icon name='checkmark' className='settings-action' size='big' color='green' onClick={() => onClose({save: true})} />
-						<Icon name='close' className='settings-action' size='big' color='red' onClick={onClose} />
-					</Menu.Menu>
-				</Menu>
-
-				<GlobalSettings
-					show={activeTab==='global'}
-					settings={globals}
-					onUpdateSettings={(attrs) => onUpdateSettings({ globals: attrs })} />
-
+				<div className='settings-menu-group'>
+					<Menu pointing fluid vertical>
+					{
+						[
+							{
+								name: 'looking',
+								title: 'Fonts & Colors',
+							},
+							{
+								name: 'behavior',
+								title: 'Behavior',
+							},
+						].map(({ name, title }) => (
+						<Menu.Item key={name} active={activeTab === name} onClick={() => {this.setState({activeTab: name})}}>
+						{ title }
+						</Menu.Item>
+						))
+					}
+					</Menu>
+				</div>
+				<div className='settings-menu-items'>
+					<Looking
+						show={activeTab==='looking'}
+						settings={globals}
+						onUpdateSettings={(attrs) => onUpdateSettings({ globals: attrs })} />
+					<Behavior
+						show={activeTab==='behavior'}
+						settings={globals}
+						onUpdateSettings={(attrs) => onUpdateSettings({ globals: attrs })} />
+				</div>
 			</Modal.Content>
+		</Modal>
 		)
 	}
 }
