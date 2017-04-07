@@ -39,7 +39,7 @@ export class FontPicker extends Component {
 		super(props)
 		this.state = {
 			fonts: updatedCache ? cachedFonts : _.filter([props.fontFamily]).map((f) => ({ key: f, value: f, text: f })),
-			selected: props.fontFamily,
+			selected: props.font,
 			loading: !updatedCache,
 		}
 		if (!updatedCache) {
@@ -50,9 +50,13 @@ export class FontPicker extends Component {
 	}
 
 	componentWillReceiveProps(nextProps) {
-		if (nextProps.color) {
-			this.setState({selected: nextProps.fontFamily})
+		if (nextProps.font) {
+			this.setState({selected: nextProps.font})
 		}
+	}
+
+	shouldComponentUpdate(nextProps, nextState) {
+		return this.state.selected !== nextState.selected || this.state.loading !== nextState.loading
 	}
 
 	onChanged(selected) {

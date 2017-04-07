@@ -108,6 +108,9 @@ const DEFAULT_STATE = {
 			fontFamily: ['Arial', 'Microsoft YaHei'],
 			color: '#000000',
 			backgroundColor: '#FFFFFF',
+			fontSize: 10,
+			lightHeight: 0,
+			letterSpacing: 0,
 		},
 		reader: {
 			isTocPinned: false,

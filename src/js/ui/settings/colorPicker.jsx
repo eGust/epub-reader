@@ -28,6 +28,10 @@ export class ColorPicker extends React.Component {
 		}
 	}
 
+	shouldComponentUpdate(nextProps, nextState) {
+		return this.state.color !== nextState.color || this.state.activePanel !== nextState.activePanel
+	}
+
 	render() {
 		const { activePanel, color: { hsl, hsv, hex } } = this.state
 			, upHex = hex.toUpperCase()
@@ -43,7 +47,7 @@ export class ColorPicker extends React.Component {
 		<div className='color-picker-popup'>
 			<div className={activePanel === 'material' ? 'material panel' : 'hide'}>
 			{
-				_.map(COLORS, (row, index) => (
+				activePanel === 'material' ? _.map(COLORS, (row, index) => (
 				<div key={index} className='column'>
 				{
 					_.map(row, (colorStyles, index) => (
@@ -56,7 +60,7 @@ export class ColorPicker extends React.Component {
 					))
 				}
 				</div>
-				))
+				)) : null
 			}
 				<div className={'#FFFFFF' === upHex ? 'selected special item white' : 'special item white'}
 					onClick={() => this.onChanged('#FFFFFF')}>
@@ -72,16 +76,24 @@ export class ColorPicker extends React.Component {
 			</div>
 
 			<div className={activePanel === 'free' ? 'free panel' : 'hide'}>
+			{
+				activePanel === 'free' ? (
 				<div className='saturation pane'>
 					<Saturation hsl={hsl} hsv={hsv} onChange={(color) => this.onChanged(color)} />
 				</div>
+				) : null
+			}
 				<div className='hue pane'>
 					<Button className='switch-button' basic icon onClick={() => this.setState({activePanel: 'material'})}>
 						<Icon name='exchange' />
 					</Button>
+					{
+						activePanel === 'free' ? (
 					<div className='hue-wrap'>
 						<Hue hsl={hsl} onChange={(color) => this.onChanged(color)} />
 					</div>
+						) : null
+					}
 				</div>
 			</div>
 		</div>

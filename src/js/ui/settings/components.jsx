@@ -14,10 +14,10 @@ function mapToFontSize(value) {
 	} else {
 		fontSize = 66 + (value-80) * 2
 	}
-	console.log(value, '=>', fontSize)
+	return fontSize
 }
 
-const Looking = ({ show, onUpdateSettings, settings: { fontName, fontSize, fontStyles, fontColor, backgroundColor } }) => (
+const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, fontStyle, color, backgroundColor, fontSize, lineHeight, letterSpacing } }) => (
 	<Form className={show ? 'setting-panel' : 'hide'}>
 		<Segment.Group>
 			<Segment>
@@ -28,7 +28,7 @@ const Looking = ({ show, onUpdateSettings, settings: { fontName, fontSize, fontS
 								<Icon name='font' />
 								Primery Font:
 							</label>
-							<FontPicker />
+							<FontPicker font={fontFamily[0]} onChange={(f) => onUpdateSettings({fontFamily: [f, fontFamily[1]]})} />
 						</Form.Field>
 					</Grid.Column>
 					<Grid.Column>
@@ -37,7 +37,7 @@ const Looking = ({ show, onUpdateSettings, settings: { fontName, fontSize, fontS
 								<Icon name='font' />
 								Secondary Font:
 							</label>
-							<FontPicker />
+							<FontPicker font={fontFamily[1]} onChange={(f) => onUpdateSettings({fontFamily: [fontFamily[0], f]})} />
 						</Form.Field>
 					</Grid.Column>
 				</Grid>
@@ -49,27 +49,27 @@ const Looking = ({ show, onUpdateSettings, settings: { fontName, fontSize, fontS
 						<Form.Field>
 							<label>
 								<Icon name='text height' />
-								Font Size:
+								{`Font Size: ${mapToFontSize(fontSize)}`}
 							</label>
-							<Slider min={0} max={100} className='font-size-slider' onChange={(v) => mapToFontSize(v)} />
+							<Slider min={0} max={100} className='font-size-slider' value={fontSize} onChange={(size) => onUpdateSettings({fontSize: size})} />
 						</Form.Field>
 					</Grid.Column>
 					<Grid.Column width={4}>
 						<Form.Field>
 							<label>
 								<Icon name='resize vertical' />
-								Line Height:
+								{`Line Height: ${lineHeight}`}
 							</label>
-							<Slider min={0} max={100} className='spacing-slider' onChange={(v) => mapToFontSize(v)} />
+							<Slider min={0} max={100} className='spacing-slider' value={lineHeight} onChange={(size) => onUpdateSettings({lineHeight: size})} />
 						</Form.Field>
 					</Grid.Column>
 					<Grid.Column width={4}>
 						<Form.Field>
 							<label>
 								<Icon name='resize horizontal' />
-								Letter Spacing:
+								{`Letter Spacing: ${letterSpacing}`}
 							</label>
-							<Slider min={0} max={100} className='spacing-slider' onChange={(v) => mapToFontSize(v)} />
+							<Slider min={0} max={100} className='spacing-slider' value={letterSpacing} onChange={(size) => onUpdateSettings({letterSpacing: size})} />
 						</Form.Field>
 					</Grid.Column>
 				</Grid>
@@ -80,13 +80,13 @@ const Looking = ({ show, onUpdateSettings, settings: { fontName, fontSize, fontS
 					<Grid.Column width={8}>
 						<Form.Field inline>
 							<label>Text Color:</label>
-							<ColorPicker />
+							<ColorPicker color={color} onChange={(color) => onUpdateSettings({color: color.hex})} />
 						</Form.Field>
 					</Grid.Column>
 					<Grid.Column width={8}>
 						<Form.Field inline>
 							<label>Background:</label>
-							<ColorPicker />
+							<ColorPicker color={backgroundColor} onChange={(color) => onUpdateSettings({backgroundColor: color.hex})} />
 						</Form.Field>
 					</Grid.Column>
 				</Grid>
