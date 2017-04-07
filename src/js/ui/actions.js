@@ -1,3 +1,5 @@
+import buildStyle from './styleBuilder'
+
 // global
 export
 const CHANGE_ROUTING = 'CHANGE_ROUTING'
@@ -11,6 +13,10 @@ export const changeRouting = (routing) => ({
 export const showSettings = () => ({
 	type: SHOW_SETTINGS,
 })
+
+function updateClientCss({ settings }) {
+	Api.updateClientCss(buildStyle(settings.globals))
+}
 
 // shelf
 export
@@ -36,10 +42,12 @@ export const openExistingBook = (book) => (
 						Api.setClientPath({chapterPath, pageNo, pageCount})
 					})
 				}
+				updateClientCss(getState())
 				// console.log({ chapterPath, pageNo, pageCount, state, })
 			})
 
 			Api.onUpdateProgress(({progress}) => {
+				document.getElementById('frame-book').focus()
 				const lastRead = (new Date).toISOString()
 					, books = {}
 					, oldBooks = getState().shelf.books
@@ -203,6 +211,7 @@ export const closeSettings = ({save}) => (
 		if (!save) return
 
 		Api.saveSettings('settings', getState().settings)
+		updateClientCss(getState())
 	}
 )
 

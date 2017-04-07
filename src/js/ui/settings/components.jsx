@@ -1,21 +1,12 @@
 import _ from 'lodash'
 import React, { Component } from 'react'
-import { Menu, Icon, Modal, Segment, Checkbox, Dropdown, Form, Grid } from 'semantic-ui-react'
-import { FontPicker } from './fontPicker'
-import { ColorPicker } from './colorPicker'
+import { Menu, Icon, Modal, Segment, Checkbox, Dropdown, Form, Grid, Button } from 'semantic-ui-react'
 import Slider from 'rc-slider'
 
-function mapToFontSize(value) {
-	let fontSize
-	if (value < 40) {
-		fontSize = 6 + value / 2
-	} else if (value < 80) {
-		fontSize = 26 + value-40
-	} else {
-		fontSize = 66 + (value-80) * 2
-	}
-	return fontSize
-}
+import { mapToFontSize, mapToLineHeight, mapToLetterSpacing } from '../sizeMappings'
+import { FontPicker } from './fontPicker'
+import { ColorPicker } from './colorPicker'
+import { PreviewBox } from './previewBox'
 
 const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, fontStyle, color, backgroundColor, fontSize, lineHeight, letterSpacing } }) => (
 	<Form className={show ? 'setting-panel' : 'hide'}>
@@ -45,7 +36,7 @@ const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, f
 
 			<Segment>
 				<Grid>
-					<Grid.Column width={8}>
+					<Grid.Column width={7}>
 						<Form.Field>
 							<label>
 								<Icon name='text height' />
@@ -54,11 +45,11 @@ const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, f
 							<Slider min={0} max={100} className='font-size-slider' value={fontSize} onChange={(size) => onUpdateSettings({fontSize: size})} />
 						</Form.Field>
 					</Grid.Column>
-					<Grid.Column width={4}>
+					<Grid.Column width={5}>
 						<Form.Field>
 							<label>
 								<Icon name='resize vertical' />
-								{`Line Height: ${lineHeight}`}
+								{`Line Height: ${(mapToLineHeight(lineHeight)*100)|0}%`}
 							</label>
 							<Slider min={0} max={100} className='spacing-slider' value={lineHeight} onChange={(size) => onUpdateSettings({lineHeight: size})} />
 						</Form.Field>
@@ -67,7 +58,7 @@ const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, f
 						<Form.Field>
 							<label>
 								<Icon name='resize horizontal' />
-								{`Letter Spacing: ${letterSpacing}`}
+								{`Letter Spacing: ${mapToLetterSpacing(letterSpacing)}`}
 							</label>
 							<Slider min={0} max={100} className='spacing-slider' value={letterSpacing} onChange={(size) => onUpdateSettings({letterSpacing: size})} />
 						</Form.Field>
@@ -77,13 +68,28 @@ const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, f
 
 			<Segment>
 				<Grid>
-					<Grid.Column width={8}>
+					<Grid.Column width={6}>
+						<Form.Field inline>
+							<label>Font Style:</label>
+							<Button icon='bold' size='small'
+								color={fontWeight==='bold' ? 'blue' : null}
+								basic={fontWeight!=='bold'}
+								onClick={(e) => {e.preventDefault(); onUpdateSettings({fontWeight: fontWeight==='bold' ? 'normal' : 'bold'})}}
+								/>
+							<Button icon='italic' size='small'
+								color={fontStyle==='italic' ? 'blue' : null}
+								basic={fontStyle!=='italic'}
+								onClick={(e) => {e.preventDefault();onUpdateSettings({fontStyle: fontStyle==='italic' ? 'normal' : 'italic'})}}
+								/>
+						</Form.Field>
+					</Grid.Column>
+					<Grid.Column width={5}>
 						<Form.Field inline>
 							<label>Text Color:</label>
 							<ColorPicker color={color} onChange={(color) => onUpdateSettings({color: color.hex})} />
 						</Form.Field>
 					</Grid.Column>
-					<Grid.Column width={8}>
+					<Grid.Column width={5}>
 						<Form.Field inline>
 							<label>Background:</label>
 							<ColorPicker color={backgroundColor} onChange={(color) => onUpdateSettings({backgroundColor: color.hex})} />
@@ -99,6 +105,7 @@ const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, f
 				<h4>Preview:</h4>
 			</Segment>
 			<Segment>
+				<PreviewBox {...{ fontFamily, fontWeight, fontStyle, color, backgroundColor, fontSize, lineHeight, letterSpacing }} />
 			</Segment>
 		</Segment.Group>
 	</Form>
@@ -128,6 +135,11 @@ const Behavior = ({ show, onUpdateSettings, settings: { isTocOpen, isTocPinned }
 
 export class Settings extends Component {
 	state = { activeTab: 'looking' }
+
+	shouldComponentUpdate(nextProps, nextState) {
+		const { showSettings = false } = nextState
+		return this.state.showSettings !== showSettings || (showSettings && !_.eq(this.state, nextState))
+	}
 
 	render() {
 		const { activeTab } = this.state

@@ -1,7 +1,7 @@
 body {
 	margin: 0;
 	padding: 0;
-	font-family: 'Arial', 'Microsoft YaHei';
+	font-family: Lato, 'Helvetica Neue', Arial, Helvetica, sans-serif, 'Microsoft YaHei';
 }
 
 #root {
@@ -197,7 +197,7 @@ body {
 #toc-container {
 	display: inline-block;
 	flex: 1 3 auto;
-	min-width: 220px;
+	min-width: 240px;
 	max-width: 35vw;
 	height: 100%;
 	overflow: hidden;
@@ -472,6 +472,11 @@ body {
 	top: 1px;
 	right: 8px;
 	cursor: pointer;
+	.pin-tip {
+		font-size: 0.78rem;
+		margin-right: 5px;
+	}
+
 	& > * {
 		vertical-align: top;
 	}
@@ -684,4 +689,19 @@ body {
 .full-wrap {
 	width: 100%;
 	height: 100%;
+}
+
+.preview-container {
+	position: relative;
+	width: 100%;
+	max-height: 165px;
+	overflow: auto;
+	padding-right: 3px;
+	.preview-content {
+		border-radius: 12px !important;
+		padding: 15px !important;
+		border-width: 1px !important;
+		border-style: solid !important;
+		resize: none !important;
+	}
 }

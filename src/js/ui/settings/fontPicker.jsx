@@ -26,7 +26,7 @@ function fetchFonts(cb) {
 
 	fetchingFonts = true
 	fontManager.getAvailableFonts((fonts) => {
-		cachedFonts = mergeFonts(fonts).map((f) => ({ key: f, value: f, text: f }))
+		cachedFonts = mergeFonts(fonts)
 		fetchingFonts = false
 		updatedCache = true
 		cb && cb(cachedFonts)
@@ -38,7 +38,7 @@ export class FontPicker extends Component {
 	constructor(props) {
 		super(props)
 		this.state = {
-			fonts: updatedCache ? cachedFonts : _.filter([props.fontFamily]).map((f) => ({ key: f, value: f, text: f })),
+			fonts: updatedCache ? cachedFonts : [props.font],
 			selected: props.font,
 			loading: !updatedCache,
 		}
@@ -71,11 +71,26 @@ export class FontPicker extends Component {
 	render() {
 		const { fonts, selected, loading } = this.state
 		return (
-		<Dropdown search selection fluid
-			options={fonts}
+		<Dropdown search fluid
+			className='selection'
 			loading={loading}
 			value={selected}
-			onChange={(e, data) => this.onChanged(data.value)} />
+			text={selected}
+			style={{fontFamily: selected}}
+			>
+			<Dropdown.Menu>
+			{
+				fonts.map((font,) => (
+					<Dropdown.Item key={font}
+						style={{fontFamily: font}}
+						onClick={() => this.onChanged(font)}
+						>
+						{font}
+					</Dropdown.Item>
+				))
+			}
+			</Dropdown.Menu>
+		</Dropdown>
 		)
 	}
 }

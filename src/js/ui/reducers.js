@@ -18,13 +18,10 @@ import {
 } from './actions'
 
 function updateSelectedTocItem(items, path, progress) {
-	if (path === progress.chapterPath) {
-		return { items, chapterTitle: progress.chapterTitle }
-	}
-
 	let chapterTitle = null
 	function updateEachItem(items) {
-		return items.map((item) => {
+		let anyChanged = false
+		const newItems = items.map((item) => {
 			let { isSelected, subItems, ...others } = item
 			isSelected = false
 			subItems = updateEachItem(item.subItems)
@@ -35,8 +32,11 @@ function updateSelectedTocItem(items, path, progress) {
 			} else {
 				isSelected = !!subItems.find(({isSelected}) => isSelected)
 			}
-			return { isSelected, subItems, ...others }
+
+			anyChanged = anyChanged || isSelected !== item.isSelected || subItems != item.subItems
+			return anyChanged ? { isSelected, subItems, ...others } : item
 		})
+		return anyChanged ? newItems : items
 	}
 	const results = updateEachItem(items)
 	return { items: results, chapterTitle }
@@ -146,7 +146,11 @@ const combinedReducer = combineReducers({
 			case UPDATE_READER_PROGRESS:
 				const { progress, toc, ...others } = state
 					, { chapterTitle, items } = updateSelectedTocItem(toc, action.progress.chapterPath, progress)
-				state = { ...others, toc: items, progress: { ...progress, ...action.progress, chapterTitle } }
+				if (toc === items) {
+					state = { ...others, toc, progress: { ...progress, ...action.progress, chapterTitle } }
+				} else {
+					state = { ...others, toc: items, progress: { ...progress, ...action.progress, chapterTitle } }
+				}
 			default:
 		}
 		return state

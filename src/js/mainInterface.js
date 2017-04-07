@@ -108,8 +108,10 @@ const DEFAULT_STATE = {
 			fontFamily: ['Arial', 'Microsoft YaHei'],
 			color: '#000000',
 			backgroundColor: '#FFFFFF',
-			fontSize: 10,
-			lightHeight: 0,
+			fontWeight: 'normal',
+			fontStyle: 'normal',
+			fontSize: 30,
+			lineHeight: 50,
 			letterSpacing: 0,
 		},
 		reader: {
@@ -187,6 +189,10 @@ const apiCallbacks = {}
 
 	setClientPage(page) {
 		postWebMessage({ action: 'setPage', page })
+	},
+
+	updateClientCss(styles) {
+		postWebMessage({ action: 'updateCss', styles })
 	},
 
 	decodeDocumentPath(path) {

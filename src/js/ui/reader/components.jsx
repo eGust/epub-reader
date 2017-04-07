@@ -44,7 +44,7 @@ export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettin
 	</Sidebar>
 )
 
-const TocItem = ({ item, onClickTocItem, onToggleTocFolding }) => {
+const _TocItem = ({ item, onClickTocItem, onToggleTocFolding }) => {
 	const { subItems, isOpen, isSelected, content, text } = item
 	return subItems && subItems.length ? (
 	<div className='toc-item'>
@@ -73,7 +73,52 @@ const TocItem = ({ item, onClickTocItem, onToggleTocFolding }) => {
 	)
 }
 
-const TocContainer = ({toc, isTocOpen = false, isTocPinned = false, opening, onClickPin, onClickTocItem, onToggleTocFolding}) => (
+class TocItem extends Component {
+	shouldComponentUpdate(nextProps, nextState) {
+		return this.props.item !== nextProps.item
+	}
+
+	render() {
+		const { item, onClickTocItem, onToggleTocFolding } = this.props
+			, { subItems, isOpen, isSelected, content, text } = item
+		return subItems && subItems.length ? (
+		<div className='toc-item'>
+			<Accordion.Title key='title' className={isSelected ? 'selected' : ''} active={isOpen} onClick={() => onToggleTocFolding(item)}>
+				<Icon name={isOpen ? 'folder open' : 'folder'} />
+				{text}
+				<Icon name='dropdown' />
+			</Accordion.Title>
+			<Accordion.Content key='index' active={isOpen}>
+				<Accordion styled exclusive={false} fluid className='list divided relaxed' inverted>
+				{
+					subItems.map((item, index) => (
+						<TocItem item={item} key={index} onClickTocItem={onClickTocItem} onToggleTocFolding={onToggleTocFolding} />
+					))
+				}
+				</Accordion>
+			</Accordion.Content>
+		</div>
+		) : (
+		<List.Item className={isSelected ? 'toc-item selected' : 'toc-item'} as='a'  href={content} onClick={(e) => { e.preventDefault(); onClickTocItem(item) }}>
+			<List.Icon name='file' />
+			<List.Content> {text} </List.Content>
+		</List.Item>
+		)
+	}
+}
+
+class TocContainer extends Component {
+	shouldComponentUpdate(nextProps, nextState) {
+		return !(  this.props.toc === nextProps.toc
+				&& this.props.isTocOpen === nextProps.isTocOpen
+				&& this.props.isTocPinned === nextProps.isTocPinned
+				&& this.props.opening === nextProps.opening
+				)
+	}
+
+	render() {
+		const {toc, isTocOpen = false, isTocPinned = false, opening, onClickPin, onClickTocItem, onToggleTocFolding} = this.props
+		return (
 	<Segment id='toc-container' inverted className={opening ? 'hide' : (isTocOpen ? 'toc-slide-in' : 'toc-slide-out') }>
 		<List className='collapse-toggle' horizontal size='mini'>
 			<List.Item onClick={() => onToggleTocFolding(true)}>
@@ -86,7 +131,7 @@ const TocContainer = ({toc, isTocOpen = false, isTocPinned = false, opening, onC
 			</List.Item>
 		</List>
 		<div className='pin-toggle' onClick={onClickPin}>
-			<span style={{ fontSize: '.78rem', marginRight: 5 }}>{isTocPinned ? 'Pinned' : 'Unpinned'}</span>
+			<span className='pin-tip'>{isTocPinned ? 'Pinned' : 'Unpinned'}</span>
 			<Icon name={isTocPinned ? 'toggle on' : 'toggle off'} color={isTocPinned ? 'green' : 'red'} />
 		</div>
 
@@ -98,7 +143,9 @@ const TocContainer = ({toc, isTocOpen = false, isTocPinned = false, opening, onC
 		}
 		</Accordion>
 	</Segment>
-)
+	)
+	}
+}
 
 const PageStatus = ({book, progress, onClickChapterPrev, onClickChapterNext, onClickPageGoDelta, onChangePageNo}) => (
 	<div className='page-status'>

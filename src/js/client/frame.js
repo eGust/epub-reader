@@ -109,9 +109,9 @@ $(() => {
 
 	$('body')
 	.on('mousewheel', (e) => {
+		e.preventDefault()
 		if (skipWheelEvent)
 			return
-		e.preventDefault()
 		debouncedOnWheel(e.originalEvent.wheelDelta)
 	})
 	.on('keyup', (e) => {
@@ -154,26 +154,15 @@ const MESSAGE_HANDLERS = {
 		$('main#main').removeClass('show')
 		$.get(`/${chapterPath}`)
 		.then((xhtml) => {
-			const $xhtml = $(xhtml), $head = $('head'), cssLink = $('#css-link')[0], toRemove = []
-			for (const el of $head.find('> *')) {
-				if (el === cssLink)
-					break
-				toRemove.push(el)
-			}
-			_.each(toRemove, (el) => $(el).remove())
+			const $xhtml = $(xhtml)
 
 			const xhead = $xhtml.find('head'), xbody = $xhtml.find('body')
-
-			xhead.find('script').remove()
 			xbody.find('script').remove()
-			xbody.find('link').appendTo(xhead)
-			xbody.find('style').appendTo(xhead)
+			xhead.find('style,link').prependTo(xbody)
 
-			history.pushState({}, '', `/${chapterPath}`)
 			currentPosition.chapterPath = chapterPath
-
-			$head.prepend(xhead.children())
 			$('main#main>#content').html(xbody.children())
+
 			setTimeout(() => {
 				updatePageCount()
 				goToPage({anchor, pageNo, pageCount})
@@ -186,17 +175,28 @@ const MESSAGE_HANDLERS = {
 		setPageNo(page)
 	},
 
+	updateCss({styles}) {
+		const lines = []
+
+		for (let key in styles) {
+			lines.push(`\t${key}: ${styles[key]} !important;`)
+		}
+		$('#dyn-css').html(`
+html, body {
+${lines.join('\n')}
+}
+
+* {
+	font-family: ${styles['font-family']} !important;
+	color: ${styles['color']} !important;
+	background-color: ${styles['background-color']} !important;
+}
+`)
+	},
+
 }
 
 function postWebMessage(data) {
 	log('send', data)
 	window.parent.postMessage(_.merge({ channel: 'ebook' }, data), '*')
-}
-
-function reloadCSSLink() {
-	$('#css-link').replaceWith(`<link id="css-link" href="ebook://globals/frame.css?t=${(now()).toISOString().replace(/\W/g, '')}" rel="stylesheet" type="text/css"/>`)
-}
-
-function updateCSSCalc(css) {
-	$('#css-calc').html(css)
 }
