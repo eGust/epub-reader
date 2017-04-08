@@ -64,7 +64,7 @@ const onReceiveServiceMessages = {
 
 	[serviceMessages.openBook]: ({book, toc = [], progress = null, apiCallId}) => {
 		const cb = popApiCallbak(apiCallId)
-		cb && cb({book, toc, progress})
+		cb && cb({book, toc, progress: progress || DEFAULT_STATE.reader.progress})
 	},
 
 	[serviceMessages.getDbValue]: ({values, apiCallId}) => {
@@ -107,12 +107,14 @@ const DEFAULT_STATE = {
 		globals: {
 			fontFamily: ['Arial', 'Microsoft YaHei'],
 			color: '#000000',
-			backgroundColor: '#FFFFFF',
+			backgroundColor: '#448aff',
 			fontWeight: 'normal',
 			fontStyle: 'normal',
 			fontSize: 30,
 			lineHeight: 50,
 			letterSpacing: 0,
+			linkColor: '#3e50b4',
+			linkUnerline: 'underline',
 		},
 		reader: {
 			isTocPinned: false,
@@ -144,7 +146,7 @@ const apiCallbacks = {}
 		const r = _.merge({}, DEFAULT_STATE)
 		Api.loadSettings('books', (savedBooks) => {
 			const books = {}
-			for (const book of savedBooks) {
+			for (const book of savedBooks || []) {
 				books[book.id] = book
 				Api.loadSettings({ scope: 'lastRead', 'bookId': book.id }, (lastRead) => {
 					book.lastRead = lastRead
@@ -193,6 +195,10 @@ const apiCallbacks = {}
 
 	updateClientCss(styles) {
 		postWebMessage({ action: 'updateCss', styles })
+	},
+
+	showClientToast(message) {
+		postWebMessage({ action: 'showToast', message })
 	},
 
 	decodeDocumentPath(path) {

@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import path from 'path'
 import fs from 'fs'
-import { fetchDynamicCss } from './fetchDynamicCss'
 import { absoluteFileName } from './docBase'
 
 function fetchStatic({ mimeType, filePath, path }, cb) {
@@ -34,7 +33,9 @@ const GLOBAL_RESOURCES = {
 		fetch: fetchStatic,
 	},
 	'frame.css': {
-		fetch: fetchDynamicCss
+		filePath: path.resolve(__dirname, `../../css/client/frame.css`),
+		mimeType: 'text/css',
+		fetch: fetchStatic,
 	},
 	'frame.html': {
 		filePath: path.resolve(__dirname, `../../frame.html`),

@@ -8,12 +8,12 @@ import { FontPicker } from './fontPicker'
 import { ColorPicker } from './colorPicker'
 import { PreviewBox } from './previewBox'
 
-const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, fontStyle, color, backgroundColor, fontSize, lineHeight, letterSpacing } }) => (
+const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, fontStyle, color, linkColor, linkUnerline, backgroundColor, fontSize, lineHeight, letterSpacing } }) => (
 	<Form className={show ? 'setting-panel' : 'hide'}>
 		<Segment.Group>
 			<Segment>
-				<Grid columns={2}>
-					<Grid.Column>
+				<Grid>
+					<Grid.Column width={6}>
 						<Form.Field>
 							<label>
 								<Icon name='font' />
@@ -22,13 +22,28 @@ const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, f
 							<FontPicker font={fontFamily[0]} onChange={(f) => onUpdateSettings({fontFamily: [f, fontFamily[1]]})} />
 						</Form.Field>
 					</Grid.Column>
-					<Grid.Column>
+					<Grid.Column width={6}>
 						<Form.Field>
 							<label>
 								<Icon name='font' />
 								Secondary Font:
 							</label>
 							<FontPicker font={fontFamily[1]} onChange={(f) => onUpdateSettings({fontFamily: [fontFamily[0], f]})} />
+						</Form.Field>
+					</Grid.Column>
+					<Grid.Column width={4}>
+						<Form.Field>
+							<label>Styles:</label>
+							<Button icon='bold' size='small'
+								color={fontWeight==='bold' ? 'blue' : null}
+								basic={fontWeight!=='bold'}
+								onClick={(e) => {e.preventDefault(); onUpdateSettings({fontWeight: fontWeight==='bold' ? 'normal' : 'bold'})}}
+								/>
+							<Button icon='italic' size='small'
+								color={fontStyle==='italic' ? 'blue' : null}
+								basic={fontStyle!=='italic'}
+								onClick={(e) => {e.preventDefault();onUpdateSettings({fontStyle: fontStyle==='italic' ? 'normal' : 'italic'})}}
+								/>
 						</Form.Field>
 					</Grid.Column>
 				</Grid>
@@ -68,25 +83,21 @@ const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, f
 
 			<Segment>
 				<Grid>
-					<Grid.Column width={6}>
-						<Form.Field inline>
-							<label>Font Style:</label>
-							<Button icon='bold' size='small'
-								color={fontWeight==='bold' ? 'blue' : null}
-								basic={fontWeight!=='bold'}
-								onClick={(e) => {e.preventDefault(); onUpdateSettings({fontWeight: fontWeight==='bold' ? 'normal' : 'bold'})}}
-								/>
-							<Button icon='italic' size='small'
-								color={fontStyle==='italic' ? 'blue' : null}
-								basic={fontStyle!=='italic'}
-								onClick={(e) => {e.preventDefault();onUpdateSettings({fontStyle: fontStyle==='italic' ? 'normal' : 'italic'})}}
-								/>
-						</Form.Field>
-					</Grid.Column>
 					<Grid.Column width={5}>
 						<Form.Field inline>
 							<label>Text Color:</label>
 							<ColorPicker color={color} onChange={(color) => onUpdateSettings({color: color.hex})} />
+						</Form.Field>
+					</Grid.Column>
+					<Grid.Column width={6}>
+						<Form.Field inline>
+							<label>Link:</label>
+							<ColorPicker color={linkColor} onChange={(color) => onUpdateSettings({linkColor: color.hex})} />
+							<Button icon='underline' size='small'
+								color={linkUnerline==='underline' ? 'blue' : null}
+								basic={linkUnerline!=='underline'}
+								onClick={(e) => {e.preventDefault();onUpdateSettings({linkUnerline: linkUnerline==='underline' ? 'none' : 'underline'})}}
+								/>
 						</Form.Field>
 					</Grid.Column>
 					<Grid.Column width={5}>
@@ -105,7 +116,7 @@ const Looking = ({ show, onUpdateSettings, settings: { fontFamily, fontWeight, f
 				<h4>Preview:</h4>
 			</Segment>
 			<Segment>
-				<PreviewBox {...{ fontFamily, fontWeight, fontStyle, color, backgroundColor, fontSize, lineHeight, letterSpacing }} />
+				<PreviewBox {...{ fontFamily, fontWeight, fontStyle, color, backgroundColor, fontSize, lineHeight, letterSpacing, link: { color: linkColor, textDecoration: linkUnerline } }} />
 			</Segment>
 		</Segment.Group>
 	</Form>

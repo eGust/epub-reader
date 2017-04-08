@@ -26,7 +26,7 @@ function updateSelectedTocItem(items, path, progress) {
 			isSelected = false
 			subItems = updateEachItem(item.subItems)
 
-			if (item.content === path) {
+			if (item.content && item.content.split('#', 1)[0] === path) {
 				isSelected = true
 				chapterTitle = item.text
 			} else {
@@ -130,7 +130,7 @@ const combinedReducer = combineReducers({
 	reader(state = {}, action) {
 		switch (action.type) {
 			case CHANGE_CURRENT_BOOK:
-				state = _.merge({}, state, action.bookInfo)
+				state = action.bookInfo
 				break
 			case CHANGE_READER_CONTENT_PATH:
 				break

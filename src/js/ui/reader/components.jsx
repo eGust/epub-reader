@@ -20,7 +20,7 @@ export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettin
 		}
 
 		<Menu.Item className='title-middle-bar'>
-			<label>{ progress.chapterTitle && progress.chapterTitle.length ? `${book.title} - ${progress.chapterTitle}` : book.title }</label>
+			<label>{ progress.chapterTitle && progress.chapterTitle.length ? `[${book.title}] - ${progress.chapterTitle}` : book.title }</label>
 		</Menu.Item>
 
 		<Menu.Menu position='right'>
@@ -209,6 +209,8 @@ const BookContainer = ({isTocOpen, isTocPinned, book, progress, ...events}) => (
 				case 34: // page down
 				case 40: // down
 				case 39: // right
+				case 32: // space
+				case 13: // enter
 					events.onClickPageGoDelta({book, progress, delta: +1})
 					break
 			}

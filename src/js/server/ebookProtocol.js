@@ -8,7 +8,7 @@ protocol.registerStandardSchemes(['ebook'])
 export const registerEBookProtocol = () => {
 	protocol.registerBufferProtocol('ebook',
 		({ url, referrer, method }, callback) => {
-			console.log('[EBOOK REQ]', { referrer, url, method })
+			// console.log('[EBOOK REQ]', { referrer, url, method })
 			url = Url.parse(url)
 			const scope = url.hostname.split('.', 1)[0]
 				, id = url.hostname.slice(scope.length+1)

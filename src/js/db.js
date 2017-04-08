@@ -14,7 +14,7 @@ export function openDB(cb) {
 		db.loadDatabase(() => {
 			dbOpen = true
 			cb(db)
-			db.persistence.setAutocompactionInterval(1000*60*30)
+			db.persistence.setAutocompactionInterval(1000*60*10)
 		})
 		db.on('compaction.done', () => {
 			untrimed = 0
@@ -35,7 +35,7 @@ export function getDbValue(path, cb) {
 export function setDbValue(path, value) {
 	openDB(() => {
 		path = typeof(path) === 'string' ? { path } : path
-		console.log('setDbValue', { path, value })
+		log('setDbValue', { path, value })
 		db.update(path, { ...path, value}, { upsert: true })
 		if (++untrimed === TRIM_LIMITATION) {
 			db.persistence.compactDatafile()

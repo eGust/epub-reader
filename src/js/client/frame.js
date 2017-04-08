@@ -51,7 +51,7 @@ function goToPage({ anchor, pageNo, pageCount }) {
 	if (anchor && anchor.length) {
 		const a = $(anchor)[0]
 		if (a) {
-			toPage = Math.floor(a.offsetLeft / currentPosition.pageWidth)
+			toPage = (a.offsetLeft / currentPosition.pageWidth | 0) + 1
 		}
 	} else if (pageNo === 1 || pageNo === -1) {
 		toPage = pageNo === 1 ? 1 : currentPosition.pageCount
@@ -124,6 +124,8 @@ $(() => {
 			case 34: // page down
 			case 40: // down
 			case 39: // right
+			case 32: // space
+			case 13: // enter
 				pageDown()
 				break
 		}
@@ -143,6 +145,14 @@ function messageHandler(event) {
 
 window.addEventListener('message', messageHandler, false)
 
+function styleMapToLines(styles) {
+	const lines = []
+	for (let key in styles) {
+		lines.push(`\t${key}: ${styles[key]} !important;`)
+	}
+	return lines
+}
+
 const MESSAGE_HANDLERS = {
 	setPath({ chapterPath, anchor, pageNo, pageCount }) {
 		log('setPath', {chapterPath})
@@ -154,6 +164,8 @@ const MESSAGE_HANDLERS = {
 		$('main#main').removeClass('show')
 		$.get(`/${chapterPath}`)
 		.then((xhtml) => {
+			$('#dialog-container').empty()
+			$('head>base').attr('href', `/${chapterPath}`)
 			const $xhtml = $(xhtml)
 
 			const xhead = $xhtml.find('head'), xbody = $xhtml.find('body')
@@ -176,24 +188,42 @@ const MESSAGE_HANDLERS = {
 	},
 
 	updateCss({styles}) {
-		const lines = []
+		const { bodyStyles, linkStyles, } = styles
+			, bodyLines = styleMapToLines(bodyStyles).join('\n')
+			, linkLines = styleMapToLines(linkStyles).join('\n')
 
-		for (let key in styles) {
-			lines.push(`\t${key}: ${styles[key]} !important;`)
-		}
 		$('#dyn-css').html(`
 html, body {
-${lines.join('\n')}
+${bodyLines}
 }
 
 * {
-	font-family: ${styles['font-family']} !important;
-	color: ${styles['color']} !important;
-	background-color: ${styles['background-color']} !important;
+	font-family: ${bodyStyles['font-family']} !important;
+	color: ${bodyStyles['color']};
+	background-color: ${bodyStyles['background-color']};
+}
+
+a {
+${linkLines}
+}
+
+a * {
+${linkLines}
 }
 `)
+		setTimeout(() => {
+			updatePageCount()
+			setPageNo(currentPosition.pageNo)
+		}, 1)
 	},
 
+	showToast({ message }) {
+		const $t = $('<dialog>').text(message)
+		$('body>#dialog-container').append($t)
+		setTimeout(() => {
+			$t.remove()
+		}, 4000)
+	},
 }
 
 function postWebMessage(data) {

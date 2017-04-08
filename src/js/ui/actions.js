@@ -165,11 +165,19 @@ export const changeReaderContentPath = (path) => (
 export const doChangeReaderPage = ({ book, progress, delta }) => {
 	if (delta < 0 && progress.pageNo <= 1) {
 		Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: -1 }, (chapterPath) => {
-			Api.setClientPath({ chapterPath, pageNo: -1 })
+			if (chapterPath) {
+				Api.setClientPath({ chapterPath, pageNo: -1 })
+			} else {
+				Api.showClientToast('No more chapters')
+			}
 		})
 	} else if (delta > 0 && progress.pageNo >= progress.pageCount) {
 		Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: +1 }, (chapterPath) => {
-			Api.setClientPath({ chapterPath })
+			if (chapterPath) {
+				Api.setClientPath({ chapterPath })
+			} else {
+				Api.showClientToast('No more chapters')
+			}
 		})
 	} else {
 		const pageNo = progress.pageNo+delta
@@ -187,7 +195,11 @@ export const changeReaderChapter = (delta) => (
 	(dispatch, getState) => {
 		const { reader: { book, progress } } = getState()
 		Api.queryDocPath({ docId: book.id, chapterPath: progress.chapterPath, go: delta }, (chapterPath) => {
-			Api.setClientPath({ chapterPath })
+			if (chapterPath) {
+				Api.setClientPath({ chapterPath })
+			} else {
+				Api.showClientToast('No more chapters')
+			}
 		})
 	}
 )

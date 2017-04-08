@@ -1,3 +1,7 @@
+* {
+	box-sizing: border-box;
+}
+
 main#main {
 	position: relative;
 	margin: auto;
@@ -72,4 +76,47 @@ h4 {
 
 h5 {
 	font-size: 1.1rem;
+}
+
+body > #dialog-container {
+	display: flex;
+	position: absolute;
+	bottom: 0;
+	padding: 60px 0 40px 0;
+	width: 60%;
+	transform: translateX(30%);
+	flex-direction: column;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	align-items: center;
+	background-color: transparent;
+	overflow: hidden;
+}
+
+body > #dialog-container > dialog {
+	position: relative;
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
+	padding: 10px 25px;
+	min-height: 48px;
+	color: white;
+	background-color: rgba(0, 0, 0, 0.7);
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12), 0 3px 1px -2px rgba(0,0,0,0.2);
+	font-family: Lato, 'Helvetica Neue', Arial, Helvetica, sans-serif, 'Microsoft YaHei' !important;
+	font-size: 16px;
+	border: none;
+	border-radius: 2px;
+	margin-bottom: 15px;
+
+	user-select: none;
+	cursor: default;
+	animation: show-toast 4s linear 1 forwards;
+}
+
+@keyframes show-toast {
+    0%   	{ transform: translateY( 120%); opacity: 0; }
+    12%  	{ transform: translateY(    0); opacity: 1; }
+    80%		{ transform: translateY(    0); opacity: 1; }
+    100%	{ transform: translateY(-200%); opacity: 0; }
 }
