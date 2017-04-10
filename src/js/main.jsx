@@ -20,6 +20,8 @@ const docRoot = document.getElementById('root')
 	// , store = createStore(reducer, initialState, applyMiddleware(thunk, logger))
 	, store = createStore(reducer, initialState, applyMiddleware(thunk))
 
+	Api.setReduxStore(store)
+
 	ReactDOM.render(
 		<Provider store={store}>
 			<App />

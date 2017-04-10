@@ -2,7 +2,7 @@ import { app } from 'electron'
 import Datastore from 'nedb'
 import log from './logger'
 
-const db = new Datastore({ filename: `${app.getPath('appData')}/epub-reader/settings.db` })
+const db = new Datastore({ filename: `${app.getPath('userData')}/appdata/settings.db` })
 	, TRIM_LIMITATION = 200
 
 let dbOpen = false, untrimed = 0

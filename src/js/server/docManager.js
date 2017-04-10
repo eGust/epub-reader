@@ -6,7 +6,7 @@ import { absoluteFileName } from './docBase'
 function fetchStatic({ mimeType, filePath, path }, cb) {
 	fs.readFile(filePath, (err, data) => {
 		if (err)
-			return docManager.handleNull(cb)
+			return respondNull(cb)
 		cb && cb({ mimeType, data })
 	})
 }
@@ -44,6 +44,10 @@ const GLOBAL_RESOURCES = {
 	}
 }
 
+export function respondNull(cb) {
+	cb && cb({ mimeType: null, data: null })
+}
+
 export class DocManager {
 	registeredTypes = {}
 	registeredExtNames = {}
@@ -64,10 +68,6 @@ export class DocManager {
 		}
 	}
 
-	handleNull(cb) {
-		cb && cb({ mimeType: null, data: null })
-	}
-
 	handleDoc({ doc, filePath, method }, cb) {
 		// console.log('[DocManager.handleDoc]', Object.keys(this.docs), {doc, filePath, method})
 		if (doc) {
@@ -84,12 +84,12 @@ export class DocManager {
 			})
 			.catch((r) => {
 				// console.log(`[fetch failed] ${JSON.stringify(url)}\n${r}`)
-				cb({ mimeType: null, data: null })
+				respondNull(cb)
 			})
 			return
 		}
 
-		this.handleNull(cb)
+		respondNull(cb)
 	}
 
 	handleToc({ doc }, cb) {
@@ -97,32 +97,12 @@ export class DocManager {
 			const toc = JSON.stringify(doc.toc)
 			return cb && cb({ mimeType: 'application/json', data: new Buffer(toc) })
 		}
-		this.handleNull(cb)
+		respondNull(cb)
 	}
 
 	handleGlobals(path, cb) {
 		const item = GLOBAL_RESOURCES[path]
-		item ? item.fetch({ ...item, path }, cb) : this.handleNull(cb)
-	}
-
-	handle({ scope, url, method, id, filePath }, cb) {
-		// console.log('[DocManager]', { scope, method, id, filePath })
-		try {
-			switch (scope) {
-				case 'doc':
-					if (filePath === 'frame.html') {
-						return this.handleGlobals(filePath, cb)
-					}
-					return this.handleDoc({ doc: this.docs[id], filePath, method }, cb)
-				case 'toc':
-					return this.handleToc({ doc: this.docs[id] }, cb)
-				case 'globals':
-					return this.handleGlobals(filePath, cb)
-			}
-		} catch (ex) {
-			// console.log('handle request failed:', ex)
-		}
-		this.handleNull(cb)
+		item ? item.fetch({ ...item, path }, cb) : respondNull(cb)
 	}
 
 	queryDocPath({ docId, chapterPath, go }) {

@@ -26,7 +26,7 @@ const services = {
 			const index = i+1
 			return () => {
 				docManager.loadFile(fileName, (doc) => {
-					doc && (fileIds[fileName] = { id: doc.id, title: doc.title, lastRead, fileInfo: doc.fileInfo })
+					doc && (fileIds[fileName] = { id: doc.id, title: doc.title, lastRead, fileInfo: doc.fileInfo, coverImage: doc.data && doc.data.coverImage })
 					// console.log({files, apiCallId, index})
 					if (index >= files.length) {
 						reply({fileIds, apiCallId})

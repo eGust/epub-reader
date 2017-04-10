@@ -5,6 +5,7 @@ import crypto from 'crypto'
 import path from 'path'
 import { DocBase, dirname, resolvePath } from './docBase'
 import cheerio from 'cheerio'
+import log from '../logger'
 // import jsdom from 'jsdom'
 
 // let $ = require('jquery')(jsdom.jsdom().defaultView)
@@ -27,6 +28,21 @@ function parseToc($node, currentPath, $) {
 }
 
 class EPubDoc extends DocBase {
+	findCoverImage($) {
+		function verifyImage($node) {
+			const { href, 'media-type': mediaType } = $node && $node.length ? $node.attr() : {}
+			return href && href.length && mediaType && mediaType.length && mediaType.startsWith('image/') ? { href, mediaType } : null
+		}
+
+		let image = verifyImage($('manifest>item[properties="cover-image"]'))
+		if (image) {
+			return image
+		}
+
+		let $node = $('metadata>meta[name="cover"]')
+		return ($node.length && verifyImage($(`#${$node.attr('content')}`))) || verifyImage($('#cover'))
+	}
+
 	loadToc({zip, toc, cb}) {
 		const $ = cheerio.load(toc, { xmlMode: true })
 		if (toc) {
@@ -72,6 +88,7 @@ class EPubDoc extends DocBase {
 				groups,
 				zip,
 				title,
+				coverImage: this.findCoverImage($),
 				toc: [],
 			}
 

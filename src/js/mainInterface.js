@@ -124,7 +124,7 @@ const DEFAULT_STATE = {
 	}
 }
 
-let apiCallId = 1
+let apiCallId = 1, reduxStore = null
 
 function getApiCallbackId(cb) {
 	const id = apiCallId++
@@ -141,6 +141,14 @@ function popApiCallbak(id) {
 const apiCallbacks = {}
 	, Api = {
 	DEFAULT_STATE,
+
+	setReduxStore(value) {
+		reduxStore = value
+	},
+
+	getReduxState() {
+		return reduxStore && reduxStore.getState()
+	},
 
 	getSavedState(prepare, cb) {
 		const r = _.merge({}, DEFAULT_STATE)
