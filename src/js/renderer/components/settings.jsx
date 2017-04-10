@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { Menu, Icon, Modal, Segment, Checkbox, Dropdown, Form, Grid, Button } from 'semantic-ui-react'
 import Slider from 'rc-slider'
 
-import { mapToFontSize, mapToLineHeight, mapToLetterSpacing } from '../sizeMappings'
+import { mapToFontSize, mapToLineHeight, mapToLetterSpacing } from '../helpers/sizeMappings'
 import { FontPicker } from './fontPicker'
 import { ColorPicker } from './colorPicker'
 import { PreviewBox } from './previewBox'

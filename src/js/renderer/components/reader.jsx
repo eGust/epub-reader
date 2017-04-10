@@ -218,7 +218,7 @@ const BookContainer = ({isTocOpen, isTocPinned, book, progress, ...events}) => (
 		<iframe
 			className={book.id ? 'full-size' : 'hide'}
 			id='frame-book'
-			src={`ebook://doc.${book.id || ''}/frame.html`}
+			src={`ebook://doc.${book.id || ''}/?s=root`}
 			/>
 		<ProgressBar pageNo={progress.pageNo} pageCount={progress.pageCount} onChangePageNo={events.onChangePageNo} />
 		<div className='page-navigator prev-page' onClick={() => events.onClickPageGoDelta({book, progress, delta: -1})}>

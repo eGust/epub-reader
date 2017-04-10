@@ -1,10 +1,9 @@
-import _ from 'lodash'
-import { serviceMessages } from './serviceMessages'
-import { app, BrowserWindow, ipcMain } from 'electron'
-import { docManager } from './server/docManager'
-import EPub from './server/epubDoc'
-import { getDbValue, setDbValue } from './db'
-import log from './logger'
+import { ipcMain } from 'electron'
+import { docManager } from './docManager'
+import EPub from './epubDoc'
+import { serviceMessages } from '../shared/serviceMessages'
+import { getDbValue, setDbValue } from '../shared/db'
+import log from '../shared/logger'
 
 const services = {
 	[serviceMessages.queryDocRoot]: ({docId, apiCallId}, reply) => {
@@ -67,7 +66,7 @@ const services = {
 export function registerServices() {
 	EPub.register()
 
-	ipcMain.once('require-setupDevTools', (event, data) => {
+	ipcMain.once('require-setupDevTools', (event) => {
 		if (process.env.NODE_ENV !== 'production') {
 			event.sender.send('reply-setupDevTools', 'setup')
 		}

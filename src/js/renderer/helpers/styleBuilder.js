@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { mapToFontSize, mapToLineHeight, mapToLetterSpacing } from './sizeMappings'
 
 const builder = ({ fontFamily, fontWeight, fontStyle, color, backgroundColor, fontSize, lineHeight, letterSpacing, linkUnerline, linkColor }) => (

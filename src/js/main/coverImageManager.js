@@ -1,17 +1,11 @@
 import { app } from 'electron'
 import fs from 'fs'
 import { docManager, respondNull } from './docManager'
-import Api from '../mainInterface'
 
 const COVER_PATH_ROOT = `${app.getPath('userData')}/appdata/covers`
 
-export function handler({id, filePath}, cb) {
-	const book = (Api.getReduxState() || { shelf: { books: {} } }).shelf.books[id]
-		, coverPath = `${COVER_PATH_ROOT}/${id}`
-
-	if (!book) {
-		return respondNull(cb)
-	}
+export function handler({id, filePath, mimeType}, cb) {
+	const coverPath = `${COVER_PATH_ROOT}/${id}`
 
 	if (fs.existsSync(coverPath)) {
 		fs.readFile(coverPath, (err, data) => {
@@ -19,13 +13,14 @@ export function handler({id, filePath}, cb) {
 				console.log(err)
 				return respondNull(cb)
 			}
-			const { mimeType } = book.coverImage
 			cb && cb({ mimeType, data })
 		})
 	} else {
-		docManager.handleCover({ doc, filePath, method: 'get' }, ({ mimeType, data }) => {
+		docManager.handleDoc({ doc: docManager.getDocumentById(id), filePath, method: 'get' }, ({ mimeType, data }) => {
 			cb && cb({ mimeType, data })
-			fs.writeFile(coverPath, data)
+			if (mimeType && data) {
+				fs.mkdir(COVER_PATH_ROOT, () => fs.writeFile(coverPath, data))
+			}
 		})
 	}
 }

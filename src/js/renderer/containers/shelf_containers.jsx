@@ -1,5 +1,5 @@
-import { showSettings, openBookFiles, openExistingBook, updateFilter, updateSorting } from '../actions'
-import components from './components'
+import { showSettings, openBookFiles, openExistingBook, updateFilter, updateSorting } from '../redux/actions'
+import components from '../components/shelf'
 import { connect } from 'react-redux'
 
 const mapStateToProps = ({settings, shelf}, ownProps) => ({...settings.shelf, ...shelf, ...ownProps})

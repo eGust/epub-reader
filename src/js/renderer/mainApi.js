@@ -1,14 +1,10 @@
 import { ipcRenderer } from 'electron'
 import _ from 'lodash'
-import { serviceMessages } from './serviceMessages'
-import { installApi } from './ui/actions'
-import log from './logger'
+import { serviceMessages } from '../shared/serviceMessages'
+import log from '../shared/logger'
+import { installApi } from './redux/actions'
 
 window.$ = require('jquery')
-
-function now() {
-	return (new Date).toISOString()
-}
 
 let onClientReadyEvent, onUpdateProgressEvent, onSwitchPageEvent
 
@@ -107,13 +103,13 @@ const DEFAULT_STATE = {
 		globals: {
 			fontFamily: ['Arial', 'Microsoft YaHei'],
 			color: '#000000',
-			backgroundColor: '#448aff',
+			backgroundColor: '#ffffff',
 			fontWeight: 'normal',
 			fontStyle: 'normal',
 			fontSize: 30,
 			lineHeight: 50,
 			letterSpacing: 0,
-			linkColor: '#3e50b4',
+			linkColor: '#448aff',
 			linkUnerline: 'underline',
 		},
 		reader: {

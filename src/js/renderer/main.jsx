@@ -6,19 +6,17 @@ import { Provider } from 'react-redux'
 import createLogger from 'redux-logger'
 import thunk from 'redux-thunk'
 
-import Api from './js/mainInterface'
-import App from './js/ui/app'
-import { reducer, setDefaultState, prepareSavedState } from './js/ui/reducers'
+import Api from './js/renderer/mainApi'
+import App from './js/renderer/containers/app_container'
+import { reducer, prepareSavedState } from './js/renderer/redux/reducers'
 
 Api.registerServiceApi()
-
-setDefaultState(Api.DEFAULT_STATE)
 
 Api.getSavedState(prepareSavedState, (initialState) => {
 const docRoot = document.getElementById('root')
 	, logger = createLogger({ collapsed: true, duration: true, diff: true })
-	// , store = createStore(reducer, initialState, applyMiddleware(thunk, logger))
-	, store = createStore(reducer, initialState, applyMiddleware(thunk))
+	, store = createStore(reducer, initialState, applyMiddleware(thunk, logger))
+	// , store = createStore(reducer, initialState, applyMiddleware(thunk))
 
 	Api.setReduxStore(store)
 

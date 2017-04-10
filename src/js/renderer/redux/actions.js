@@ -1,4 +1,4 @@
-import buildStyle from './styleBuilder'
+import buildStyle from '../helpers/styleBuilder'
 
 // global
 export
@@ -156,7 +156,7 @@ export const toggleTocItemOpen = (itemOrAllOpen) => ({
 })
 
 export const changeReaderContentPath = (path) => (
-	(dispatch) => {
+	() => {
 		// console.log(CHANGE_READER_CONTENT_PATH, {path})
 		Api.setClientPath(Api.decodeDocumentPath(path.content))
 	}

@@ -2,10 +2,9 @@ import _ from 'lodash'
 import JSZip from 'jszip'
 import fs from 'fs'
 import crypto from 'crypto'
-import path from 'path'
 import { DocBase, dirname, resolvePath } from './docBase'
 import cheerio from 'cheerio'
-import log from '../logger'
+import log from '../shared/logger'
 // import jsdom from 'jsdom'
 
 // let $ = require('jquery')(jsdom.jsdom().defaultView)
@@ -28,10 +27,10 @@ function parseToc($node, currentPath, $) {
 }
 
 class EPubDoc extends DocBase {
-	findCoverImage($) {
+	findCoverImage($, opfPath) {
 		function verifyImage($node) {
 			const { href, 'media-type': mediaType } = $node && $node.length ? $node.attr() : {}
-			return href && href.length && mediaType && mediaType.length && mediaType.startsWith('image/') ? { href, mediaType } : null
+			return href && href.length && mediaType && mediaType.length && mediaType.startsWith('image/') ? { href: resolvePath(opfPath, href), mediaType } : null
 		}
 
 		let image = verifyImage($('manifest>item[properties="cover-image"]'))
@@ -43,7 +42,7 @@ class EPubDoc extends DocBase {
 		return ($node.length && verifyImage($(`#${$node.attr('content')}`))) || verifyImage($('#cover'))
 	}
 
-	loadToc({zip, toc, cb}) {
+	loadToc({toc, cb}) {
 		const $ = cheerio.load(toc, { xmlMode: true })
 		if (toc) {
 			this.data.toc = parseToc($('navMap'), this.data.tocPath, $)
@@ -88,7 +87,7 @@ class EPubDoc extends DocBase {
 				groups,
 				zip,
 				title,
-				coverImage: this.findCoverImage($),
+				coverImage: this.findCoverImage($, opfPath),
 				toc: [],
 			}
 
@@ -101,7 +100,7 @@ class EPubDoc extends DocBase {
 					if(toc) {
 						toc.async('string')
 						.then((toc) => {
-							this.loadToc({zip, toc, cb})
+							this.loadToc({toc, cb})
 						})
 						return
 					}
@@ -134,7 +133,6 @@ class EPubDoc extends DocBase {
 	}
 
 	loadFile(cb) {
-		let fileBuff
 		this.loaded = 'failed'
 		fs.readFile(this.fileName, (err, zipBuff) => {
 			if (err) {

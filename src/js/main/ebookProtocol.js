@@ -1,33 +1,45 @@
-import { app, protocol } from 'electron'
+import { protocol } from 'electron'
 import Url from 'url'
-import _ from 'lodash'
+import querystring from 'querystring'
 import { docManager } from './docManager'
-import coverImageManagerHandler from './coverImageManager'
+import coverImageHandler from './coverImageManager'
+import log from '../shared/logger'
 
 protocol.registerStandardSchemes(['ebook'])
 
 export const registerEBookProtocol = () => {
 	protocol.registerBufferProtocol('ebook',
 		({ url, referrer, method }, callback) => {
-			// console.log('[EBOOK REQ]', { referrer, url, method })
+			log('[EBOOK://REQ]', { referrer, url, method })
+			const cb = (data) => {
+				log('[EBOOK://RES]', data)
+				callback(data)
+			}
+
 			url = Url.parse(url)
 			const scope = url.hostname.split('.', 1)[0]
 				, id = url.hostname.slice(scope.length+1)
 				, filePath = url.pathname.slice(1)
+				, qs = querystring.parse(url.query)
 
 			try {
 				switch (scope) {
 					case 'doc':
-						if (filePath === 'frame.html') {
-							return docManager.handleGlobals(filePath, cb)
+						if (filePath === '') {
+							switch (qs.s) {
+								case 'root':
+									return docManager.handleGlobals('frame.html', cb)
+								case 'cover':
+									const { p: filePath, mt: mimeType } = qs
+									return coverImageHandler({id, filePath, mimeType}, cb)
+							}
+							respondNull(cb)
 						}
 						return docManager.handleDoc({ doc: docManager.docs[id], filePath, method }, cb)
 					case 'toc':
 						return docManager.handleToc({ doc: docManager.docs[id] }, cb)
 					case 'globals':
 						return docManager.handleGlobals(filePath, cb)
-					case 'cover':
-						return coverImageManagerHandler({id, filePath}, cb)
 				}
 				respondNull(cb)
 			} catch (ex) {

@@ -1,14 +1,14 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
-import { registerEBookProtocol } from './js/server/ebookProtocol'
-import { registerServices } from './js/services'
-import { getMainWindowSettings, saveMainWindowSettings, closeDB } from './js/db'
-import log from './js/logger'
+import { app, BrowserWindow } from 'electron'
+import { registerEBookProtocol } from './js/main/ebookProtocol'
+import { registerServices } from './js/main/services'
+import { getMainWindowSettings, saveMainWindowSettings, closeDB } from './js/shared/db'
+import log from './js/shared/logger'
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
-function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
+function setupUpdateWindowSizeEvents(window, initial, updateSettings) {
 	const DELAY_INTERVAL = 1000
 	let   { sizePosition, maximized, fullscreen } = initial
 		, sizePositionStack = [ sizePosition ]
@@ -43,11 +43,11 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 		return sizePositionStack[sizePositionStack.length - 1]
 	}
 
-	mainWindow.on('resize', () => {
+	window.on('resize', () => {
 		if (maximized || fullscreen)
 			return
 
-		const [ newWidth, newHeight ] = mainWindow.getSize()
+		const [ newWidth, newHeight ] = window.getSize()
 			, { x, y, width, height } = getLastSizePosition()
 
 		if (width === newWidth && height === newHeight)
@@ -57,8 +57,8 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 		delayUpdateSettings('resize')
 	})
 
-	mainWindow.on('move', () => {
-		const [ nX, nY ] = mainWindow.getPosition()
+	window.on('move', () => {
+		const [ nX, nY ] = window.getPosition()
 			, { x, y, width, height } = getLastSizePosition()
 
 		if (x === nX && y === nY)
@@ -78,7 +78,7 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 		lastNormalSizePosition = sizePosition
 	}
 
-	mainWindow.on('maximize', () => {
+	window.on('maximize', () => {
 		maximized = true
 		if (fullscreen) {
 			sizePosition = lastNormalSizePosition
@@ -88,7 +88,7 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 		delayUpdateSettings('maximize')
 	})
 
-	mainWindow.on('enter-full-screen', () => {
+	window.on('enter-full-screen', () => {
 		fullscreen = true
 		if (maximized) {
 			sizePosition = lastNormalSizePosition
@@ -98,7 +98,7 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 		delayUpdateSettings('enter-full-screen')
 	})
 
-	mainWindow.on('unmaximize', () => {
+	window.on('unmaximize', () => {
 		maximized = false
 		if (fullscreen) {
 			sizePosition = lastNormalSizePosition
@@ -108,7 +108,7 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 		delayUpdateSettings('unmaximize')
 	})
 
-	mainWindow.on('leave-full-screen', () => {
+	window.on('leave-full-screen', () => {
 		fullscreen = false
 		if (maximized) {
 			sizePosition = lastNormalSizePosition
@@ -118,7 +118,7 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 		delayUpdateSettings('leave-full-screen')
 	})
 
-	mainWindow.on('restore', () => {
+	window.on('restore', () => {
 		if (maximized || fullscreen) {
 			sizePosition = lastNormalSizePosition
 		}
@@ -127,7 +127,7 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 
 	let savedBeforeClosing = false
 
-	mainWindow.on('close', (e) => {
+	window.on('close', (e) => {
 		if (savedBeforeClosing)
 			return
 
@@ -135,7 +135,7 @@ function setupUpdateWindowSizeEvents(mainWindow, initial, updateSettings) {
 		updateSettings({sizePosition, maximized, fullscreen})
 		closeDB(() => {
 			savedBeforeClosing = true
-			mainWindow.close()
+			window.close()
 		})
 	})
 }

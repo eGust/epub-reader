@@ -17,7 +17,7 @@ import {
 	UPDATE_READER_PROGRESS,
 } from './actions'
 
-function updateSelectedTocItem(items, path, progress) {
+function updateSelectedTocItem(items, path) {
 	let chapterTitle = null
 	function updateEachItem(items) {
 		let anyChanged = false
@@ -145,7 +145,7 @@ const combinedReducer = combineReducers({
 				break
 			case UPDATE_READER_PROGRESS:
 				const { progress, toc, ...others } = state
-					, { chapterTitle, items } = updateSelectedTocItem(toc, action.progress.chapterPath, progress)
+					, { chapterTitle, items } = updateSelectedTocItem(toc, action.progress.chapterPath)
 				if (toc === items) {
 					state = { ...others, toc, progress: { ...progress, ...action.progress, chapterTitle } }
 				} else {
@@ -188,12 +188,6 @@ export const reducer = (state, action) => {
 			state = combinedReducer(state, action)
 	}
 	return state
-}
-
-let DEFAULT_STATE
-
-export function setDefaultState(state) {
-	DEFAULT_STATE = state
 }
 
 export function prepareSavedState(state) {

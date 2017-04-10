@@ -1,5 +1,5 @@
-import { updateSettings, closeSettings } from '../actions'
-import components from './components'
+import { updateSettings, closeSettings } from '../redux/actions'
+import components from '../components/settings'
 import { connect } from 'react-redux'
 
 const mapStateToProps = ({settings}, ownProps) => ({...settings, ...ownProps})

@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import React, { Component } from 'react'
 import { Icon, Header, Modal } from 'semantic-ui-react'
-import { ShelfMenu, ShelfBody } from './shelf/containers'
-import { ReaderMenu, ReaderBody } from './reader/containers'
-import { Settings } from './settings/containers'
+import { ShelfMenu, ShelfBody } from '../containers/shelf_containers'
+import { ReaderMenu, ReaderBody } from '../containers/reader_containers'
+import { Settings } from '../containers/settings_containers'
 import { connect } from 'react-redux'
 
 let droot
@@ -17,7 +17,7 @@ const Dimmer = ({show, content}) => (
 	</div>
 )
 
-class AppUi extends Component {
+class App extends Component {
 	state = {
 		dragging: false,
 		viewMargin: 0,
@@ -102,8 +102,6 @@ class AppUi extends Component {
 	}
 }
 
-const mapStateToProps = (state, ownProps) => ({...state, ...ownProps})
+const exported = { App }
 
-const App = connect(mapStateToProps)(AppUi)
-
-export default App
+export default exported

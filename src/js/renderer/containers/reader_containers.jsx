@@ -9,8 +9,8 @@ import {
 	changeReaderChapter,
 	changeReaderPageNo,
 	doChangeReaderPage,
-} from '../actions'
-import components from './components'
+} from '../redux/actions'
+import components from '../components/reader'
 import { connect } from 'react-redux'
 
 const mapStateToProps = ({reader, settings}, ownProps) => ({...reader, progresses: settings.progresses, ...ownProps})

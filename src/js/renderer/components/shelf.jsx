@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import React from 'react'
 import { Menu, Sidebar, Icon, Popup, Input, Label } from 'semantic-ui-react'
+import querystring from 'querystring'
 
 export const ShelfMenu = ({ filter, sorting, onClickShowSettings, openBookFiles, changeFilter, changeOrder }) => (
 	<Sidebar as={Menu} direction='top' visible inverted fluid>
@@ -114,6 +115,12 @@ export const ShelfBody = ({ customMargin, viewMargin, bookMargin, bookCovers, on
 				onClick={() => onClickOpenBook(book)}
 				style={ customMargin ? { marginLeft: bookMargin/2, marginRight: bookMargin/2, } : {} }
 				>
+				{
+					book.coverImage ? (
+				<img style={{maxWidth: '100%', maxHeight: '100%'}}
+					src={`ebook://doc.${book.id || ''}/?${querystring.stringify({s: 'cover', p: book.coverImage.href, mt: book.coverImage.mediaType })}`} />
+					) : null
+				}
 				<label className='book-title' title={book.fileName}>{book.title}</label>
 			</div>
 		))

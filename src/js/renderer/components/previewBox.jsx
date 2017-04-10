@@ -1,5 +1,5 @@
 import React from 'react'
-import { mapToFontSize, mapToLineHeight, mapToLetterSpacing } from '../sizeMappings'
+import { mapToFontSize, mapToLineHeight, mapToLetterSpacing } from '../helpers/sizeMappings'
 
 export const PreviewBox = ({ fontFamily, fontWeight, fontStyle, color, link, backgroundColor, fontSize, lineHeight, letterSpacing }) => (
 	<div className='preview-container'>

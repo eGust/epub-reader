@@ -2,10 +2,6 @@ function log(...args) {
 	// console.log(`[frame] ${(new Date).toISOString()}`, ...args)
 }
 
-function now() {
-	return (new Date).toISOString()
-}
-
 let currentPosition = {
 	chapterPath: null,
 	anchor: null,
