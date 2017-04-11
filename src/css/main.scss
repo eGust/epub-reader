@@ -182,6 +182,7 @@ body {
 		margin: 5px -25px 0 -25px;
 		font-weight: bold;
 		text-align: center;
+		cursor: pointer;
 	}
 }
 
@@ -291,6 +292,26 @@ body {
 	overflow-y: auto;
 	max-height: calc(100% - 20px);
 	width: 100%;
+}
+
+.toc-item > .title {
+	.folder-link {
+		display: none;
+	}
+
+	.dropdown.icon {
+		vertical-align: middle !important;
+	}
+
+	&:hover {
+		.folder-link {
+			display: initial;
+			margin-left: 6px;
+			&:hover {
+				color: #81D4FA;
+			}
+		}
+	}
 }
 
 .ui.inverted.list a.toc-item.item {
@@ -510,7 +531,7 @@ body {
 }
 
 .ui.styled.accordion.inverted .accordion .active.title:hover, .ui.styled.accordion.inverted .accordion .title:hover, .ui.styled.accordion.inverted .active.title, .ui.styled.accordion.inverted .title:hover {
-	color: #CCC;
+	color: #DCEDC8;
 }
 
 .ui.accordion.list > .item {

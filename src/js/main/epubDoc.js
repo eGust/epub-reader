@@ -9,21 +9,44 @@ import log from '../shared/logger'
 
 // let $ = require('jquery')(jsdom.jsdom().defaultView)
 
-function parseToc($node, currentPath, $) {
-	let results = []
-	$node.find('>navPoint').each((index, np) => {
-		const $np = $(np)
-		results.push({
-			index,
-			id: $np.attr('id'),
-			playOrder: $np.attr('playOrder')|0,
-			text: $np.find('>navLabel>text').text(),
-			content: resolvePath(currentPath, $np.find('>content').attr('src')),
-			subItems: parseToc($np, currentPath, $),
+function parseTocNcx($, basePath) {
+	function parse($node) {
+		let results = []
+		$node.find('>navPoint').each((index, np) => {
+			const $np = $(np)
+			results.push({
+				index,
+				id: $np.attr('id'),
+				playOrder: $np.attr('playOrder')|0,
+				text: $np.find('>navLabel>text').text(),
+				content: resolvePath(basePath, $np.find('>content').attr('src')),
+				subItems: parse($np),
+			})
 		})
-	})
+		return results.sort((a, b) => a.playOrder === b.playOrder ? a.index - b.index : a.playOrder - b.playOrder)
+	}
 
-	return results.sort((a, b) => a.playOrder === b.playOrder ? a.index - b.index : a.playOrder - b.playOrder)
+	return parse($('navMap'))
+}
+
+function parseTocXml($, basePath) {
+	function parse($node) {
+		let results = []
+		$node.length && $node.find('>li').each((index, li) => {
+			const $li = $(li), $a = $li.find('>a'), $ol = $li.find('>ol')
+			if ($a.length) {
+				results.push({
+					index,
+					text: $a.attr('title') || $a.text(),
+					content: resolvePath(basePath, $a.attr('href')),
+					subItems: parse($li.find('>ol')),
+				})
+			}
+		})
+		return results
+	}
+
+	return parse($('nav>ol'))
 }
 
 class EPubDoc extends DocBase {
@@ -42,11 +65,44 @@ class EPubDoc extends DocBase {
 		return ($node.length && verifyImage($(`#${$node.attr('content')}`))) || verifyImage($('#cover'))
 	}
 
-	loadToc({toc, cb}) {
-		const $ = cheerio.load(toc, { xmlMode: true })
-		if (toc) {
-			this.data.toc = parseToc($('navMap'), this.data.tocPath, $)
-		}
+	loadToc($, cb) {
+		const parseToc = ($toc) => {
+				if (!$toc.length)
+					return false
+
+				const tocPath = resolvePath(this.data.opfPath, $toc.attr('href'))
+				let tocParser = null
+				switch ($toc.attr('media-type')) {
+					case 'application/x-dtbncx+xml':
+						tocParser = parseTocNcx
+						break
+					case 'application/xhtml+xml':
+						tocParser = parseTocXml
+						break
+				}
+
+				if (tocParser) {
+					const tocZip = zip.files[this.data.tocPath = tocPath]
+					if(tocZip) {
+						tocZip.async('string')
+						.then((toc) => {
+							this.data.toc = tocParser(cheerio.load(toc, { xmlMode: true }), dirname(tocPath))
+							cb('success', this)
+						})
+						return true
+					}
+				}
+				return false
+			}
+
+		const { opfPath, zip } = this.data
+
+		let tocId = $('spine').prop('toc')
+		if (tocId && tocId.length && parseToc($(`#${tocId}`)) ||
+			parseToc($('manifest>[properties="nav"]')) ||
+			parseToc($('manifest>[media-type="application/x-dtbncx+xml"]')))
+			return
+
 		cb('success', this)
 	}
 
@@ -91,23 +147,7 @@ class EPubDoc extends DocBase {
 				toc: [],
 			}
 
-			let toc = groups['application/x-dtbncx+xml']
-			if (toc) {
-				toc = toc[_.keys(toc)[0]]
-				if (toc && toc.href) {
-					this.data.tocPath = dirname(toc.href)
-					toc = zip.files[toc.href]
-					if(toc) {
-						toc.async('string')
-						.then((toc) => {
-							this.loadToc({toc, cb})
-						})
-						return
-					}
-				}
-			}
-
-			cb('success', this)
+			this.loadToc($, cb)
 		} catch (ex) {
 			console.log('exception', ex)
 		}
@@ -129,15 +169,19 @@ class EPubDoc extends DocBase {
 	}
 
 	get toc() {
-		return this.data.toc
+		return this.data && this.data.toc
 	}
 
 	loadFile(cb) {
-		this.loaded = 'failed'
+		this.loaded = false
+		if (!fs.existsSync(this.fileName)) {
+			cb && cb({id: null, reason: 'not exist'})
+		}
+
 		fs.readFile(this.fileName, (err, zipBuff) => {
 			if (err) {
 				console.log('loadFile.error:', err)
-				throw err
+				return cb && cb({id: null, reason: 'read error'})
 			}
 
 			const hash = crypto.createHash('sha256')
@@ -165,28 +209,28 @@ class EPubDoc extends DocBase {
 				fulfill(item.cached)
 			})
 		}
-		return this.data.zip.files[item.href].async('nodebuffer').then((buffer) => (item.cached = buffer))
+		return this.data && this.data.zip.files[item.href].async('nodebuffer').then((buffer) => (item.cached = buffer))
 	}
 
 	get title() {
-		return this.data.title
+		return this.data && this.data.title
 	}
 
 	get rootItem() {
-		return this.data.items[0]
+		return this.data && this.data.items[0]
 	}
 
 	pathToItem(path) {
 		// console.log(path, _.keys(this.data.pathIndexes), this.data.pathIndexes[path])
-		return this.data.pathIndexes[path]
+		return this.data && this.data.pathIndexes[path]
 	}
 
 	prevItemOf(item) {
-		return this.data.items[item.order-1]
+		return this.data && this.data.items[item.order-1]
 	}
 
 	nextItemOf(item) {
-		return this.data.items[item.order+1]
+		return this.data && this.data.items[item.order+1]
 	}
 
 }

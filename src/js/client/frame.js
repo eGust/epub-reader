@@ -192,13 +192,13 @@ const MESSAGE_HANDLERS = {
 			, bodyLines = styleMapToLines(bodyStyles).join('\n')
 			, linkLines = styleMapToLines(linkStyles).join('\n')
 
-		$('#dyn-css').html(`
+		$('#dyn-css-pre').html(`
 html, body {
 ${bodyLines}
 }
 
 * {
-	font-family: ${bodyStyles['font-family']} !important;
+	font-family: ${bodyStyles['font-family']};
 	color: ${bodyStyles['color']};
 	background-color: ${bodyStyles['background-color']};
 }

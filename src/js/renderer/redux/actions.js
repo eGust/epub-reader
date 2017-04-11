@@ -29,7 +29,12 @@ export const openExistingBook = (book) => (
 	(dispatch, getState) => {
 		const state = getState()
 		Api.openBook(book, (bookInfo) => {
+			if (!bookInfo.book) {
+				return Api.showToast(`Failed to open file: ${bookInfo.reason}!`, 'red')
+			}
+
 			bookInfo = { ...bookInfo, ...state.settings.reader }
+			delete bookInfo.reason
 
 			Api.onClientReady(() => {
 				document.getElementById('frame-book').focus()

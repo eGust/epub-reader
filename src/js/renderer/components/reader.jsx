@@ -27,7 +27,7 @@ export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettin
 			<Popup inverted
 				trigger={
 					<Menu.Item onClick={onClickShowShelf}>
-						<Icon name='block layout' />
+						<Icon name='grid layout' />
 					</Menu.Item>
 				}
 				content='BookShelf'
@@ -44,35 +44,6 @@ export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettin
 	</Sidebar>
 )
 
-const _TocItem = ({ item, onClickTocItem, onToggleTocFolding }) => {
-	const { subItems, isOpen, isSelected, content, text } = item
-	return subItems && subItems.length ? (
-	<div className='toc-item'>
-		<Accordion.Title key='title' className={isSelected ? 'selected' : ''} active={isOpen} onClick={() => onToggleTocFolding(item)}>
-			<Icon name={isOpen ? 'folder open' : 'folder'} />
-			{text}
-			<Icon name='dropdown' />
-		</Accordion.Title>
-		<Accordion.Content key='index' active={isOpen}>
-			<Accordion styled exclusive={false} fluid className='list divided relaxed' inverted>
-			{
-				isOpen ?
-				subItems.map((item, index) => (
-					<TocItem item={item} key={index} onClickTocItem={onClickTocItem} onToggleTocFolding={onToggleTocFolding} />
-				))
-				: null
-			}
-			</Accordion>
-		</Accordion.Content>
-	</div>
-	) : (
-	<List.Item className={isSelected ? 'toc-item selected' : 'toc-item'} as='a'  href={content} onClick={(e) => { e.preventDefault(); onClickTocItem(item) }}>
-		<List.Icon name='file' />
-		<List.Content> {text} </List.Content>
-	</List.Item>
-	)
-}
-
 class TocItem extends Component {
 	shouldComponentUpdate(nextProps, nextState) {
 		return this.props.item !== nextProps.item
@@ -83,23 +54,26 @@ class TocItem extends Component {
 			, { subItems, isOpen, isSelected, content, text } = item
 		return subItems && subItems.length ? (
 		<div className='toc-item'>
-			<Accordion.Title key='title' className={isSelected ? 'selected' : ''} active={isOpen} onClick={() => onToggleTocFolding(item)}>
+			<Accordion.Title key='title' active={isOpen} className={isSelected ? 'selected' : ''} onClick={() => onToggleTocFolding(item)}>
 				<Icon name={isOpen ? 'folder open' : 'folder'} />
-				{text}
+				<span className='toc-title'>{text}</span>
 				<Icon name='dropdown' />
+				<Icon className='folder-link' name='anchor' onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClickTocItem(item) }} />
 			</Accordion.Title>
 			<Accordion.Content key='index' active={isOpen}>
 				<Accordion styled exclusive={false} fluid className='list divided relaxed' inverted>
 				{
-					subItems.map((item, index) => (
+					isOpen ? subItems.map((item, index) => (
 						<TocItem item={item} key={index} onClickTocItem={onClickTocItem} onToggleTocFolding={onToggleTocFolding} />
-					))
+					)) : null
 				}
 				</Accordion>
 			</Accordion.Content>
 		</div>
 		) : (
-		<List.Item className={isSelected ? 'toc-item selected' : 'toc-item'} as='a'  href={content} onClick={(e) => { e.preventDefault(); onClickTocItem(item) }}>
+		<List.Item as='a'  href={content}
+			className={isSelected ? 'toc-item selected' : 'toc-item'}
+			onClick={(e) => { e.preventDefault(); onClickTocItem(item) }}>
 			<List.Icon name='file' />
 			<List.Content> {text} </List.Content>
 		</List.Item>

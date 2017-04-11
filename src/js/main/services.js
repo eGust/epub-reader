@@ -45,8 +45,9 @@ const services = {
 
 	[serviceMessages.openBook]: ({book, apiCallId}, reply) => {
 		docManager.openBook(book.fileInfo.path, book.id, (doc) => {
-			if (!doc)
-				return reply({apiCallId})
+			if (!doc.id) {
+				return reply({book: null, reason: doc.reason, apiCallId})
+			}
 			getDbValue({ scope: 'progress', 'bookId': book.id }, (progress) => {
 				reply({book, toc: doc.toc, progress, apiCallId})
 			})

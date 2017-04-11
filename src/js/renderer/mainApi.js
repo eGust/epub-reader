@@ -62,9 +62,9 @@ const onReceiveServiceMessages = {
 		cb && cb(fileIds)
 	},
 
-	[serviceMessages.openBook]: ({book, toc = [], progress = null, apiCallId}) => {
+	[serviceMessages.openBook]: ({book, toc = [], reason = null, progress = null, apiCallId}) => {
 		const cb = popApiCallbak(apiCallId)
-		cb && cb({book, toc, progress: progress || DEFAULT_STATE.reader.progress})
+		cb && cb({book, toc, progress: progress || DEFAULT_STATE.reader.progress, reason})
 	},
 
 	[serviceMessages.getDbValue]: ({values, apiCallId}) => {
