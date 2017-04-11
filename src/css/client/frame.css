@@ -115,8 +115,8 @@ body > #dialog-container > dialog {
 }
 
 @keyframes show-toast {
-    0%   	{ transform: translateY( 120%); opacity: 0; }
-    12%  	{ transform: translateY(    0); opacity: 1; }
-    80%		{ transform: translateY(    0); opacity: 1; }
-    100%	{ transform: translateY(-200%); opacity: 0; }
+	0%   	{ transform: translateY( 120%); opacity: 0; }
+	12%  	{ transform: translateY(    0); opacity: 1; }
+	80%		{ transform: translateY(    0); opacity: 1; }
+	100%	{ transform: translateY(-200%); opacity: 0; }
 }

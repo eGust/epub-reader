@@ -11,10 +11,7 @@ function mergeFonts(fonts) {
 
 function fetchFonts(cb) {
 	if (updatedCache) {
-		setTimeout(() => {
-			cb && cb(cachedFonts)
-		}, 100)
-		return
+		return cb && cb(cachedFonts)
 	}
 
 	if (fetchingFonts) {
@@ -44,7 +41,7 @@ export class FontPicker extends Component {
 		}
 		if (!updatedCache) {
 			fetchFonts((fonts) => {
-				this.setState({fonts, loading: false})
+				this.setState(() => ({fonts, loading: false}))
 			})
 		}
 	}

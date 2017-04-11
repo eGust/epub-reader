@@ -15,8 +15,8 @@ Api.registerServiceApi()
 Api.getSavedState(prepareSavedState, (initialState) => {
 const docRoot = document.getElementById('root')
 	, logger = createLogger({ collapsed: true, duration: true, diff: true })
-	, store = createStore(reducer, initialState, applyMiddleware(thunk, logger))
-	// , store = createStore(reducer, initialState, applyMiddleware(thunk))
+	// , store = createStore(reducer, initialState, applyMiddleware(thunk, logger))
+	, store = createStore(reducer, initialState, applyMiddleware(thunk))
 
 	Api.setReduxStore(store)
 

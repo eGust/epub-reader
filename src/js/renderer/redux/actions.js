@@ -86,8 +86,15 @@ export const openExistingBook = (book) => (
 
 export const openBookFiles = (files) => (
 	(dispatch) => {
+		// const epubFiles = files.filter((path) => path.toLowerCase().endsWith('.epub'))
 		Api.openFiles(files, (fileIds) => {
-			dispatch(addBooksToShelf({fileIds, open: Object.keys(fileIds).length === 1}))
+			const openCount = Object.keys(fileIds).length
+			dispatch(addBooksToShelf({fileIds, open: openCount === 1}))
+			if (openCount < files.length) {
+				Api.showToast(`Failed to open ${files.length - openCount} files!`, 'red')
+			} else {
+				Api.showToast(`Successed to open ${openCount} files`, 'green')
+			}
 		})
 		dispatch({
 			type: OPEN_BOOK_FILES,
@@ -127,10 +134,12 @@ export const updateFilter = (filter = '') => ({
 	filter,
 })
 
-export const updateSorting = (order) => ({
-	type: UPDATE_SORTING,
-	order,
-})
+export const updateSorting = (order) => (
+	(dispatch, getState) => {
+		dispatch({type: UPDATE_SORTING, order})
+		Api.saveSettings('shelf.sorting', { ...getState().shelf.sorting, ...order })
+	}
+)
 
 // reader
 export
@@ -168,7 +177,7 @@ export const doChangeReaderPage = ({ book, progress, delta }) => {
 			if (chapterPath) {
 				Api.setClientPath({ chapterPath, pageNo: -1 })
 			} else {
-				Api.showClientToast('No more chapters')
+				Api.showToast('No more chapters')
 			}
 		})
 	} else if (delta > 0 && progress.pageNo >= progress.pageCount) {
@@ -176,7 +185,7 @@ export const doChangeReaderPage = ({ book, progress, delta }) => {
 			if (chapterPath) {
 				Api.setClientPath({ chapterPath })
 			} else {
-				Api.showClientToast('No more chapters')
+				Api.showToast('No more chapters')
 			}
 		})
 	} else {
@@ -198,7 +207,7 @@ export const changeReaderChapter = (delta) => (
 			if (chapterPath) {
 				Api.setClientPath({ chapterPath })
 			} else {
-				Api.showClientToast('No more chapters')
+				Api.showToast('No more chapters')
 			}
 		})
 	}

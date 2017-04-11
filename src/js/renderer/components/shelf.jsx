@@ -109,18 +109,22 @@ export const ShelfMenu = ({ filter, sorting, onClickShowSettings, openBookFiles,
 export const ShelfBody = ({ customMargin, viewMargin, bookMargin, bookCovers, onClickOpenBook }) => (
 	<div id='books-shelf' style={ customMargin ? { paddingLeft: viewMargin, paddingRight: viewMargin, } : {} }>
 	{
-		bookCovers.map((book = {}, index) => (
+		bookCovers.map((book, index) => (
 			<div key={index}
-				className='book-cover'
+				className='book'
 				onClick={() => onClickOpenBook(book)}
 				style={ customMargin ? { marginLeft: bookMargin/2, marginRight: bookMargin/2, } : {} }
 				>
-				{
-					book.coverImage ? (
-				<img style={{maxWidth: '100%', maxHeight: '100%'}}
-					src={`ebook://doc.${book.id || ''}/?${querystring.stringify({s: 'cover', p: book.coverImage.href, mt: book.coverImage.mediaType })}`} />
-					) : null
-				}
+				<div className='cover-wrap'>
+					<div className='cover-border'>
+					{
+						book.coverImage ? (
+						<img className='cover-image'
+							src={`ebook://doc.${book.id || ''}/?${querystring.stringify({s: 'cover', p: book.coverImage.href, mt: book.coverImage.mediaType })}`} />
+						) : null
+					}
+					</div>
+				</div>
 				<label className='book-title' title={book.fileName}>{book.title}</label>
 			</div>
 		))

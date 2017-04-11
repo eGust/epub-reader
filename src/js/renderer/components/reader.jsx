@@ -186,51 +186,74 @@ const PageStatus = ({book, progress, onClickChapterPrev, onClickChapterNext, onC
 const ProgressBar = ({ pageNo = 1, pageCount = 0, onChangePageNo }) => (
 	<div className='progress-bar'>
 	{
-		_.times(pageCount, (index) => (
+		pageCount > 1 ?_.times(pageCount, (index) => (
 			<span key={index}
 				className={index+1 === pageNo ? "current item" : index < pageNo ? 'past item' : 'future item'}
 				title={`Page ${index+1}`}
 				onClick={() => { index+1 !== pageNo && onChangePageNo(index+1) }}
 				/>
-		))
+		)) : null
 	}
 	</div>
 )
 
-const BookContainer = ({isTocOpen, isTocPinned, book, progress, ...events}) => (
-	<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }
-		onKeyUp={(e) => {
-			switch (e.which) {
-				case 33: // page up
-				case 38: // up
-				case 37: // left
-					events.onClickPageGoDelta({book, progress, delta: -1})
-					break
-				case 34: // page down
-				case 40: // down
-				case 39: // right
-				case 32: // space
-				case 13: // enter
-					events.onClickPageGoDelta({book, progress, delta: +1})
-					break
-			}
-		}}>
-		<iframe
-			className={book.id ? 'full-size' : 'hide'}
-			id='frame-book'
-			src={`ebook://doc.${book.id || ''}/?s=root`}
-			/>
-		<ProgressBar pageNo={progress.pageNo} pageCount={progress.pageCount} onChangePageNo={events.onChangePageNo} />
-		<div className='page-navigator prev-page' onClick={() => events.onClickPageGoDelta({book, progress, delta: -1})}>
-			<Icon name='chevron left' size='large' title='Previous Page' />
+const BookContainer = ({isTocOpen, isTocPinned, book, progress, onDragStart, onDragEnd, onDrop, ...events}) => {
+	const hookFrameDragEvents = (frame, {onDragStart, onDragEnd, onDrop}) => {
+			if (!frame)
+				return
+			const body = frame.contentWindow.document.getElementsByTagName('body')[0]
+			if (body.getAttribute('data-bound'))
+				return
+
+			body.addEventListener('drag', onDragStart, true)
+			body.addEventListener('dragenter', onDragStart, true)
+			body.addEventListener('dragstart', onDragStart, true)
+			body.addEventListener('dragenter', onDragStart, true)
+			body.addEventListener('dragover', onDragStart, true)
+
+			body.addEventListener('dragend', onDragEnd, true)
+			body.addEventListener('dragleave', onDragEnd, true)
+			body.addEventListener('drop', onDrop, true)
+
+			body.setAttribute('data-bound', 1)
+		}
+
+	return (
+		<div id='book-container' className={isTocOpen ? 'book-with-toc' : 'book-full-src' }
+			onKeyUp={(e) => {
+				switch (e.which) {
+					case 33: // page up
+					case 38: // up
+					case 37: // left
+						events.onClickPageGoDelta({book, progress, delta: -1})
+						break
+					case 34: // page down
+					case 40: // down
+					case 39: // right
+					case 32: // space
+					case 13: // enter
+						events.onClickPageGoDelta({book, progress, delta: +1})
+						break
+				}
+			}}>
+			<iframe
+				className={book.id ? 'full-size' : 'hide'}
+				id='frame-book'
+				src={`ebook://doc.${book.id || ''}/?s=root`}
+				ref={(frame) => hookFrameDragEvents(frame, {onDragStart, onDragEnd, onDrop})}
+				/>
+			<ProgressBar pageNo={progress.pageNo} pageCount={progress.pageCount} onChangePageNo={events.onChangePageNo} />
+			<div className='page-navigator prev-page' onClick={() => events.onClickPageGoDelta({book, progress, delta: -1})}>
+				<Icon name='chevron left' size='large' title='Previous Page' />
+			</div>
+			<div className='page-navigator next-page' onClick={() => events.onClickPageGoDelta({book, progress, delta: +1})}>
+				<Icon name='chevron right' size='large' title='Next Page' />
+			</div>
+			<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={events.onClickDimmer} />
+			<PageStatus book={book} progress={progress} onClickPageGoDelta={events.onClickPageGoDelta} {...events} />
 		</div>
-		<div className='page-navigator next-page' onClick={() => events.onClickPageGoDelta({book, progress, delta: +1})}>
-			<Icon name='chevron right' size='large' title='Next Page' />
-		</div>
-		<div className={isTocOpen && !isTocPinned ? 'reader-dimmer' : 'hide'} onClick={events.onClickDimmer} />
-		<PageStatus book={book} progress={progress} onClickPageGoDelta={events.onClickPageGoDelta} {...events} />
-	</div>
-)
+	)
+}
 
 export const ReaderBody = (props) => (
 	<div id='book-reader' as={Menu}>

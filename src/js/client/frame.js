@@ -19,7 +19,11 @@ $(document)
 .on('click', 'a', function (event) {
 	event.preventDefault()
 	let a = $(this)[0], chapterPath = a.pathname.slice(1), anchor = a.hash
-	MESSAGE_HANDLERS.setPath({ chapterPath, anchor })
+	if (a.protocol === location.protocol && a.host === location.host) {
+		MESSAGE_HANDLERS.setPath({ chapterPath, anchor })
+	} else {
+		postWebMessage({action: 'openExternal', url: a.href})
+	}
 })
 
 function updatePageCount() {

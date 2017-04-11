@@ -50,7 +50,7 @@ class App extends Component {
 
 	render() {
 		const { dragging, ...margins } = this.state
-			, { routing, showSettings, reader, shelf } = this.props
+			, { routing, showSettings, reader, shelf, openBookFiles } = this.props
 		// customMargin, viewMargin, bookMargin, bookCovers,
 
 		const onPreventDefault = (e) => {
@@ -59,17 +59,23 @@ class App extends Component {
 			}
 			, onDragStart = (e) => {
 				e.preventDefault()
-				// e.stopPropagation()
+				e.stopPropagation()
 				this.setState({ dragging: true })
 			}
 			, onDragEnd = (e) => {
 				e.preventDefault()
-				// e.stopPropagation()
+				e.stopPropagation()
 				this.setState({ dragging: false })
+			}
+			, onDrop = (e) => {
+				e.preventDefault()
+				e.stopPropagation()
+				this.setState({ dragging: false })
+				openBookFiles(_.map(e.dataTransfer.files, (f) => f.path))
 			}
 
 		return (
-			<div className="App" onDragEnter={onDragStart}>
+			<div className="App" onDragEnterCapture={onDragStart}>
 				<div className={routing === 'shelf' ? 'full-size' : 'hide'} >
 					<ShelfMenu />
 					<ShelfBody {...margins} />
@@ -78,7 +84,7 @@ class App extends Component {
 
 				<div className={routing === 'reader' ? 'full-size' : 'hide'} >
 					<ReaderMenu />
-					<ReaderBody />
+					<ReaderBody onDragStart={onDragStart} onDragEnd={onDragEnd} onDrop={onDrop} />
 					<Dimmer show={reader.opening} content='Opening...' />
 				</div>
 
@@ -88,13 +94,13 @@ class App extends Component {
 					<Icon name='file text' className='file-icon' style={{color: 'gray'}} />
 					<Icon name='level down' className='file-icon' style={{color: 'black', marginLeft: '10vw'}} />
 					<div id='dragging-file' className='dragging'
-						onDragOver={onPreventDefault}
-						onDragEnter={onPreventDefault}
-						onDrag={onPreventDefault}
-						onDragStart={onPreventDefault}
-						onDragEnd={onDragEnd}
-						onDragLeave={onDragEnd}
-						onDrop={onDragEnd}
+						onDragOverCapture={onPreventDefault}
+						onDragEnterCapture={onPreventDefault}
+						onDragCapture={onPreventDefault}
+						onDragStartCapture={onPreventDefault}
+						onDragEndCapture={onDragEnd}
+						onDragLeaveCapture={onDragEnd}
+						onDropCapture={onDrop}
 					/>
 				</div>
 			</div>

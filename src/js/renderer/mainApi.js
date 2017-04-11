@@ -1,10 +1,10 @@
-import { ipcRenderer } from 'electron'
+import { ipcRenderer, shell } from 'electron'
 import _ from 'lodash'
 import { serviceMessages } from '../shared/serviceMessages'
 import log from '../shared/logger'
 import { installApi } from './redux/actions'
 
-window.$ = require('jquery')
+var $ = window.$ = require('jquery')
 
 let onClientReadyEvent, onUpdateProgressEvent, onSwitchPageEvent
 
@@ -19,6 +19,10 @@ const MESSAGE_HANDLERS = {
 
 	switchPage: (delta) => {
 		onSwitchPageEvent && onSwitchPageEvent(delta)
+	},
+
+	openExternal: ({url}) => {
+		shell.openExternal(url)
 	},
 }
 
@@ -78,8 +82,8 @@ const DEFAULT_STATE = {
 		opening: false,
 		filter: '',
 		sorting: {
-			method: 'Title',
-			order: 'ascending',
+			method: 'Last Read',
+			order: 'descending',
 		},
 	},
 	reader: {
@@ -132,6 +136,13 @@ function popApiCallbak(id) {
 	const cb = apiCallbacks[id]
 	delete apiCallbacks[id]
 	return cb
+}
+
+function showToastDialog($dlg) {
+	$('body>#dialog-container').append($dlg)
+	setTimeout(() => {
+		$dlg.remove()
+	}, 4000)
 }
 
 const apiCallbacks = {}
@@ -237,6 +248,10 @@ const apiCallbacks = {}
 
 	loadSettings(key, cb) {
 		sendServiceMessage(serviceMessages.getDbValue, { path: key, apiCallId: getApiCallbackId(cb) })
+	},
+
+	showToast(message, style = null) {
+		showToastDialog($(`<dialog class="${style || ''}">`).text(message))
 	},
 }
 

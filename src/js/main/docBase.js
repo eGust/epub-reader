@@ -2,8 +2,6 @@ import { docManager } from './docManager'
 import path from 'path'
 import moment from 'moment'
 
-const idBase = '2000-01-01'
-
 export class DocBase {
 	loaded = false
 
@@ -23,7 +21,7 @@ export class DocBase {
 	setFileName(fileName, id) {
 		if (this.fileName)
 			return this
-		this.id = id || `${Date.now().toString(36)}.${moment().diff(idBase).toString(36)}`
+		this.id = id || `${Date.now().toString(36)}`
 		docManager.addDoc(this, this.fileName = path.resolve(fileName))
 		return this
 	}
