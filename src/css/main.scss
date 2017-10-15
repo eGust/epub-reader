@@ -427,28 +427,33 @@ body {
 		}
 	}
 
-	.page-status {
+	.page-status-wrapper {
 		position: absolute;
+		display: flex;
+		width: 100%;
 		bottom: $page-navigator-margin;
-		left: calc(50% - 180px);
-		width: 360px;
 		height: 38px;
-		text-align: center;
-		opacity: 0.6;
 
-		label {
-			color: black;
-			font-weight: bold;
+		.page-status {
+			text-align: center;
+			opacity: 0.6;
+			margin: 0 auto;
+
+			label {
+				color: black;
+				font-weight: bold;
+			}
+
+			&:hover {
+				opacity: 1;
+			}
+
+			.ui.menu .dropdown.item .menu {
+				border-radius: 4px 4px 0 0;
+			}
 		}
 
-		&:hover {
-			opacity: 1;
 		}
-
-		.ui.menu .dropdown.item .menu {
-			border-radius: 4px 4px 0 0;
-		}
-	}
 
 	.progress-bar {
 		display: flex;

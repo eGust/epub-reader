@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { Component } from 'react'
+import React, { Component, PureComponent } from 'react'
 import { Menu, Sidebar, Icon, Popup, Segment, Accordion, List, Dropdown } from 'semantic-ui-react'
 
 export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettings, onClickShowShelf, isTocOpen }) => (
@@ -44,11 +44,7 @@ export const ReaderMenu = ({ book, progress, onClickToggleToc, onClickShowSettin
 	</Sidebar>
 )
 
-class TocItem extends Component {
-	shouldComponentUpdate(nextProps, nextState) {
-		return this.props.item !== nextProps.item
-	}
-
+class TocItem extends PureComponent {
 	render() {
 		const { item, onClickTocItem, onToggleTocFolding } = this.props
 			, { subItems, isOpen, isSelected, content, text } = item
@@ -81,15 +77,7 @@ class TocItem extends Component {
 	}
 }
 
-class TocContainer extends Component {
-	shouldComponentUpdate(nextProps, nextState) {
-		return !(  this.props.toc === nextProps.toc
-				&& this.props.isTocOpen === nextProps.isTocOpen
-				&& this.props.isTocPinned === nextProps.isTocPinned
-				&& this.props.opening === nextProps.opening
-				)
-	}
-
+class TocContainer extends PureComponent {
 	render() {
 		const {toc, isTocOpen = false, isTocPinned = false, opening, onClickPin, onClickTocItem, onToggleTocFolding} = this.props
 		return (
@@ -122,38 +110,36 @@ class TocContainer extends Component {
 }
 
 const PageStatus = ({book, progress, onClickChapterPrev, onClickChapterNext, onClickPageGoDelta, onChangePageNo}) => (
-	<div className='page-status'>
-		<Menu icon size='small' color='brown' inverted>
-			<Menu.Item title='Previous Chapter' onClick={onClickChapterPrev}>
-				<Icon name='step backward' />
-			</Menu.Item>
-			<Menu.Item title='Previous Page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
-				<Icon name='caret left' />
-			</Menu.Item>
-
-			<Dropdown text={progress.pageNo ? `${progress.pageNo}` : '-'} className='link item upward'>
-				<Dropdown.Menu>
-				{
-					_.times(progress.pageCount, (i) => (
-						<Dropdown.Item key={`${i}`} onClick={() => onChangePageNo(i+1)}>{i+1}</Dropdown.Item>
-					))
-				}
-				</Dropdown.Menu>
-			</Dropdown>
-
-			<Menu.Item className='title-middle-bar'>
-				<label>{progress.pageCount ? ` of ${progress.pageCount}` : '-'}</label>
-			</Menu.Item>
-
-			<Menu.Menu position='right'>
-				<Menu.Item title='Next Page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
-					<Icon name='caret right' />
+	<div className='page-status-wrapper'>
+		<div className='page-status'>
+			<Menu icon size='small' color='brown' inverted>
+				<Menu.Item title='Previous Chapter' onClick={onClickChapterPrev}>
+					<Icon name='step backward' />
 				</Menu.Item>
-				<Menu.Item title='Next Chapter' onClick={onClickChapterNext}>
-					<Icon name='step forward' />
+				<Menu.Item title='Previous Page' onClick={() => onClickPageGoDelta({book, progress, delta: -1})}>
+					<Icon name='caret left' />
 				</Menu.Item>
-			</Menu.Menu>
-		</Menu>
+
+				<Dropdown text={progress.pageNo ? `${progress.pageNo} / ${progress.pageCount}` : '-'} className='link item upward'>
+					<Dropdown.Menu>
+					{
+						_.times(progress.pageCount, (i) => (
+							<Dropdown.Item key={`${i}`} onClick={() => onChangePageNo(i+1)}>{i+1} / {progress.pageCount}</Dropdown.Item>
+						))
+					}
+					</Dropdown.Menu>
+				</Dropdown>
+
+				<Menu.Menu position='right'>
+					<Menu.Item title='Next Page' onClick={() => onClickPageGoDelta({book, progress, delta: +1})}>
+						<Icon name='caret right' />
+					</Menu.Item>
+					<Menu.Item title='Next Chapter' onClick={onClickChapterNext}>
+						<Icon name='step forward' />
+					</Menu.Item>
+				</Menu.Menu>
+			</Menu>
+		</div>
 	</div>
 )
 

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { Component } from 'react'
+import React, { PureComponent } from 'react'
 import { Icon, Header, Modal } from 'semantic-ui-react'
 import { ShelfMenu, ShelfBody } from '../containers/shelf_containers'
 import { ReaderMenu, ReaderBody } from '../containers/reader_containers'
@@ -17,7 +17,7 @@ const Dimmer = ({show, content}) => (
 	</div>
 )
 
-class App extends Component {
+class App extends PureComponent {
 	state = {
 		dragging: false,
 		viewMargin: 0,

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { Component } from 'react'
+import React, { PureComponent } from 'react'
 import { Menu, Icon, Modal, Segment, Checkbox, Dropdown, Form, Grid, Button } from 'semantic-ui-react'
 import Slider from 'rc-slider'
 
@@ -144,13 +144,8 @@ const Behavior = ({ show, onUpdateSettings, settings: { isTocOpen, isTocPinned }
 	</div>
 )
 
-export class Settings extends Component {
+export class Settings extends PureComponent {
 	state = { activeTab: 'looking' }
-
-	shouldComponentUpdate(nextProps, nextState) {
-		const { showSettings = false } = nextState
-		return this.state.showSettings !== showSettings || (showSettings && !_.eq(this.state, nextState))
-	}
 
 	render() {
 		const { activeTab } = this.state

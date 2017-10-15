@@ -4,7 +4,7 @@ import { Icon, Popup, Button } from 'semantic-ui-react'
 import { Hue, Saturation } from 'react-color/lib/components/common'
 import Color from 'react-color/lib/helpers/color'
 
-export class ColorPicker extends React.Component {
+export class ColorPicker extends React.PureComponent {
 	constructor(props) {
 		super(props)
 		this.state = {
@@ -26,10 +26,6 @@ export class ColorPicker extends React.Component {
 		if (nextProps.color) {
 			this.setState({color: Color.toState(nextProps.color, 0)})
 		}
-	}
-
-	shouldComponentUpdate(nextProps, nextState) {
-		return this.state.color !== nextState.color || this.state.activePanel !== nextState.activePanel
 	}
 
 	render() {

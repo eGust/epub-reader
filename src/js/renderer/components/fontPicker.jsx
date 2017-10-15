@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { Component } from 'react'
+import React, { PureComponent } from 'react'
 import { Dropdown } from 'semantic-ui-react'
 import fontManager from 'font-manager'
 
@@ -30,7 +30,7 @@ function fetchFonts(cb) {
 	})
 }
 
-export class FontPicker extends Component {
+export class FontPicker extends PureComponent {
 
 	constructor(props) {
 		super(props)

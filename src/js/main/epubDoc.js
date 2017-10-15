@@ -62,7 +62,7 @@ class EPubDoc extends DocBase {
 		}
 
 		let $node = $('metadata>meta[name="cover"]')
-		return ($node.length && verifyImage($(`#${$node.attr('content')}`))) || verifyImage($('#cover'))
+		return ($node.length && verifyImage($(`#${$node.attr('content').replace(/(\W)/g, '\\$1')}`))) || verifyImage($('#cover'))
 	}
 
 	loadToc($, cb) {
