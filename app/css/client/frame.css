@@ -1,0 +1,139 @@
+* {
+  box-sizing: border-box;
+}
+
+main#main {
+  position: relative;
+  margin: auto;
+  width: 95vw;
+  height: 94vh;
+  margin-top: 3vh;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+main#main.show {
+  visibility: visible;
+}
+
+main#main>#content {
+  position: absolute;
+  height: 100%;
+  column-fill: auto;
+  text-align: left;
+
+  column-width: 450px;
+  column-gap: 10px;
+  width: 480px;
+}
+
+@media (min-width: 480px) {
+  main#main>#content {
+    width: 100%;
+    column-width: 95vw;
+    column-gap: 3vw;
+  }
+
+  svg,
+  img {
+    max-width: 95vw;
+    margin: auto;
+  }
+}
+
+@media (min-width: 992px) {
+  main#main>#content {
+    column-width: 40vw;
+    column-gap: 3vw;
+  }
+
+  svg,
+  img {
+    max-width: 40vw;
+    margin: auto;
+  }
+}
+
+p {
+  margin-top: 0.1rem !important;
+  margin-bottom: 0.3rem !important;
+  font-size: 1rem !important;
+}
+
+h1 {
+  font-size: 2rem !important;
+}
+
+h2 {
+  font-size: 1.7rem !important;
+}
+
+h3 {
+  font-size: 1.4rem !important;
+}
+
+h4 {
+  font-size: 1.2rem !important;
+}
+
+h5 {
+  font-size: 1.1rem !important;
+}
+
+body>#dialog-container {
+  display: flex;
+  position: absolute;
+  bottom: 0;
+  padding: 60px 0 40px 0;
+  width: 60%;
+  transform: translateX(30%);
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  background-color: transparent;
+  overflow: hidden;
+}
+
+body>#dialog-container>dialog {
+  position: relative;
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  padding: 10px 25px;
+  min-height: 48px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.7);
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+  font-family: Lato, 'Helvetica Neue', Arial, Helvetica, sans-serif, 'Microsoft YaHei' !important;
+  font-size: 16px;
+  border: none;
+  border-radius: 2px;
+  margin-bottom: 15px;
+
+  user-select: none;
+  cursor: default;
+  animation: show-toast 4s linear 1 forwards;
+}
+
+@keyframes show-toast {
+  0% {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+
+  12% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  80% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-200%);
+    opacity: 0;
+  }
+}

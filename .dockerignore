@@ -49,5 +49,4 @@ main.js.map
 
 .idea
 npm-debug.log.*
-test/
-out
+.*.dockerfile
