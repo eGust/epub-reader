@@ -20,14 +20,16 @@ function fetchStatic({
   })
 }
 
+const appPath = process.env.NODE_ENV === 'production' ? __dirname: path.join(__dirname, '..', '..');
+
 const GLOBAL_RESOURCES = {
   'lodash.js': {
-    filePath: path.resolve(__dirname, `../../../node_modules/lodash/lodash.min.js`),
+    filePath: path.resolve(appPath, `../node_modules/lodash/lodash.min.js`),
     mimeType: 'application/javascript',
     fetch: fetchStatic,
   },
   'jquery.js': {
-    filePath: path.resolve(__dirname, `../../../node_modules/jquery/dist/jquery.min.js`),
+    filePath: path.resolve(appPath, `../node_modules/jquery/dist/jquery.min.js`),
     mimeType: 'application/javascript',
     fetch: fetchStatic,
   },
@@ -37,17 +39,17 @@ const GLOBAL_RESOURCES = {
   // 	fetch: fetchStatic
   // },
   'frame.js': {
-    filePath: path.resolve(__dirname, `../client/frame.js`),
+    filePath: path.resolve(appPath, `js/client/frame.js`),
     mimeType: 'application/javascript',
     fetch: fetchStatic,
   },
   'frame.css': {
-    filePath: path.resolve(__dirname, `../../css/client/frame.css`),
+    filePath: path.resolve(appPath, `css/client/frame.css`),
     mimeType: 'text/css',
     fetch: fetchStatic,
   },
   'frame.html': {
-    filePath: path.resolve(__dirname, `../../frame.html`),
+    filePath: path.resolve(appPath, `frame.html`),
     mimeType: 'text/html',
     fetch: fetchStatic,
   },
