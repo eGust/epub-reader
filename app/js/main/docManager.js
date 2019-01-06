@@ -20,7 +20,7 @@ function fetchStatic({
   })
 }
 
-const appPath = process.env.NODE_ENV === 'production' ? __dirname: path.join(__dirname, '..', '..');
+const appPath = process.env.NODE_ENV === 'production' ? __dirname : path.join(__dirname, '..', '..');
 
 const GLOBAL_RESOURCES = {
   'lodash.js': {
