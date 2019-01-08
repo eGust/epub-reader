@@ -62,6 +62,9 @@
     "files": [
       "app/dist/",
       "app/app.html",
+      "app/frame.html",
+      "app/js/client/",
+      "app/css/client/",
       "app/main.prod.js",
       "app/main.prod.js.map",
       "package.json"
