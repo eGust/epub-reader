@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "es2019",
+    "jsx": "react",
+    "module": "esnext",
+    "moduleResolution": "node",
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+
+    "inlineSources": true,
+    "sourceMap": true,
+
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+
+    "newLine": "lf",
+
+    "noEmitOnError": true,
+    "lib": ["dom", "esnext"]
+  },
+  "include": [
+    "app/**/*"
+  ],
+  "exclude": ["node_modules"]
+}
