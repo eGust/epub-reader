@@ -34,8 +34,14 @@ export const parseOpf = async (xml: string): Promise<OpfData | null> => {
   return result as OpfData;
 };
 
-export const parseNav = async (xml: string): Promise<Navigation | null> => {
+export const parseNcx = async (xml: string): Promise<Navigation | null> => {
   const { result } = await parseXml({ xml, target: ParseXmlType.Ncx });
+  if (!result) return null;
+  return result as Navigation;
+};
+
+export const parseNav = async (xml: string): Promise<Navigation | null> => {
+  const { result } = await parseXml({ xml, target: ParseXmlType.Nav });
   if (!result) return null;
   return result as Navigation;
 };

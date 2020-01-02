@@ -1,7 +1,7 @@
 import { join } from 'path';
 
 import ZipFiles from './zip_files';
-import { OpfItem, OpfData } from '../ipc/types';
+import { OpfItem, OpfData, OpfMeta } from '../ipc/types';
 
 export interface ManifestItem {
   readonly id: string;
@@ -11,6 +11,16 @@ export interface ManifestItem {
   readonly mime: string;
 
   index: number;
+}
+
+export interface ManifestRef {
+  readonly id: string;
+
+  readonly isLinear: boolean;
+
+  readonly item: ManifestItem;
+
+  readonly index: number;
 }
 
 const createItem = ({ path, ...item }: OpfItem, base: string): ManifestItem => ({
@@ -24,15 +34,18 @@ export class MetaFile {
 
   private itemByPath: Record<string, ManifestItem> = {};
 
-  private spine: ManifestItem[] = [];
+  private spine: ManifestRef[] = [];
 
   public readonly path: string;
+
+  public readonly metadata: OpfMeta;
 
   public readonly files: ZipFiles;
 
   constructor(opf: OpfData, path: string, files: ZipFiles) {
     this.path = path;
     this.files = files;
+    this.metadata = opf.meta;
 
     const basePath = join(this.path, '..');
     opf.items.forEach((opfItem) => {
@@ -42,9 +55,17 @@ export class MetaFile {
     });
 
     opf.refs.forEach((ref, index) => {
-      const item = this.itemById[ref]!;
-      item.index = index;
-      this.spine.push(item);
+      const item = this.itemById[ref.idRef]!;
+      if (ref.isLinear) {
+        item.index = index;
+      }
+      const refItem = {
+        id: ref.idRef,
+        isLinear: ref.isLinear,
+        item,
+        index,
+      };
+      this.spine.push(refItem);
     });
   }
 
@@ -59,13 +80,13 @@ export class MetaFile {
   public getPrevOf({ id, path }: { id?: string, path?: string }): ManifestItem | undefined {
     const item = this.getItemBy({ id, path });
     if (!item || item.index <= 0) return undefined;
-    return this.spine[item.index - 1];
+    return this.spine[item.index - 1]?.item;
   }
 
   public getNextOf({ id, path }: { id?: string, path?: string }): ManifestItem | undefined {
     const item = this.getItemBy({ id, path });
     if (!item || item.index < 0) return undefined;
-    return this.spine[item.index + 1];
+    return this.spine[item.index + 1]?.item;
   }
 }
 

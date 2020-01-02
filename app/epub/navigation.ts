@@ -1,13 +1,13 @@
-export interface NavPoint {
+export interface NavItem {
   readonly label: string;
   readonly path: string;
-  readonly children: NavPoint[];
-  readonly category: string;
+  readonly items: NavItem[];
+  readonly cat: string;
   readonly id: string | null;
-  readonly order: number | null;
+  readonly seq: number | null;
 }
 
 export interface Navigation {
   readonly title: string;
-  readonly points: NavPoint[];
+  readonly items: NavItem[];
 }

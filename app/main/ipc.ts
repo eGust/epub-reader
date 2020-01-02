@@ -26,6 +26,16 @@ ipcMain.handle(IpcMessageType.OpenFile, async (event, message: IpcMessageData) =
   if (pm) {
     data.normalized = pm.filename;
     data.id = pm.id;
+    data.meta = pm.metadata!.metadata;
+    data.toc = pm.navigation;
+    if (data.meta.cover) {
+      const cover = pm.metadata!.getItemBy({ id: data.meta.cover });
+      data.cover = cover && {
+        id: cover.id,
+        path: cover.path,
+        mime: cover.mime,
+      };
+    }
   }
   return result;
 });

@@ -11,6 +11,7 @@ export enum ParseXmlType {
   Meta,
   Opf,
   Ncx,
+  Nav,
 }
 
 export interface ParseXmlMessage {
@@ -22,15 +23,30 @@ export interface MetaData {
   path: string;
 }
 
+export interface OpfMeta {
+  title: string;
+  creators: string[];
+  description: string;
+  cover: string;
+  otherMeta: Record<string, string>;
+  docContent: Record<string, string[]>;
+}
+
 export interface OpfItem {
   id: string;
   path: string;
   mime: string;
 }
 
+export interface OpfItemRef {
+  idRef: string;
+  isLinear: boolean;
+}
+
 export interface OpfData {
+  meta: OpfMeta;
   items: OpfItem[];
-  refs: string[];
+  refs: OpfItemRef[];
 }
 
 export interface ParseXmlResult {
@@ -46,6 +62,13 @@ export interface OpenFileResult {
   filename: string;
   normalized?: string;
   id?: string;
+  meta?: OpfMeta;
+  cover?: {
+    id: string;
+    path: string;
+    mime: string;
+  };
+  toc?: Navigation;
 }
 
 export interface IpcMessageData {
@@ -54,4 +77,4 @@ export interface IpcMessageData {
   error?: string;
 }
 
-export { NavPoint, Navigation } from '../epub/navigation';
+export { NavItem, Navigation } from '../epub/navigation';

@@ -50,6 +50,7 @@ const createWindow = () => {
     width: 800,
     webPreferences: {
       nodeIntegration: true,
+      webviewTag: true,
       // nodeIntegrationInWorker: true,
       // sandbox: true,
     },

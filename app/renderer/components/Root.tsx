@@ -4,5 +4,6 @@ export default () => (
   <>
     <div>Hello world</div>
     <img alt="test" />
+    <webview />
   </>
 );

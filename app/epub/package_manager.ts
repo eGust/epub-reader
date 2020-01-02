@@ -7,7 +7,9 @@ import JSZip, { JSZipObject } from 'jszip';
 import { MetaFile, ManifestItem } from './meta_file';
 import ZipFiles, { CompressedObject } from './zip_files';
 import { Navigation } from './navigation';
-import { parseMeta, parseOpf, parseNav } from './parseXml';
+import {
+  parseMeta, parseOpf, parseNcx, parseNav,
+} from './parseXml';
 
 interface ResponseObject {
   mime: string;
@@ -93,9 +95,10 @@ export class PackageManager {
       if (!this.meta) return;
 
       const ncx = this.meta!.getItemBy({ id: 'ncx' });
-      if (!ncx) return;
+      const nav = ncx ? undefined : this.meta!.getItemBy({ id: 'nav' });
+      if (!ncx && !nav) return;
 
-      await this.loadNav(ncx);
+      await this.loadNav({ ncx, nav });
     } catch (e) {
       console.error(e);
     }
@@ -111,16 +114,26 @@ export class PackageManager {
     this.meta = new MetaFile(opfData, path, this.files!);
   }
 
-  private async loadNav(ncx: ManifestItem): Promise<void> {
+  private async loadNav({ ncx, nav }: { ncx?: ManifestItem, nav?: ManifestItem }): Promise<void> {
     this.nav = undefined;
     try {
-      const xml = await this.files?.asText(ncx.path);
-      if (!xml) return;
+      if (ncx) {
+        const xml = await this.files?.asText(ncx.path);
+        if (!xml) return;
 
-      const navigation = await parseNav(xml);
-      if (!navigation) return;
+        const navigation = await parseNcx(xml);
+        if (!navigation) return;
 
-      this.nav = navigation;
+        this.nav = navigation;
+      } else if (nav) {
+        const xml = await this.files?.asText(nav.path);
+        if (!xml) return;
+
+        const navigation = await parseNav(xml);
+        if (!navigation) return;
+
+        this.nav = navigation;
+      }
     } catch (e) {
       console.error(e);
     }

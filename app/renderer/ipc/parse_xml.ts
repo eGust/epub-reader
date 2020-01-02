@@ -1,27 +1,41 @@
 import {
   ParseXmlMessage, ParseXmlType, ParseXmlResult,
-  IpcMessageType, IpcMessageData, NavPoint,
+  IpcMessageType, IpcMessageData, NavItem, OpfMeta,
 } from '../../ipc/types';
 
 const parser: DOMParser = new DOMParser();
 
 const xmlToDoc = (data: string): Document => parser.parseFromString(data.trim(), 'text/xml');
 
-const loadPoints = (element: Element): NavPoint[] => Array.from(element.children)
+const loadNavItems = (element: Element): NavItem[] => Array.from(element.children)
   .filter((el) => el.matches('navPoint'))
   .map((el) => {
     const label = el.querySelector('navLabel text')!.textContent!;
     const path = el.querySelector('content')!.getAttribute('src')!;
-    const children = loadPoints(el);
-    const category = el.getAttribute('class') ?? '';
+    const items = loadNavItems(el);
+    const cat = el.getAttribute('class') ?? '';
     const id = el.getAttribute('id') ?? null;
     const playOrder = el.getAttribute('playOrder') ?? null;
-    const order = (playOrder && Number.parseInt(playOrder, 10)) || null;
+    const seq = (playOrder && Number.parseInt(playOrder, 10)) || null;
 
-    const point: NavPoint = {
-      label, path, children, category, id, order,
+    const item: NavItem = {
+      label, path, items, cat, id, seq,
     };
-    return point;
+    return item;
+  });
+
+const loadListItems = (ol: Element): NavItem[] => Array.from(ol.children)
+  .filter((el) => el.matches('li'))
+  .map((el) => {
+    const label = (el.querySelector('a') || el.querySelector('span'))?.textContent ?? '';
+    const path = el.querySelector('a')?.getAttribute('src') ?? '';
+    const orderedList = el.querySelector('ol');
+    const items = orderedList ? loadListItems(orderedList) : [];
+
+    const item: NavItem = {
+      label, path, items, cat: '', id: null, seq: null,
+    };
+    return item;
   });
 
 export const parseXml = (message: ParseXmlMessage): IpcMessageData => {
@@ -45,6 +59,47 @@ export const parseXml = (message: ParseXmlMessage): IpcMessageData => {
         break;
       }
       case ParseXmlType.Opf: {
+        const meta: OpfMeta = {
+          title: '',
+          creators: [],
+          description: '',
+          cover: '',
+          otherMeta: {},
+          docContent: {},
+        };
+
+        xml.querySelectorAll('metadata > meta[name][content]').forEach((el) => {
+          meta.otherMeta[el.getAttribute('name')!] = el.getAttribute('content')!;
+        });
+
+        Array.from(xml.querySelectorAll('metadata > :not(meta)'))
+          .filter((el) => el.tagName.toLowerCase().startsWith('dc:'))
+          .forEach((el) => {
+            const name = el.tagName.toLowerCase().slice(3);
+            const value = el.textContent ?? '';
+            if (!(name in meta.otherMeta)) {
+              meta.docContent[name] = [];
+            }
+            meta.docContent[name].push(value);
+          });
+
+        if (meta.otherMeta.cover) {
+          meta.cover = meta.otherMeta.cover;
+          delete meta.otherMeta.cover;
+        }
+        if (meta.docContent.title) {
+          meta.title = meta.docContent.title[0]!;
+          delete meta.docContent.title;
+        }
+        if (meta.docContent.description) {
+          meta.description = meta.docContent.description[0]!;
+          delete meta.docContent.description;
+        }
+        if (meta.docContent.creator) {
+          meta.creators = meta.docContent.creator;
+          delete meta.docContent.creator;
+        }
+
         const items = Array.from(xml.querySelectorAll('manifest > item')).map((item) => {
           const id = item.getAttribute('id')!;
           const mime = item.getAttribute('media-type')!;
@@ -53,9 +108,12 @@ export const parseXml = (message: ParseXmlMessage): IpcMessageData => {
         });
 
         const refs = Array.from(xml.querySelectorAll('spine > itemref'))
-          .map((itemRef) => itemRef.getAttribute('idref')!);
+          .map((itemRef) => ({
+            idRef: itemRef.getAttribute('idref')!,
+            isLinear: itemRef.getAttribute('linear')?.toLocaleLowerCase() !== 'no',
+          }));
 
-        data.result = { items, refs };
+        data.result = { meta, items, refs };
         break;
       }
       case ParseXmlType.Ncx: {
@@ -64,8 +122,19 @@ export const parseXml = (message: ParseXmlMessage): IpcMessageData => {
           result.error = 'navMap is required';
         } else {
           const title = xml.querySelector('docTitle > text')?.textContent ?? '';
-          const points = loadPoints(navMap);
-          data.result = { title, points };
+          const items = loadNavItems(navMap);
+          data.result = { title, items };
+        }
+        break;
+      }
+      case ParseXmlType.Nav: {
+        const nav = xml.querySelector('nav > ol');
+        if (!nav) {
+          result.error = 'nav is required';
+        } else {
+          const title = xml.querySelector('head > title')?.textContent ?? '';
+          const items = loadListItems(nav);
+          data.result = { title, items };
         }
         break;
       }
