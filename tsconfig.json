@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "rootDirs": ["app", "stories"],
     "target": "es2019",
     "jsx": "react",
     "module": "esnext",

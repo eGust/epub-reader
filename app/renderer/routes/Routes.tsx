@@ -2,11 +2,11 @@ import * as React from 'react';
 import { hot } from 'react-hot-loader';
 import { BrowserRouter, Route } from 'react-router-dom';
 
-import Root from '../components/Root';
+import Home from '../components/Home';
 
 const RootRouter = () => (
   <BrowserRouter>
-    <Route path="/" component={Root} />
+    <Route path="/" component={Home} />
   </BrowserRouter>
 );
 
