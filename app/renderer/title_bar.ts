@@ -42,6 +42,12 @@ const setDefaultMenu = () => {
     submenu: DEFAULT_MENU_ITEMS,
   }]);
   setMenu(menu);
+  setTimeout(() => {
+    const bar = document.querySelector('.titlebar')! as HTMLElement;
+    const style = document.getElementById('style-overrides')!;
+    const { height: top } = bar.style;
+    style.innerText = `body > .ms-Layer.ms-Layer--fixed { top: ${top}; }`;
+  }, 100);
 };
 
 setDefaultMenu();

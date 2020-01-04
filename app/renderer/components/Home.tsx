@@ -36,7 +36,9 @@ const Home: FC<Props> = ({ openFile }: Props): React.ReactElement => {
 
     console.log(data);
     openFile(data);
-    history.push(`/read/${data.fileId}/${data.bookId}/`);
+    setTimeout(() => {
+      history.push(`/read/${data.fileId}/${data.bookId}/`);
+    }, 0);
   };
 
   return (

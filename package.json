@@ -119,6 +119,7 @@
     "worker-loader": "^2.0.0"
   },
   "dependencies": {
+    "@uifabric/react-hooks": "^7.0.1",
     "connected-react-router": "^6.6.1",
     "custom-electron-titlebar": "^3.2.0",
     "electron-squirrel-startup": "^1.0.0",

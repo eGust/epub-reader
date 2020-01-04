@@ -10,11 +10,8 @@ export interface ManifestItem {
 
 export interface ManifestRef {
   readonly id: string;
-
   readonly isLinear: boolean;
-
   readonly item: ManifestItem;
-
   readonly index: number;
 }
 

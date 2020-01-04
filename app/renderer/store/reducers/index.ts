@@ -35,7 +35,7 @@ const rootReducer: Reducer<RootState, Action> = (
       const bookFiles = fileId in oldFiles ? oldFiles : {
         ...oldFiles,
         [fileId]: {
-          fileId, bookId, filename,
+          fileId, bookId, filename, nav: [],
         },
       };
 
@@ -64,5 +64,7 @@ export const createRootReducer = (history: History) => combineReducers({
   root: rootReducer,
   router: connectRouter(history),
 });
+
+export type StoreState = ReturnType<ReturnType<typeof createRootReducer>>;
 
 export * from './types';

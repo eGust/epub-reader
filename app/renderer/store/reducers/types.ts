@@ -1,3 +1,5 @@
+import { INavLinkGroup } from 'office-ui-fabric-react';
+
 import { ManifestRef } from '../../../epub/navigation';
 import { OpfMeta, Navigation } from '../../../ipc/types';
 
@@ -13,6 +15,7 @@ export interface BookFile {
   fileId: string;
   bookId: string;
   filename: string;
+  nav: INavLinkGroup[];
 }
 
 export interface BookData {
