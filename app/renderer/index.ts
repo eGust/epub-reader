@@ -6,4 +6,6 @@ import mountAppTo from './app';
 
 import './ipc';
 
+import './title_bar';
+
 mountAppTo(document.getElementById('app')!);

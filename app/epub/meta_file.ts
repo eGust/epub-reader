@@ -2,26 +2,7 @@ import { join } from 'path';
 
 import ZipFiles from './zip_files';
 import { OpfItem, OpfData, OpfMeta } from '../ipc/types';
-
-export interface ManifestItem {
-  readonly id: string;
-
-  readonly path: string;
-
-  readonly mime: string;
-
-  index: number;
-}
-
-export interface ManifestRef {
-  readonly id: string;
-
-  readonly isLinear: boolean;
-
-  readonly item: ManifestItem;
-
-  readonly index: number;
-}
+import { ManifestItem, ManifestRef } from './navigation';
 
 const createItem = ({ path, ...item }: OpfItem, base: string): ManifestItem => ({
   ...item,
@@ -70,6 +51,10 @@ export class MetaFile {
   }
 
   public get spineItems() { return this.spine; }
+
+  public getStartPage(): ManifestItem {
+    return this.spine[0].item;
+  }
 
   public getItemBy({ id, path }: { id?: string, path?: string }): ManifestItem | undefined {
     if (id) return this.itemById[id];

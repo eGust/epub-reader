@@ -14,6 +14,7 @@ module.exports = {
   ignorePatterns: ['!.*.js'],
   // add your custom rules here
   rules: {
+    'jsx-a11y/label-has-associated-control': 0,
     'max-len': ['warn', 100],
     'no-console': 'off',
     'max-classes-per-file': 'off',

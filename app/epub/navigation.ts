@@ -1,3 +1,23 @@
+export interface ManifestItem {
+  readonly id: string;
+
+  readonly path: string;
+
+  readonly mime: string;
+
+  index: number;
+}
+
+export interface ManifestRef {
+  readonly id: string;
+
+  readonly isLinear: boolean;
+
+  readonly item: ManifestItem;
+
+  readonly index: number;
+}
+
 export interface NavItem {
   readonly label: string;
   readonly path: string;

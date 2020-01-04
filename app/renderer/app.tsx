@@ -3,6 +3,8 @@ import { render } from 'react-dom';
 
 import App from './routes/App';
 
+import './file_drop';
+
 const mountAppTo = (rootElement: HTMLElement) => {
   if (process.env.NODE_ENV === 'production') {
     render((<App />), rootElement);

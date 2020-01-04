@@ -1,15 +1,18 @@
 import { ActionCreator } from 'redux';
 
+import { ApiPackage } from '../../api/open_file';
+
 export enum ActionType {
+  OpenFile = 'OpenFile',
   Unknown = 'Unknown',
 }
 
 export interface Action {
   type: ActionType;
-  payload: Record<string, unknown>;
+  data: ApiPackage | null;
 }
 
-export const foo: ActionCreator<Action> = () => ({
-  type: ActionType.Unknown,
-  payload: {},
+export const actionOpenFile: ActionCreator<Action> = (data: ApiPackage) => ({
+  type: ActionType.OpenFile,
+  data,
 });

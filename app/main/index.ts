@@ -48,6 +48,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     height: 600,
     width: 800,
+    frame: false,
     webPreferences: {
       nodeIntegration: true,
       webviewTag: true,

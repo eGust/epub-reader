@@ -1,4 +1,4 @@
-import { Navigation } from '../epub/navigation';
+import { Navigation, ManifestRef } from '../epub/navigation';
 
 export enum IpcMessageType {
   ParseXml = 'parse-xml',
@@ -60,15 +60,16 @@ export interface OpenFileMessage {
 
 export interface OpenFileResult {
   filename: string;
-  normalized?: string;
-  id?: string;
+  fileId?: string;
+  bookId?: string;
   meta?: OpfMeta;
+  toc?: Navigation;
+  spine?: ManifestRef[];
   cover?: {
     id: string;
     path: string;
     mime: string;
   };
-  toc?: Navigation;
 }
 
 export interface IpcMessageData {

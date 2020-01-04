@@ -1,5 +1,6 @@
 import { addParameters, configure } from '@storybook/react';
 import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport';
+import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 
 import 'office-ui-fabric-core/dist/css/fabric.css';
 
@@ -12,3 +13,5 @@ addParameters({
     viewports: INITIAL_VIEWPORTS,
   },
 });
+
+initializeIcons();

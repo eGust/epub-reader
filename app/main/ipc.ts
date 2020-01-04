@@ -24,9 +24,10 @@ ipcMain.handle(IpcMessageType.OpenFile, async (event, message: IpcMessageData) =
 
   const pm = await openFile(data.filename);
   if (pm) {
-    data.normalized = pm.filename;
-    data.id = pm.id;
+    data.fileId = pm.fileId;
+    data.bookId = pm.bookId;
     data.meta = pm.metadata!.metadata;
+    data.spine = pm.metadata!.spineItems;
     data.toc = pm.navigation;
     if (data.meta.cover) {
       const cover = pm.metadata!.getItemBy({ id: data.meta.cover });

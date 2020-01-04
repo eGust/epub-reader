@@ -4,9 +4,9 @@ import { promisify } from 'util';
 import { createHash } from 'crypto';
 import JSZip, { JSZipObject } from 'jszip';
 
-import { MetaFile, ManifestItem } from './meta_file';
+import { MetaFile } from './meta_file';
 import ZipFiles, { CompressedObject } from './zip_files';
-import { Navigation } from './navigation';
+import { Navigation, ManifestItem } from './navigation';
 import {
   parseMeta, parseOpf, parseNcx, parseNav,
 } from './parseXml';
@@ -27,7 +27,7 @@ const normalizeFilename = (filename: string): string | null => {
   return existsSync(lower) ? lower : fn;
 };
 
-const generateUniqFileId = (filename: string): string => createHash('sha256')
+const generateUid = (filename: string): string => createHash('sha256')
   .update(filename, 'utf8')
   .digest('hex').toLowerCase();
 
@@ -36,7 +36,7 @@ interface ZipObject extends JSZipObject {
 }
 
 export class PackageManager {
-  private currentFilename: string = '';
+  private filename: string = '';
 
   private meta?: MetaFile;
 
@@ -44,24 +44,29 @@ export class PackageManager {
 
   private nav?: Navigation;
 
-  private uid: string = '';
+  private fid: string = '';
 
-  public get isReady() { return !!this.currentFilename; }
+  private bid: string = '';
 
-  public get filename() { return this.currentFilename; }
+  public get isReady() { return !!this.filename; }
+
+  public get file() { return this.filename; }
+
+  public get fileId() { return this.fid; }
 
   public get metadata() { return this.meta; }
 
   public get navigation() { return this.nav; }
 
-  public get id() { return this.uid; }
+  public get bookId() { return this.bid; }
 
   public async open(filename: string, id?: string): Promise<boolean> {
     const fn = normalizeFilename(filename);
     if (!fn) return false;
 
-    this.currentFilename = '';
-    this.uid = '';
+    this.filename = '';
+    this.fid = '';
+    this.bid = '';
     try {
       const zip = new JSZip();
       const buff = await readFileAsync(fn);
@@ -73,8 +78,8 @@ export class PackageManager {
       await this.loadMetaAll();
       if (!this.meta || !this.nav) return false;
 
-      this.currentFilename = fn;
-      this.uid = (id ?? generateUniqFileId(fn)).toLowerCase();
+      this.filename = fn;
+      this.fid = (id ?? generateUid(fn)).toLowerCase();
       return true;
     } catch (e) {
       console.error(e);
@@ -111,6 +116,7 @@ export class PackageManager {
     const opfData = await parseOpf(opfXml);
     if (!opfData) return;
 
+    this.bid = generateUid(opfXml);
     this.meta = new MetaFile(opfData, path, this.files!);
   }
 
@@ -148,10 +154,13 @@ export class PackageManager {
   // }
 
   public toResponse(filename: string): ResponseObject | null {
-    const zip = this.files?.raw(filename);
+    const path = filename || this.meta!.getStartPage().path;
+    console.log({ filename, path });
+
+    const zip = this.files?.raw(path);
     if (!zip) return null;
 
-    const item = this.meta?.getItemBy({ path: filename });
+    const item = this.meta?.getItemBy({ path });
     if (!item) return null;
 
     const { _data: raw } = zip as ZipObject;
@@ -168,13 +177,13 @@ export const openFile = async (filename: string): Promise<PackageManager | null>
   const fn = normalizeFilename(filename);
   if (!fn) return null;
 
-  const id = generateUniqFileId(fn);
+  const id = generateUid(fn);
   if (!id) return null;
   if (id in cache) return cache[id];
 
   const pm = pool.length ? pool.pop()! : new PackageManager();
   if (await pm.open(fn, id)) {
-    cache[pm.id] = pm;
+    cache[pm.bookId] = pm;
     return pm;
   }
 
