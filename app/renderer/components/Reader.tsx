@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
+// import { remote } from 'electron';
 import React, {
   Dispatch, useState, useMemo,
   FC, MouseEvent,
@@ -13,12 +15,11 @@ import { useConstCallback } from '@uifabric/react-hooks';
 import { Action, ActionType } from '../store/actions';
 import { StoreState, BookData } from '../store/reducers';
 import { NavItem } from '../../ipc/types';
+import ReaderView from './ReaderView';
 
-const mapStateToProps = ({ root: state }: StoreState, props: RouteComponentProps) => {
-  const { bookData, bookFiles } = state;
-  console.log('mapStateToProps', { state, props });
-  return { bookData, bookFiles };
-};
+const mapStateToProps = ({ root: { bookData, bookFiles } }: StoreState) => ({
+  bookData, bookFiles,
+});
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
   foo: () => dispatch({ type: ActionType.Unknown, data: null }),
@@ -63,6 +64,7 @@ const Reader: FC<Props> = ({ bookData, bookFiles, match }: Props): React.ReactEl
   const nav = fileInfo.nav.length ? fileInfo.nav : convertToc(bookInfo);
 
   const history = useHistory();
+  const { hash } = history.location;
   const [isOpen, setIsOpen] = useState(false);
 
   const onOpenPanel = useConstCallback(() => setIsOpen(true));
@@ -98,7 +100,7 @@ const Reader: FC<Props> = ({ bookData, bookFiles, match }: Props): React.ReactEl
       >
         <Nav groups={nav} onLinkClick={onClickLink} onLinkExpandClick={onLinkExpandClick} />
       </Panel>
-      <webview src={`epub://${bookId}/${path}`} style={{ flex: 1 }} />
+      <ReaderView bookId={bookId} fileId={fileId} pathname={path} hash={hash} />
       <CommandBar items={commandItems} />
     </Stack>
   );

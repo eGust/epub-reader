@@ -55,6 +55,15 @@
                   "html": "./app/renderer/assets/index.html",
                   "js": "./app/renderer/index.ts",
                   "name": "main_window"
+                },
+                {
+                  "js": "./app/reader/preload.ts",
+                  "name": "reader_preload"
+                },
+                {
+                  "html": "./app/reader/index.html",
+                  "js": "./app/reader/index.ts",
+                  "name": "reader"
                 }
               ]
             }
