@@ -1,0 +1,84 @@
+*, *:before, *:after
+  box-sizing border-box
+
+body
+  margin 0
+  width 100vw
+  height 100vh
+  overflow auto
+
+#root
+  position relative
+  display flex
+  width 100%
+  height 100%
+
+.flex
+  display flex
+  &.row
+    flex-direction row
+  &.column
+    flex-direction column
+
+.flex-auto
+  flex 1
+
+.hide
+  display none
+
+.app-bar
+  width auto !important
+  .title
+    max-width calc(95vw - 90px)
+    white-space nowrap
+    overflow hidden
+    text-overflow ellipsis
+
+#reader
+  border none
+  position absolute
+  width calc(100vw - 16px)
+  height calc(100vh - 60px)
+  left 8px
+  bottom 8px
+
+.toc-wrap
+  position relative
+  overflow hidden
+  z-index 1
+
+ul.toc
+  display inline-block
+  margin 3px 0
+  padding 0 15px 0 5px
+  height calc(100% - 5px)
+  max-width 40%
+  overflow-x hidden
+  overflow-y auto
+  background-color #eee
+  font-size 11pt
+
+  li
+    list-style none
+    cursor default
+    color #222
+    span
+      display inline-flex
+      align-content center
+      align-items center
+    .title
+      margin 0 6px
+    .count
+      font-size 80%
+      color blue
+      &::before
+        content: '['
+      &::after
+        content: ']'
+    .link
+      cursor pointer
+      &:hover
+        color deepskyblue
+
+  ul
+    padding-left 24px
