@@ -1,4 +1,4 @@
-import { join } from './utils';
+import { join } from '../utils';
 import { ZipFiles } from './zip_files';
 import { OpfItem, OpfData, OpfMeta, ManifestItem, ManifestRef } from './types';
 
@@ -26,11 +26,11 @@ export class MetaFile {
     this.files = files;
     this.metadata = opf.meta;
 
-    // console.log(this.path, '..');
     const basePath = join(this.path, '..');
+    // console.debug(this.path, '..', { basePath });
     opf.items.forEach((opfItem) => {
-      // console.log('join', basePath, opfItem);
       const item = createItem(opfItem, basePath);
+      // console.debug(opfItem.path, basePath, item);
       this.itemById[item.id] = item;
       this.itemByPath[item.path] = item;
     });

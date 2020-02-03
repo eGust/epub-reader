@@ -16,26 +16,26 @@ export class ZipFiles {
 
   private urlCache: Record<string, string | null> = {};
 
-  public asText(filename: string): Promise<string | null> {
+  public asText(filename: string): Promise<string> | null {
     return this.zip.file(filename)?.async('text') || null;
   }
 
-  public asBytes(filename: string): Promise<Uint8Array | null> {
-    return this.zip.file(filename)?.async('uint8array') || null;
-  }
-
-  // public async asUrl(filename: string): Promise<string | null> {
-  //   const cached = this.urlCache[filename];
-  //   if (cached !== undefined) return cached;
-
-  //   const file = this.zip.file(filename);
-  //   if (!file) return null;
-
-  //   const blob = await file.async('blob');
-  //   const url = URL.createObjectURL(blob);
-  //   this.urlCache[filename] = url;
-  //   return url;
+  // public asBytes(filename: string): Promise<Uint8Array> | null {
+  //   return this.zip.file(filename)?.async('uint8array') || null;
   // }
+
+  public async asUrl(filename: string): Promise<string | null> {
+    const cached = this.urlCache[filename];
+    if (cached !== undefined) return cached;
+
+    const file = this.zip.file(filename);
+    if (!file) return null;
+
+    const blob = await file.async('blob');
+    const url = URL.createObjectURL(blob);
+    this.urlCache[filename] = url;
+    return url;
+  }
 
   public of(filename: string): JSZipObject {
     return this.zip.file(filename);

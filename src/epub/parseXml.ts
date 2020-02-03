@@ -1,17 +1,18 @@
 import {
   NavItem, OpfMeta, MetaData, OpfData, Navigation,
 } from './types';
+import { join } from '../utils';
 
 const parser: DOMParser = new DOMParser();
 
 const xmlToDoc = (data: string): Document => parser.parseFromString(data.trim(), 'text/xml');
 
-const loadNavItems = (element: Element): NavItem[] => Array.from(element.children)
+const loadNavItems = (element: Element, basePath: string): NavItem[] => Array.from(element.children)
   .filter((el) => el.matches('navPoint'))
   .map((el) => {
     const label = el.querySelector('navLabel text')!.textContent!;
-    const path = el.querySelector('content')!.getAttribute('src')!;
-    const items = loadNavItems(el);
+    const path = join(basePath, el.querySelector('content')!.getAttribute('src')!);
+    const items = loadNavItems(el, basePath);
     const cat = el.getAttribute('class') ?? '';
     const id = el.getAttribute('id') ?? null;
     const playOrder = el.getAttribute('playOrder') ?? null;
@@ -23,13 +24,14 @@ const loadNavItems = (element: Element): NavItem[] => Array.from(element.childre
     return item;
   });
 
-const loadListItems = (ol: Element): NavItem[] => Array.from(ol.children)
+const loadListItems = (ol: Element, basePath: string): NavItem[] => Array.from(ol.children)
   .filter((el) => el.matches('li'))
   .map((el) => {
     const label = (el.querySelector('a') || el.querySelector('span'))?.textContent ?? '';
-    const path = el.querySelector('a')?.getAttribute('src') ?? '';
+    const src = el.querySelector('a')?.getAttribute('src') ?? '';
+    const path = src ? join(basePath, src) : src;
     const orderedList = el.querySelector('ol');
-    const items = orderedList ? loadListItems(orderedList) : [];
+    const items = orderedList ? loadListItems(orderedList, basePath) : [];
 
     const item: NavItem = {
       label, path, items, cat: '', id: null, seq: null,
@@ -104,7 +106,7 @@ export const parseOpf = (xmlContent: string): OpfData => {
   return { meta, items, refs };
 };
 
-export const parseNcx = (xmlContent: string): Navigation => {
+export const parseNcx = (xmlContent: string, basePath: string): Navigation => {
   const xml = xmlToDoc(xmlContent);
   const navMap = xml.querySelector('navMap');
   if (!navMap) {
@@ -112,16 +114,16 @@ export const parseNcx = (xmlContent: string): Navigation => {
   }
 
   const title = xml.querySelector('docTitle > text')?.textContent ?? '';
-  const items = loadNavItems(navMap);
+  const items = loadNavItems(navMap, basePath);
   return { title, items };
 };
 
-export const parseNav = (xmlContent: string): Navigation => {
+export const parseNav = (xmlContent: string, basePath: string): Navigation => {
   const xml = xmlToDoc(xmlContent);
   const nav = xml.querySelector('nav > ol');
   if (!nav) { throw new Error('nav is required') }
 
   const title = xml.querySelector('head > title')?.textContent ?? '';
-  const items = loadListItems(nav);
+  const items = loadListItems(nav, basePath);
   return { title, items };
 };

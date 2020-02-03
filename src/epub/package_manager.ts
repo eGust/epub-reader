@@ -6,8 +6,10 @@ import { ZipFiles, CompressedObject } from './zip_files';
 import {
   parseMeta, parseOpf, parseNcx, parseNav,
 } from './parseXml';
+import { join } from '../utils';
 
-interface ResponseObject {
+export interface ResponseObject {
+  path: string;
   mime: string;
   zip: JSZipObject;
 }
@@ -19,7 +21,7 @@ interface ZipObject extends JSZipObject {
 const readFile = (file: File): Promise<ArrayBuffer> => new Promise((resolve) => {
   const reader = new FileReader();
   reader.onload = ({ target }) => {
-    resolve(target.result as ArrayBuffer);
+    resolve(target!.result as ArrayBuffer);
   };
   reader.readAsArrayBuffer(file);
 });
@@ -33,7 +35,7 @@ export class PackageManager {
 
   private nav?: Navigation;
 
-  private digest: string;
+  private digest = '';
 
   public get isReady() { return !!this.digest; }
 
@@ -62,9 +64,8 @@ export class PackageManager {
       ]);
       if (!this.meta || !this.nav) return false;
 
-      const hash = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)));
+      const hash = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(digest))));
       this.digest = hash + buff.byteLength.toString(36);
-      console.debug(this.id)
       return true;
     } catch (e) {
       console.error(e);
@@ -94,6 +95,7 @@ export class PackageManager {
 
   private async loadOpf(path: string): Promise<void> {
     const opfXml = await this.files?.asText(path);
+    if (!opfXml) return;
     const opfData = await parseOpf(opfXml);
     this.meta = new MetaFile(opfData, path, this.files!);
   }
@@ -105,7 +107,7 @@ export class PackageManager {
         const xml = await this.files?.asText(ncx.path);
         if (!xml) return;
 
-        const navigation = await parseNcx(xml);
+        const navigation = await parseNcx(xml, join(ncx.path, '..'));
         if (!navigation) return;
 
         this.nav = navigation;
@@ -113,7 +115,7 @@ export class PackageManager {
         const xml = await this.files?.asText(nav.path);
         if (!xml) return;
 
-        const navigation = await parseNav(xml);
+        const navigation = await parseNav(xml, join(nav.path, '..'));
         if (!navigation) return;
 
         this.nav = navigation;
@@ -123,21 +125,30 @@ export class PackageManager {
     }
   }
 
+  public getHome(): ResponseObject | null {
+    const home = this.metadata?.getStartPage();
+    return home ? this.toResponse(home.path) : null;
+  }
+
   public asText(filename: string): Promise<string> | null {
     return this.files?.asText(filename) ?? null;
   }
 
-  public toResponse(filename: string): ResponseObject | null {
-    const path = filename || this.meta!.getStartPage().path;
-    console.log({ filename, path });
+  public asUrl(filename: string): Promise<string | null> | null {
+    return this.files?.asUrl(filename) ?? null;
+  }
 
+  public toResponse(filename: string): ResponseObject | null {
+    if (!filename) return null;
+
+    const path = filename;
     const zip = this.files?.raw(path);
     if (!zip) return null;
 
     const item = this.meta?.getItemBy({ path });
     if (!item) return null;
 
-    return { mime: item.mime, zip };
+    return { path, mime: item.mime, zip };
   }
 }
 

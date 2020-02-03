@@ -13,6 +13,3 @@ import App from './App';
   const tmp = document.getElementById('temp');
   if (tmp) { tmp.parentNode!.removeChild(tmp); }
 })();
-// window.addEventListener('message', (ev) => {
-//   console.log('main window received message', ev);
-// }, false);
