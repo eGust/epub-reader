@@ -25,3 +25,32 @@ body
     background-color #444
     border-radius 6px
     border 1px solid #888
+
+  & > main
+    position absolute
+    height 100%
+    column-fill auto
+    text-align left
+    column-width 450px
+    column-gap 10px
+    width 480px
+    overflow hidden
+
+@media (min-width: 480px)
+  body > main
+    width: 100%;
+    column-width: 95vw;
+    column-gap: 3vw;
+
+    svg, img
+      max-width: 95vw;
+      margin: auto;
+
+@media (min-width: 992px)
+  body > main
+    column-width: 40vw;
+    column-gap: 3vw;
+
+    svg, img
+      max-width: 40vw;
+      margin: auto;

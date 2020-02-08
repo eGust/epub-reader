@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from 'react'
+import React, { useState, ChangeEvent, useRef } from 'react'
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
@@ -12,119 +12,85 @@ import TocView from './TocView';
 import PackageManager, { ResponseObject } from '../epub/package_manager';
 import { tick } from '../utils';
 import { NavItem } from '../epub/types';
+import { addMessageHandler, current, Respond, sendMessage } from './message';
+import { MessageType } from './types';
 
-const $reader = document.getElementById('reader')! as HTMLIFrameElement;
-const reader = $reader.contentWindow!;
+const openPath = async (page: ResponseObject | null): Promise<void> => {
+  if (!page) { return; }
 
-const openPath = (() => {
-  const post = (payload: Record<string, any>) => {
-    reader.postMessage({ type: 'open', payload }, '/');
-  };
+  const { mime, path, zip } = page;
+  const content = await zip.async(mime.includes('html') ? 'text' : 'blob');
+  sendMessage('open', { content, path, mime });
+};
 
-  return async (page: ResponseObject | null): Promise<void> => {
-    if (!page) { return; }
+addMessageHandler('go', ({ path }: MessageType['go']) => {
+  if (!path || !current.doc) return;
+  openPath(current.doc.toResponse(path));
+});
 
-    const { mime, path, zip } = page;
-    const content = await zip.async(mime.includes('html') ? 'text' : 'blob');
-    post({ content, path, mime });
-  };
-})();
+addMessageHandler('image', async ({ path }: MessageType['image'], respond: Respond) => {
+  if (!path || !current.doc) return;
+  const url = await current.doc.asUrl(path);
+  console.debug('image', { path, url });
+  respond({ url });
+});
 
-let currentDoc: PackageManager | null = null;
-
-interface PathPayload { path: string }
-interface ImagePathsPayload { paths: string[] }
-
-(() => {
-  // @ts-ignore
-  if (window.initialized) return;
-
-  // @ts-ignore
-  window.initialized = true;
-
-  const respondMessage = (messageId: string, data: Record<string, any>) => {
-    reader.postMessage({ type: 'respond', payload: { messageId, data } }, '/');
-  };
-
-  window.addEventListener('message', async ({ data }) => {
-    if (!currentDoc || !(data?.type)) return;
-
-    switch (data.type) {
-      case 'image': {
-        const { path } = data.payload as PathPayload;
-        const url = await currentDoc.asUrl(path);
-        console.debug('image', { path, url });
-        respondMessage(data.messageId as string, { url });
-        break;
-      }
-      case 'images': {
-        const { paths } = data.payload as ImagePathsPayload;
-        const urlPairs = await Promise.all(
-          paths.map(async (path) => [
-            path,
-            await currentDoc!.asUrl(path),
-          ])
-        );
-        const urls = Object.fromEntries(urlPairs.filter(([, url]) => !!url));
-        console.debug('images', { urlPairs, urls });
-        respondMessage(data.messageId as string, { urls });
-        break;
-      }
-      case 'go': {
-        const { path } = data.payload as PathPayload;
-        console.debug('go', { path });
-        if (!path) return;
-        openPath(currentDoc.toResponse(path));
-        break;
-      }
-      default: {
-        console.debug('main window received message', data);
-      }
-    }
-  }, false);
-})();
+addMessageHandler('images', async ({ paths }: MessageType['images'], respond: Respond) => {
+  if (!paths || !current.doc) return;
+  const urlPairs = await Promise.all(
+    paths.map(async (path) => [
+      path,
+      await current.doc!.asUrl(path),
+    ])
+  );
+  const urls = Object.fromEntries(urlPairs.filter(([, url]) => !!url));
+  console.debug('images', { urlPairs, urls });
+  respond({ urls });
+});
 
 const Home = () => {
   const [doc, setDoc] = useState<PackageManager | null>(null);
   const [selected, setSelected] = useState('');
   const [showToc, setShowToc] = useState(false);
   const [isOpening, setOpening] = useState(false);
+  const refReader = useRef<HTMLIFrameElement>(null);
+
+  const setCurrentDocument = (doc: PackageManager | null) => {
+    setShowToc(!!doc);
+    setDoc(doc);
+    current.doc = doc;
+  }
 
   const onSelectFile = async (ev: ChangeEvent<HTMLInputElement>) => {
     const { target } = ev;
     const file = target.files![0];
+    current.reader = refReader.current?.contentWindow ?? null;
 
     console.clear();
-    reader.postMessage({ type: 'reset' }, '/');
+    sendMessage('reset');
     setOpening(true);
-    setShowToc(false);
-    setDoc(null);
-    currentDoc = null;
-    await tick();
+    try {
+      setCurrentDocument(null);
+      await tick();
 
-    console.time('loading');
-    const pm = new PackageManager(file);
-    target.files = null;
-    target.value = '';
+      target.files = null;
+      target.value = '';
+      console.time('loading');
+      const pm = new PackageManager(file);
+      if (!await pm.open()) {
+        console.error('unable to open file:', file);
+        return;
+      }
 
-    if (!await pm.open()) {
-      console.error('unable to open file:', file);
-      $reader.classList.add('hide');
-      return;
+      console.timeEnd('loading');
+      setCurrentDocument(pm);
+
+      await tick();
+      // open home
+      openPath(pm.getHome());
+    } finally {
+      setOpening(false);
     }
-
-    console.timeEnd('loading');
-    currentDoc = pm;
-    $reader.classList.remove('hide');
-    await tick();
-
-    console.debug(pm);
-    setShowToc(true);
-    setDoc(pm);
-    await tick();
-
-    // open home
-    openPath(pm.getHome());
   };
 
   const title = doc?.navigation?.title ?? (isOpening ? 'Loading...' : 'EPub Reader');
@@ -157,13 +123,14 @@ const Home = () => {
           </IconButton>
         </Toolbar>
       </AppBar>
-      {
-        doc?.navigation ? (
-          <div className={`toc-wrap ${showToc ? 'flex-auto' : 'hide'}`}>
-            <TocView nav={doc.navigation} selected={selected} onClickItem={onClickItem} />
-          </div>
-         ) : null
-      }
+      <div className="reader-wrap flex-auto">
+        {
+          doc?.navigation ? (
+            <TocView show={showToc} nav={doc.navigation} selected={selected} onClickItem={onClickItem} />
+            ) : null
+        }
+        <iframe src="./reader.html" id="reader" ref={refReader} className={doc?.navigation ? '': "hide"} />
+      </div>
     </div>
   );
 }

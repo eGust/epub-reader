@@ -2,5 +2,6 @@ doctype html
 html
   body
     #root
-    iframe#reader.hide(src='./reader.pug')
+    template
+      iframe#reader.hide(src='./reader.pug')
     script(src="./index.tsx")
