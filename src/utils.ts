@@ -9,6 +9,6 @@ export const getBasePath = (path: string): string => {
   return last < 0 ? '' : path.slice(0, last);
 }
 
-export const tick = (): Promise<void> => new Promise((resolve) => {
-  setTimeout(resolve, 0);
+export const tick = (ms = 0): Promise<void> => new Promise((resolve) => {
+  setTimeout(resolve, ms);
 });

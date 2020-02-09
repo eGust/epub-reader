@@ -1,7 +1,8 @@
 import './reader.styl';
 import { sendMessage, emitMessage, addMessageHandler } from './reader/message';
 import { IMAGE_TYPES } from './reader/parser';
-import { doOpen } from './reader/actions';
+import { doOpen, doSetPageNo } from './reader/actions';
+import './input';
 
 addMessageHandler('open', doOpen);
 
@@ -45,3 +46,19 @@ document.addEventListener('click', async (ev) => {
   goToLink(path);
   console.debug('clicked', { path });
 }, true);
+
+window.addEventListener('keyup', (ev) => {
+  console.debug(ev.code);
+  switch (ev.code) {
+    case 'ArrowLeft':
+    case 'PageUp': {
+      doSetPageNo({ flip: -1 });
+      return;
+    }
+    case 'ArrowRight':
+    case 'PageDown': {
+      doSetPageNo({ flip: +1 });
+      return;
+    }
+  }
+}, false);

@@ -14,10 +14,6 @@ export interface ResponseObject {
   zip: JSZipObject;
 }
 
-interface ZipObject extends JSZipObject {
-  _data: CompressedObject;
-}
-
 const readFile = (file: File): Promise<ArrayBuffer> => new Promise((resolve) => {
   const reader = new FileReader();
   reader.onload = ({ target }) => {

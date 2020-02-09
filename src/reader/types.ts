@@ -4,6 +4,10 @@ export interface PayloadType {
     path: string;
     content: string | Blob;
   },
+  setPage: {
+    pageNo?: number;
+    flip?: -1 | 1;
+  };
 }
 
 export interface MessageData {
