@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, useRef } from 'react'
+import React, { useState, ChangeEvent, useRef, useEffect } from 'react'
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
@@ -48,6 +48,28 @@ addMessageHandler('images', async ({ paths }: MessageType['images'], respond: Re
   respond({ urls });
 });
 
+const updateReaderHtml = async (reader: HTMLIFrameElement) => {
+  if (reader.getAttribute('src')) return;
+
+  try {
+    reader.setAttribute('src', './reader.html');
+    await tick();
+  } catch (e) {
+    console.error(e);
+  } finally {
+    if (reader.getAttribute('src') !== 'about:blank') return;
+
+    const html = reader.contentDocument!.documentElement.innerHTML;
+    console.warn({ html });
+    await tick();
+    const doc = reader.contentDocument!;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    console.warn('updated html');
+  }
+};
+
 const Home = () => {
   const [doc, setDoc] = useState<PackageManager | null>(null);
   const [selected, setSelected] = useState('');
@@ -60,6 +82,13 @@ const Home = () => {
     setDoc(doc);
     current.doc = doc;
   }
+
+  useEffect(() => {
+    current.reader = refReader.current?.contentWindow ?? null;
+    if (!refReader.current) return;
+
+    updateReaderHtml(refReader.current);
+  }, [refReader]);
 
   const onSelectFile = async (ev: ChangeEvent<HTMLInputElement>) => {
     const { target } = ev;
@@ -129,7 +158,7 @@ const Home = () => {
             <TocView show={showToc} nav={doc.navigation} selected={selected} onClickItem={onClickItem} />
             ) : null
         }
-        <iframe src="./reader.html" id="reader" ref={refReader} className={doc?.navigation ? '': "hide"} />
+        <iframe id="reader" ref={refReader} className={doc?.navigation ? '': "hide"} />
       </div>
     </div>
   );

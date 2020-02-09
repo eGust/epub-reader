@@ -1,4 +1,6 @@
 import { emitMessage } from './message';
+import { page } from './actions';
+import { join } from '../utils';
 
 export const IMAGE_TYPES: Record<string, string> = {
   'svg image': 'xlink:href',
@@ -9,15 +11,13 @@ const domParser = new DOMParser();
 
 const resolveImages = async (root: HTMLElement): Promise<string> => {
   const images = new Map<Element, { attr: string, path: string }>();
-  const base = location.toString();
   Object.entries(IMAGE_TYPES).forEach(([selector, attrName]) => {
     const attrs = { attr: attrName };
     root.querySelectorAll(selector).forEach((el) => {
       const path = el.getAttribute(attrName);
       if (!path) return;
 
-      const url = new URL(path, base);
-      images.set(el, { ...attrs, path: url.pathname.slice(1) });
+      images.set(el, { ...attrs, path: join(page.basePath, path) });
     })
   });
 
@@ -39,7 +39,7 @@ const TAG_SELECTOR_REMOVE = [
   'style',
 ];
 
-export const parseHtml = async (html: string, mime: string): Promise<string> => {
+export const parseHtml = (html: string, mime: string): Promise<string> => {
   const dom = domParser.parseFromString(html, mime as SupportedType);
   const body = dom.querySelector('body');
   if (body) {

@@ -1,7 +1,8 @@
 import './reader.styl';
 import { sendMessage, emitMessage, addMessageHandler } from './reader/message';
 import { IMAGE_TYPES } from './reader/parser';
-import { doOpen, doSetPageNo } from './reader/actions';
+import { doOpen, doSetPageNo, page } from './reader/actions';
+import { join } from './utils';
 import './input';
 
 addMessageHandler('open', doOpen);
@@ -37,12 +38,13 @@ document.addEventListener('click', async (ev) => {
   if (!target) return;
 
   const $el = target as HTMLAnchorElement;
-  const path = $el.pathname?.slice(1);
-  if (!path) return;
+  const href = $el.getAttribute('href');
+  if (!href) return;
 
   ev.preventDefault();
   ev.stopPropagation();
 
+  const path = join(page.basePath, href);
   goToLink(path);
   console.debug('clicked', { path });
 }, true);

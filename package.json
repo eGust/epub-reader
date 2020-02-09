@@ -7,8 +7,12 @@
     "clean": "rimraf dist",
     "build": "cross-env NODE_ENV=production run-s clean build:assets",
     "build:dev": "cross-env NODE_ENV=development run-s clean build:assets",
-    "build:assets": "parcel build src/index.pug",
-    "dev": "parcel src/index.pug"
+    "build:assets": "parcel build src/web/index.pug",
+    "build:release": "cross-env NODE_ENV=production run-s clean build:assets release",
+    "release": "node src/inline-html.js",
+    "cargo:clean:run": "cargo clean && cargo run",
+    "debug:cargo": "run-s build:release cargo:clean:run",
+    "dev": "parcel --host 0.0.0.0 src/web/index.pug"
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
@@ -31,16 +35,8 @@
     "react": "^16.8.0",
     "react-dom": "^16.8.0"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+  "browserslist": [
+    "last 1 firefox version",
+    "last 1 safari version"
+  ]
 }

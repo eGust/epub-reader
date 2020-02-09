@@ -38,25 +38,27 @@ const TocItem = ({ item, index, selected, level, getIsOpen, setIsOpen, onClickIt
 
   return (
     <li className={isSelected ? 'selected toc-item' : 'toc-item'}>
-      <span className={isOpenable ? 'group' : 'link'} onClick={onClickedTitle}>
-        {
-          isOpenable ? (
-            isOpen ? (<ArrowDropDownIcon />) : (<ArrowRightIcon />)
-          ) : (
-            <ShortTextIcon />
-          )
-        }
-        {
-          isOpenable && !isOpen ? (
-            <span className="count">{items.length}</span>
-          ) : null
-        }
-        <span className="title" title={label}>{label}</span>
-      </span>
-      <span className="link" onClick={onClickedItem}>
-        {
-          isOpenable ? (<LinkIcon />) : null
-        }
+      <span className="title">
+        <span className={isOpenable ? 'group' : 'link'} onClick={onClickedTitle}>
+          {
+            isOpenable ? (
+              isOpen ? (<ArrowDropDownIcon />) : (<ArrowRightIcon />)
+            ) : (
+              <ShortTextIcon />
+            )
+          }
+          {
+            isOpenable && !isOpen ? (
+              <span className="count">{items.length}</span>
+            ) : null
+          }
+          <span className="title" title={label}>{label}</span>
+        </span>
+        <span className="link" onClick={onClickedItem}>
+          {
+            isOpenable ? (<LinkIcon />) : null
+          }
+        </span>
       </span>
       {
         isOpen ? (
