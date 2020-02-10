@@ -25,14 +25,28 @@ Currently, the browser version is working but still lacks features. It's **PRE-A
 
 ## Road-map
 
-- [ ] Add more features
-- [ ] Add ESLint or TSLint
-- [ ] May switch to Webpack
-- [ ] Desktop friendly features
+1. Generic Features
+   * [ ] flip pages between chapters
+   * [ ] drag and drop files to read
+   * [ ] remember position
+   * [ ] mouse supports
+   * [ ] shortcuts: toggle ToC, prev/next chapter
+   * [ ] settings: fonts, background, themes, keybindings
+   * [ ] multiple tabs?
+2. Desktop only
+   * [ ] settings: font family
+   * [ ] native open dialog / drag and drop
+   * [ ] book shelf
+   * [ ] cloud files
+   * [ ] multiple windows?
+   * [ ] sync settings?
+3. Tooling
+   * [ ] add ESLint or TSLint
+   * [ ] switch to Webpack?
 
 ## Known Issues
 
-Since Windows just switched Edge to Chromium based recently, it seems not working well.
+Since Windows just switched Edge to Chromium based recently, it seems not working well yet.
 
 ## Development
 
@@ -42,9 +56,11 @@ Since Windows just switched Edge to Chromium based recently, it seems not workin
 2. Yarn
 3. optional - Rust(if you want to try desktop version)
 
-### Install
+### Install, Develop and Build
 
 1. `yarn` to install dependencies
-2. `yarn dev` to start dev
+2. `yarn dev` to start dev server
 3. `yarn build` to generate static assets
 4. optional - `yarn cargo:clean:run` to run desktop version
+
+> Dev server(`yarn dev`) is running on [http://0.0.0.0:1234/](http://0.0.0.0:1234/). However, `window.crypto.subtle` may not exist in some browsers due `0.0.0.0` is not one of "secure origins". Just use [http://localhost:1234](http://localhost:1234) or try other browsers.

@@ -37,14 +37,11 @@ addMessageHandler('image', async ({ path }: MessageType['image'], respond: Respo
 
 addMessageHandler('images', async ({ paths }: MessageType['images'], respond: Respond) => {
   if (!paths || !current.doc) return;
-  const urlPairs = await Promise.all(
-    paths.map(async (path) => [
-      path,
-      await current.doc!.asUrl(path),
-    ])
-  );
-  const urls = Object.fromEntries(urlPairs.filter(([, url]) => !!url));
-  console.debug('images', { urlPairs, urls });
+  const urls = (
+      await Promise.all(
+        paths.map(async (path) => [path, await current.doc!.asUrl(path)]),
+      )
+    ).mapToObject(([key, url]) => (url ? [key!, url] : false));
   respond({ urls });
 });
 
@@ -124,8 +121,9 @@ const Home = () => {
 
   const title = doc?.navigation?.title ?? (isOpening ? 'Loading...' : 'EPub Reader');
   const onToggleToc = () => setShowToc(!showToc);
-  const onClickItem = (item: NavItem) => {
+  const onClickItem = (item: NavItem, id: string) => {
     openPath(doc!.toResponse(item.path));
+    setSelected(id);
     console.debug('open', item);
   };
 

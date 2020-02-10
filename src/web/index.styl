@@ -94,7 +94,10 @@ ul.toc
     .link
       cursor pointer
       &:hover
-        color deepskyblue
+        color deepskyblue !important
+
+    &.selected > .item .link
+      color green;
 
   ul
     padding-left 24px
