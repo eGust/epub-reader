@@ -13,7 +13,9 @@ import PackageManager, { ResponseObject } from '../epub/package_manager';
 import { tick } from '../utils';
 import { NavItem } from '../epub/types';
 import { addMessageHandler, current, Respond, sendMessage } from './message';
-import { MessageType } from './types';
+import { actions } from './shortcuts';
+
+const currentPage = { count: -1, no: -1, path: '' };
 
 const openPath = async (page: ResponseObject | null): Promise<void> => {
   if (!page) { return; }
@@ -21,21 +23,24 @@ const openPath = async (page: ResponseObject | null): Promise<void> => {
   const { mime, path, zip } = page;
   const content = await zip.async(mime.includes('html') ? 'text' : 'blob');
   sendMessage('open', { content, path, mime });
+  currentPage.path = path;
+  currentPage.count = -1;
+  currentPage.no = -1;
 };
 
-addMessageHandler('go', ({ path }: MessageType['go']) => {
+addMessageHandler('go', ({ path }) => {
   if (!path || !current.doc) return;
   openPath(current.doc.toResponse(path));
 });
 
-addMessageHandler('image', async ({ path }: MessageType['image'], respond: Respond) => {
+addMessageHandler('image', async ({ path }, respond) => {
   if (!path || !current.doc) return;
   const url = await current.doc.asUrl(path);
   console.debug('image', { path, url });
   respond({ url });
 });
 
-addMessageHandler('images', async ({ paths }: MessageType['images'], respond: Respond) => {
+addMessageHandler('images', async ({ paths }, respond) => {
   if (!paths || !current.doc) return;
   const urls = (
       await Promise.all(
@@ -44,6 +49,25 @@ addMessageHandler('images', async ({ paths }: MessageType['images'], respond: Re
     ).mapToObject(([key, url]) => (url ? [key!, url] : false));
   respond({ urls });
 });
+
+addMessageHandler('updateStatus', ({ pageCount, pageNo }) => {
+  currentPage.count = pageCount;
+  currentPage.no = pageNo;
+  console.debug('updateStatus', currentPage);
+});
+
+const flipPage = (direction: 1 | -1): void => {
+  if (currentPage.count < 0 || currentPage.no < 0) return;
+
+  const pageNo = currentPage.no + direction;
+  if (pageNo >= 0 && pageNo < currentPage.count) {
+    sendMessage('setPage', { pageNo });
+  }
+}
+
+actions.flipPrev = () => flipPage(-1);
+
+actions.flipNext = () => flipPage(+1);
 
 const updateReaderHtml = async (reader: HTMLIFrameElement) => {
   if (reader.getAttribute('src')) return;

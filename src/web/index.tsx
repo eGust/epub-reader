@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 
 import './index.styl';
 import App from './App';
-import './input';
 
 (() => {
   ReactDOM.render(

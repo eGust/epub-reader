@@ -5,9 +5,8 @@ export interface PayloadType {
     content: string | Blob;
   },
   setPage: {
-    pageNo?: number;
-    flip?: -1 | 1;
-  };
+    pageNo: number;
+  },
 }
 
 export interface MessageData {

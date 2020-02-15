@@ -2,6 +2,7 @@ import { getBasePath } from './../utils';
 import { PayloadType } from "./types";
 import { parseHtml } from "./parser";
 import { tick } from "../utils";
+import { sendMessage } from './message';
 
 const pending: Record<string, number> = {};
 
@@ -14,9 +15,10 @@ export const $body = document.querySelector('body')!;
 export const $content = document.querySelector('main > section') as HTMLDivElement;
 
 const setPageNo = (pageNo: number) => {
-  if (pageNo < 0 || pageNo > page.count - 1) return;
-  $content.style.setProperty('--page-no', pageNo.toString());
-  page.no = pageNo;
+  const no = pageNo | 0;
+  if (Number.isNaN(no) || no < 0 || no > page.count - 1) return;
+  $content.style.setProperty('--page-no', no.toString());
+  page.no = no;
 }
 
 const setPageCount = (pageCount: number) => {
@@ -24,15 +26,18 @@ const setPageCount = (pageCount: number) => {
   page.count = pageCount;
 };
 
-export const doSetPageNo = ({ pageNo, flip }: PayloadType['setPage']): void => {
-  if (flip) {
-    setPageNo(page.no + flip);
-    return;
-  }
+const syncStatus = () => {
+  const { basePath, count: pageCount, no: pageNo } = page;
+  sendMessage('updateStatus', { pageNo, pageCount, basePath });
+};
 
-  if (pageNo === undefined) return;
+export const doSetPageNo = ({ pageNo }: PayloadType['setPage']): void => {
+  const oldNo = page.no;
   setPageNo(pageNo);
-}
+  if (oldNo !== page.no) {
+    syncStatus();
+  }
+};
 
 export const updatePageCount = async () => {
   const timestamp = Date.now();
@@ -49,10 +54,14 @@ export const updatePageCount = async () => {
   const vw = $body.clientWidth * 0.03;
   const count = (fullWidth + pageWidth * 0.4 + vw) / (pageWidth + vw);
   console.debug({ fullWidth, pageWidth, vw }, count, (fullWidth + vw) / (pageWidth + vw));
-  setPageCount(Math.round(count));
+  try {
+    setPageCount(Math.round(count));
 
-  if (page.no + 1 < page.count) return;
-  setPageNo(page.count - 1);
+    if (page.no + 1 < page.count) return;
+    setPageNo(page.count - 1);
+  } finally {
+    syncStatus();
+  }
 };
 
 export const doOpen = async ({ mime, path, content }: PayloadType['open']): Promise<void> => {

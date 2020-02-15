@@ -23,14 +23,14 @@ const buildRespond = ({ messageId }: { messageId: string }) =>
 
 export type Respond = ReturnType<typeof buildRespond>;
 
-type MessageHandler = (payload: any, respond: Respond) => void | Promise<any>;
+type MessageHandler<T extends keyof MessageType, P = MessageType[T]> = (payload: P, respond: Respond) => void | Promise<void>;
 
-const messageHandlers: Record<string, MessageHandler> = {};
+const messageHandlers: { [T in keyof MessageType]?: MessageHandler<T> } = {};
 
 window.addEventListener('message', async ({ data }) => {
   if (!current.doc || !(data?.type)) return;
 
-  const handler = messageHandlers[data.type];
+  const handler = messageHandlers[data.type as keyof MessageType];
   if (!handler) {
     console.debug('main window received message', data);
     return;
@@ -39,12 +39,12 @@ window.addEventListener('message', async ({ data }) => {
   handler(data.payload, buildRespond(data));
 }, false);
 
-export const addMessageHandler = (message: keyof MessageType, handler: MessageHandler): void => {
-  messageHandlers[message] = handler;
+export const addMessageHandler = <T extends keyof MessageType>(message: T, handler: MessageHandler<T>): void => {
+  messageHandlers[message] = handler as typeof messageHandlers[T];
 };
 
-export const removeMessageHandler = (message: keyof MessageType): MessageHandler | null => {
+export const removeMessageHandler = <T extends keyof MessageType>(message: T): MessageHandler<T> | null => {
   const result = messageHandlers[message] ?? null;
   delete messageHandlers[message];
-  return result;
+  return result as MessageHandler<T>;
 };

@@ -1,11 +1,12 @@
 import './reader.styl';
 import { sendMessage, emitMessage, addMessageHandler } from './reader/message';
 import { IMAGE_TYPES } from './reader/parser';
-import { doOpen, doSetPageNo, page } from './reader/actions';
+import { page, doOpen, doSetPageNo } from './reader/actions';
 import { join } from './utils';
-import './input';
 
 addMessageHandler('open', doOpen);
+
+addMessageHandler('setPage', doSetPageNo);
 
 const goToLink = (path: string) => sendMessage('go', { path });
 
@@ -50,17 +51,6 @@ document.addEventListener('click', async (ev) => {
 }, true);
 
 window.addEventListener('keyup', (ev) => {
-  console.debug(ev.code);
-  switch (ev.code) {
-    case 'ArrowLeft':
-    case 'PageUp': {
-      doSetPageNo({ flip: -1 });
-      return;
-    }
-    case 'ArrowRight':
-    case 'PageDown': {
-      doSetPageNo({ flip: +1 });
-      return;
-    }
-  }
+  const { altKey: alt, ctrlKey: ctrl, metaKey: meta, shiftKey: shift, key, code } = ev;
+  sendMessage('keyUp', { alt, ctrl, meta, shift, key, code });
 }, false);
