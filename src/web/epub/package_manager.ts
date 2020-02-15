@@ -147,5 +147,3 @@ export class PackageManager {
     return { path, mime: item.mime, zip };
   }
 }
-
-export default PackageManager;

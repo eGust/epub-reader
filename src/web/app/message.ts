@@ -1,14 +1,23 @@
-import PackageManager from "../epub/package_manager";
+import { PathHelper } from './path_helper';
+import { PackageManager } from "../epub/package_manager";
 import { MessageType } from "./types";
 
 interface Current {
   doc: PackageManager | null;
   reader: Window | null;
+  helper: PathHelper | null;
+  path: string;
+  pageNo: number;
+  pageCount: number;
 }
 
 export const current: Current = {
   doc: null,
   reader: null,
+  helper: null,
+  path: '',
+  pageNo: -1,
+  pageCount: -1,
 };
 
 export const sendMessage = (type: string, payload: Record<string, any> = {}): void => {

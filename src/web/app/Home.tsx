@@ -9,23 +9,21 @@ import TocIcon from '@material-ui/icons/Toc';
 
 import TocView from './TocView';
 
-import PackageManager, { ResponseObject } from '../epub/package_manager';
+import { PackageManager, ResponseObject } from '../epub/package_manager';
 import { tick } from '../utils';
-import { NavItem } from '../epub/types';
-import { addMessageHandler, current, Respond, sendMessage } from './message';
+import { addMessageHandler, current, sendMessage } from './message';
 import { actions } from './shortcuts';
+import { PathHelper, ContentItem } from './path_helper';
 
-const currentPage = { count: -1, no: -1, path: '' };
-
-const openPath = async (page: ResponseObject | null): Promise<void> => {
+const openPath = async (page: ResponseObject | null, atLast = false): Promise<void> => {
   if (!page) { return; }
 
   const { mime, path, zip } = page;
   const content = await zip.async(mime.includes('html') ? 'text' : 'blob');
-  sendMessage('open', { content, path, mime });
-  currentPage.path = path;
-  currentPage.count = -1;
-  currentPage.no = -1;
+  sendMessage('open', { content, path, mime, atLast });
+  current.path = path;
+  current.pageCount = -1;
+  current.pageNo = -1;
 };
 
 addMessageHandler('go', ({ path }) => {
@@ -51,23 +49,69 @@ addMessageHandler('images', async ({ paths }, respond) => {
 });
 
 addMessageHandler('updateStatus', ({ pageCount, pageNo }) => {
-  currentPage.count = pageCount;
-  currentPage.no = pageNo;
-  console.debug('updateStatus', currentPage);
+  current.pageCount = pageCount;
+  current.pageNo = pageNo;
+  console.debug('updateStatus', current);
 });
 
-const flipPage = (direction: 1 | -1): void => {
-  if (currentPage.count < 0 || currentPage.no < 0) return;
+const ui = {
+  setSelected: () => {},
+};
 
-  const pageNo = currentPage.no + direction;
-  if (pageNo >= 0 && pageNo < currentPage.count) {
-    sendMessage('setPage', { pageNo });
+const updateSelectedChapter = (spineIndex: number) => {
+  const h = current.helper!;
+  const { spineItems } = current.doc!.metadata!;
+  for (let i = spineIndex; i >= 0; i -= 1) {
+    const { item } = spineItems[spineIndex];
+    const info = h.getPathInfo(item.path)!;
+    if (info.tocItems.length) {
+      ui.setSelected(info.tocItems[0].id);
+      break;
+    }
   }
+};
+
+const flipChapter = (direction: 1 | -1): void => {
+  const cur = current.helper!.getPathInfo(current.path);
+  if (!cur || cur.spineIndex === undefined) {
+    console.warn(current);
+    return;
+  }
+
+  const spineIndex = cur.spineIndex + direction;
+  const doc = current.doc!;
+  const { spineItems } = doc.metadata!;
+  if (spineIndex < 0 || spineIndex >= spineItems.length) {
+    console.warn(current, cur);
+    return;
+  }
+
+  const next = spineItems[spineIndex];
+  const { item: { path } } = next;
+  console.debug(cur, next, current.helper!.getPathInfo(path));
+  openPath(doc.toResponse(path), direction < 0);
+  updateSelectedChapter(spineIndex);
 }
 
-actions.flipPrev = () => flipPage(-1);
+actions.flipChapterPrev = () => flipChapter(-1);
 
-actions.flipNext = () => flipPage(+1);
+actions.flipChapterNext = () => flipChapter(+1);
+
+const flipPage = (direction: 1 | -1): void => {
+  if (current.pageCount < 0 || current.pageNo < 0) return;
+
+  const pageNo = current.pageNo + direction;
+  if (pageNo >= 0 && pageNo < current.pageCount) {
+    sendMessage('setPage', { pageNo });
+    return;
+  }
+
+  flipChapter(direction);
+}
+
+actions.flipPagePrev = () => flipPage(-1);
+
+actions.flipPageNext = () => flipPage(+1);
 
 const updateReaderHtml = async (reader: HTMLIFrameElement) => {
   if (reader.getAttribute('src')) return;
@@ -93,6 +137,7 @@ const updateReaderHtml = async (reader: HTMLIFrameElement) => {
 
 const Home = () => {
   const [doc, setDoc] = useState<PackageManager | null>(null);
+  const [helper, setHelper] = useState<PathHelper | null>(null);
   const [selected, setSelected] = useState('');
   const [showToc, setShowToc] = useState(false);
   const [isOpening, setOpening] = useState(false);
@@ -110,6 +155,15 @@ const Home = () => {
 
     updateReaderHtml(refReader.current);
   }, [refReader]);
+
+  useEffect(() => {
+    current.helper = doc ? new PathHelper(doc) : null;
+    setHelper(current.helper);
+  }, [doc]);
+
+  useEffect(() => {
+    ui.setSelected = setSelected;
+  }, [setSelected]);
 
   const onSelectFile = async (ev: ChangeEvent<HTMLInputElement>) => {
     const { target } = ev;
@@ -145,11 +199,13 @@ const Home = () => {
 
   const title = doc?.navigation?.title ?? (isOpening ? 'Loading...' : 'EPub Reader');
   const onToggleToc = () => setShowToc(!showToc);
-  const onClickItem = (item: NavItem, id: string) => {
+  const onClickItem = (item: ContentItem) => {
     openPath(doc!.toResponse(item.path));
-    setSelected(id);
+    setSelected(item.id);
     console.debug('open', item);
   };
+
+  actions.toggleToc = onToggleToc;
 
   return (
     <div className="flex column flex-auto">
@@ -176,8 +232,8 @@ const Home = () => {
       </AppBar>
       <div className="reader-wrap flex-auto">
         {
-          doc?.navigation ? (
-            <TocView show={showToc} nav={doc.navigation} selected={selected} onClickItem={onClickItem} />
+          helper ? (
+            <TocView show={showToc} helper={helper} selected={selected} onClickItem={onClickItem} />
             ) : null
         }
         <iframe id="reader" ref={refReader} className={doc?.navigation ? '': "hide"} />

@@ -3,10 +3,13 @@ import { MessageType } from "./types";
 
 export const bindings: { [key: string]: Record<string, string> } = {
   keyboard: {
-    ArrowLeft: 'flipPrev',
-    ArrowRight: 'flipNext',
-    PageUp: 'flipPrev',
-    PageDown: 'flipNext',
+    'CtrlMeta + ArrowLeft': 'flipChapterPrev',
+    'CtrlMeta + ArrowRight': 'flipChapterNext',
+    ArrowLeft: 'flipPagePrev',
+    ArrowRight: 'flipPageNext',
+    PageUp: 'flipPagePrev',
+    PageDown: 'flipPageNext',
+    Backquote: 'toggleToc',
   },
   mouse: {},
 };
@@ -32,7 +35,7 @@ const keyHandler = (keyStatus: MessageType['keyUp']) => {
     maps[1].push(keyStatus.ctrl ? 'Ctrl' : 'Meta');
   }
 
-  maps.find((keys) => {
+  const handled = maps.some((keys) => {
     const bind = [...keys].reverse().join(' + ');
     const actionName = bindings.keyboard[bind];
     if (actionName) {
@@ -41,6 +44,10 @@ const keyHandler = (keyStatus: MessageType['keyUp']) => {
       return true;
     }
   });
+
+  if (!handled) {
+    console.log(maps);
+  }
 };
 
 window.addEventListener('keyup', (ev) => {

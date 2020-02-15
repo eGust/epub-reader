@@ -20,6 +20,10 @@ declare global {
   interface Array<T> {
     mapToObject<V>(cb: (value: T, index: number) => Optional<[PropertyKey, V]>): { [K in PropertyKey]: V };
   }
+
+  interface ReadonlyArray<T> {
+    mapToObject<V>(cb: (value: T, index: number) => Optional<[PropertyKey, V]>): { [K in PropertyKey]: V };
+  }
 }
 
 function updateObject<V>(this: any, pair: Optional<[PropertyKey, V]>) {

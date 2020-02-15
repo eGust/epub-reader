@@ -74,6 +74,7 @@ export const doOpen = async ({ mime, path, content }: PayloadType['open']): Prom
       $content.innerHTML = elements;
       $content.style.setProperty('--page-no', '0');
       updatePageCount();
+      $content.style.setProperty('--path', path);
     } catch (e) {
       console.error('doOpen', e);
     }

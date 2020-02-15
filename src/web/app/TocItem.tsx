@@ -5,33 +5,29 @@ import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ShortTextIcon from '@material-ui/icons/ShortText';
 
-import { NavItem } from '../epub/types';
+import { ContentItem } from './path_helper';
 
 interface TocProps {
-  item: NavItem;
-  idKey: string;
-  level: number;
+  item: ContentItem;
   selected: string;
   getIsOpen: (id: string) => boolean,
   setIsOpen: (id: string, value: boolean) => void,
-  onClickItem: (item: NavItem, id: string) => void,
+  onClickItem: (item: ContentItem) => void,
 }
 
-const TocItem = ({ item, idKey, selected, level, getIsOpen, setIsOpen, onClickItem }: TocProps) => {
+const TocItem = ({ item, selected, getIsOpen, setIsOpen, onClickItem }: TocProps) => {
   const { label, items } = item;
 
-  const nextLevel = level + 1;
   const isOpenable = items.length > 0;
-  const isOpen = getIsOpen(idKey);
-  const isSelected = idKey === selected;
+  const isOpen = getIsOpen(item.id);
+  const isSelected = item.id === selected;
 
   const subItemProps = {
-    level: nextLevel,
     selected, getIsOpen, setIsOpen, onClickItem
   };
 
-  const onClickedItem = () => onClickItem(item, idKey);
-  const toggleOpen = () => setIsOpen(idKey, !isOpen);
+  const onClickedItem = () => onClickItem(item);
+  const toggleOpen = () => setIsOpen(item.id, !isOpen);
   const onClickedTitle = isOpenable ? toggleOpen : onClickedItem;
 
   return (
@@ -62,8 +58,8 @@ const TocItem = ({ item, idKey, selected, level, getIsOpen, setIsOpen, onClickIt
         isOpen ? (
           <ul>
             {
-              items.map((subItem, idx) => ({ subItem, key: `${idKey}-${idx}` })).map(({ subItem, key }) => (
-                <TocItem key={key} item={subItem} idKey={key} {...subItemProps} />
+              items.map((subItem) => (
+                <TocItem key={subItem.id} item={subItem} {...subItemProps} />
               ))
             }
           </ul>
