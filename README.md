@@ -26,7 +26,7 @@ Currently, the browser version is working but still lacks features. It's **PRE-A
 ## Road-map
 
 1. Generic Features
-   * [ ] flip pages between chapters
+   * [x] flip pages between chapters
    * [ ] drag and drop files to read
    * [ ] remember position
    * [ ] mouse supports

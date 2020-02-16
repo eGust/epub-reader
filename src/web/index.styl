@@ -51,7 +51,7 @@ body
 
 #reader
   border none
-  margin 8px
+  margin 5px 8px 16px 5px
   padding 0
   flex 1
 
@@ -59,6 +59,56 @@ body
   display flex
   position relative
   overflow hidden
+
+.page-indicator
+  position absolute
+  width 62%
+  height 10px
+  left 19%
+  bottom 3px
+  color white
+  border-radius 20px
+  opacity 0.4
+  display flex
+  flex-direction column
+  justify-content space-evenly
+
+  .label
+    align-self center
+    display none
+
+  .scroll-bar
+    position relative
+    margin 0 20px
+    height 8px
+    align-self stretch
+    border-radius 5px
+    overflow hidden
+    display flex
+    flex-direction row
+    align-content stretch
+    border 0.5px dotted black
+    .scroll-thumb
+      background-color black
+      flex 1
+    .scroll-block
+      cursor pointer
+      flex 1
+      &:hover
+        border 0.5px dotted white
+
+  &:hover
+    opacity 0.9
+    background-color rgba(0, 0, 0, 0.9)
+    height 40px
+    .label
+      opacity 1
+      display block
+    .scroll-bar
+      border none
+      background-color #666
+    .scroll-thumb
+      background-color #eee
 
 ul.toc
   z-index 1
@@ -82,6 +132,8 @@ ul.toc
       white-space nowrap
     .title
       margin 0 6px
+      &.selected
+        color green
     .count
       font-size 80%
       color blue

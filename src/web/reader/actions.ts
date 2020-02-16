@@ -31,15 +31,15 @@ const syncStatus = () => {
   sendMessage('updateStatus', { pageNo, pageCount, basePath });
 };
 
-export const doSetPageNo = ({ pageNo }: PayloadType['setPage']): void => {
+export const doSetPageNo = ({ pageNo, forceSync = false }: PayloadType['setPage']): void => {
   const oldNo = page.no;
   setPageNo(pageNo);
-  if (oldNo !== page.no) {
+  if (oldNo !== page.no || forceSync) {
     syncStatus();
   }
 };
 
-export const updatePageCount = async () => {
+export const updatePageCount = async ({ ignoreSync = false } = {}) => {
   const timestamp = Date.now();
   if (timestamp < pending.pageCount ?? 0) return;
 
@@ -60,11 +60,13 @@ export const updatePageCount = async () => {
     if (page.no + 1 < page.count) return;
     setPageNo(page.count - 1);
   } finally {
-    syncStatus();
+    if (!ignoreSync) {
+      syncStatus();
+    }
   }
 };
 
-export const doOpen = async ({ mime, path, content }: PayloadType['open']): Promise<void> => {
+export const doOpen = async ({ mime, path, content, atLast }: PayloadType['open']): Promise<void> => {
   if (/(html|xml)/.test(mime)) {
     $content.innerHTML = '';
     page.basePath = `/${getBasePath(path)}`;
@@ -72,9 +74,12 @@ export const doOpen = async ({ mime, path, content }: PayloadType['open']): Prom
       const elements = await parseHtml(content as string, mime);
       console.debug('open', { path, elements });
       $content.innerHTML = elements;
-      $content.style.setProperty('--page-no', '0');
-      updatePageCount();
-      $content.style.setProperty('--path', path);
+      $content.style.setProperty('--debug--path', path);
+      $content.style.setProperty('visibility', 'hidden');
+
+      await updatePageCount({ ignoreSync: true });
+      $content.style.removeProperty('visibility');
+      doSetPageNo({ pageNo: atLast ? page.count - 1 : 0, forceSync: true });
     } catch (e) {
       console.error('doOpen', e);
     }
@@ -83,4 +88,4 @@ export const doOpen = async ({ mime, path, content }: PayloadType['open']): Prom
   console.error('open', { mime, path, content });
 };
 
-window.addEventListener('resize', updatePageCount);
+window.addEventListener('resize', () => updatePageCount());

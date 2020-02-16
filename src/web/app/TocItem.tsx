@@ -9,7 +9,7 @@ import { ContentItem } from './path_helper';
 
 interface TocProps {
   item: ContentItem;
-  selected: string;
+  selected: { id: string, parentIds: Set<string> };
   getIsOpen: (id: string) => boolean,
   setIsOpen: (id: string, value: boolean) => void,
   onClickItem: (item: ContentItem) => void,
@@ -20,7 +20,6 @@ const TocItem = ({ item, selected, getIsOpen, setIsOpen, onClickItem }: TocProps
 
   const isOpenable = items.length > 0;
   const isOpen = getIsOpen(item.id);
-  const isSelected = item.id === selected;
 
   const subItemProps = {
     selected, getIsOpen, setIsOpen, onClickItem
@@ -31,7 +30,7 @@ const TocItem = ({ item, selected, getIsOpen, setIsOpen, onClickItem }: TocProps
   const onClickedTitle = isOpenable ? toggleOpen : onClickedItem;
 
   return (
-    <li className={isSelected ? 'selected toc-item' : 'toc-item'}>
+    <li className={`toc-item ${item.id === selected.id ? 'selected' : ''}`}>
       <span className="item">
         <span className={isOpenable ? 'group' : 'link'} onClick={onClickedTitle}>
           {
@@ -46,7 +45,7 @@ const TocItem = ({ item, selected, getIsOpen, setIsOpen, onClickItem }: TocProps
               <span className="count">{items.length}</span>
             ) : null
           }
-          <span className="title" title={label}>{label}</span>
+          <span className={`title ${selected.parentIds.has(item.id) ? 'selected' : ''}`} title={label}>{label}</span>
         </span>
         <span className="link" onClick={onClickedItem}>
           {

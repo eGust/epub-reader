@@ -5,7 +5,7 @@ import { PathHelper, ContentItem } from './path_helper';
 
 interface TocViewProps {
   helper: PathHelper;
-  selected: string;
+  selected: { id: string, parentIds: Set<string> };
   show: boolean;
   onClickItem: (item: ContentItem) => void,
 }

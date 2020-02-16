@@ -10,6 +10,8 @@ export const bindings: { [key: string]: Record<string, string> } = {
     PageUp: 'flipPagePrev',
     PageDown: 'flipPageNext',
     Backquote: 'toggleToc',
+    Home: 'jumpPageFirst',
+    End: 'jumpPageLast',
   },
   mouse: {},
 };

@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, useRef, useEffect } from 'react'
+import React, { useState, ChangeEvent, useRef, useEffect, useCallback, useMemo } from 'react'
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
@@ -8,6 +8,7 @@ import LibraryAddIcon from '@material-ui/icons/LibraryAdd';
 import TocIcon from '@material-ui/icons/Toc';
 
 import TocView from './TocView';
+import PageIndicator, { PageIndicatorProps } from './PageIndicator';
 
 import { PackageManager, ResponseObject } from '../epub/package_manager';
 import { tick } from '../utils';
@@ -48,15 +49,17 @@ addMessageHandler('images', async ({ paths }, respond) => {
   respond({ urls });
 });
 
+const ui = {
+  setSelected: (_id: string) => {},
+  setPageStatus: (status: Record<string, any>) => {},
+};
+
 addMessageHandler('updateStatus', ({ pageCount, pageNo }) => {
   current.pageCount = pageCount;
   current.pageNo = pageNo;
+  ui.setPageStatus({ count: pageCount, no: pageNo });
   console.debug('updateStatus', current);
 });
-
-const ui = {
-  setSelected: () => {},
-};
 
 const updateSelectedChapter = (spineIndex: number) => {
   const h = current.helper!;
@@ -97,12 +100,18 @@ actions.flipChapterPrev = () => flipChapter(-1);
 
 actions.flipChapterNext = () => flipChapter(+1);
 
+const jumpPage = (pageNo: number): boolean => {
+  if (pageNo < 0 || pageNo >= current.pageCount || pageNo === current.pageNo) {
+    return false;
+  }
+  sendMessage('setPage', { pageNo });
+  return true;
+}
+
 const flipPage = (direction: 1 | -1): void => {
   if (current.pageCount < 0 || current.pageNo < 0) return;
 
-  const pageNo = current.pageNo + direction;
-  if (pageNo >= 0 && pageNo < current.pageCount) {
-    sendMessage('setPage', { pageNo });
+  if (jumpPage(current.pageNo + direction)) {
     return;
   }
 
@@ -112,6 +121,10 @@ const flipPage = (direction: 1 | -1): void => {
 actions.flipPagePrev = () => flipPage(-1);
 
 actions.flipPageNext = () => flipPage(+1);
+
+actions.jumpPageFirst = () => jumpPage(0);
+
+actions.jumpPageLast = () => jumpPage(current.pageCount - 1);
 
 const updateReaderHtml = async (reader: HTMLIFrameElement) => {
   if (reader.getAttribute('src')) return;
@@ -138,16 +151,25 @@ const updateReaderHtml = async (reader: HTMLIFrameElement) => {
 const Home = () => {
   const [doc, setDoc] = useState<PackageManager | null>(null);
   const [helper, setHelper] = useState<PathHelper | null>(null);
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState({ id: '', parentIds: new Set<string>() });
   const [showToc, setShowToc] = useState(false);
   const [isOpening, setOpening] = useState(false);
+  const [pageIndProps, setPageIndProps] = useState<PageIndicatorProps>({
+    count: -1,
+    no: -1,
+    hidden: false,
+    onUpdate: jumpPage,
+  });
   const refReader = useRef<HTMLIFrameElement>(null);
 
-  const setCurrentDocument = (doc: PackageManager | null) => {
-    setShowToc(!!doc);
-    setDoc(doc);
-    current.doc = doc;
-  }
+  const setCurrentDocument = useCallback(
+    (doc: PackageManager | null) => {
+      setShowToc(!!doc);
+      setDoc(doc);
+      current.doc = doc;
+    },
+    [setShowToc, setDoc],
+  );
 
   useEffect(() => {
     current.reader = refReader.current?.contentWindow ?? null;
@@ -162,50 +184,72 @@ const Home = () => {
   }, [doc]);
 
   useEffect(() => {
-    ui.setSelected = setSelected;
-  }, [setSelected]);
+    ui.setPageStatus = ({ count, no }: Record<string, number>) => {
+      setPageIndProps({
+        ...pageIndProps,
+        count,
+        no,
+      });
+    };
+  }, [setPageIndProps]);
 
-  const onSelectFile = async (ev: ChangeEvent<HTMLInputElement>) => {
-    const { target } = ev;
-    const file = target.files![0];
-    current.reader = refReader.current?.contentWindow ?? null;
+  const onSelectFile = useCallback(
+    async (ev: ChangeEvent<HTMLInputElement>) => {
+      const { target } = ev;
+      const file = target.files![0];
+      current.reader = refReader.current?.contentWindow ?? null;
 
-    console.clear();
-    sendMessage('reset');
-    setOpening(true);
-    try {
-      setCurrentDocument(null);
-      await tick();
+      console.clear();
+      sendMessage('reset');
+      setOpening(true);
+      try {
+        setCurrentDocument(null);
+        await tick();
 
-      target.files = null;
-      target.value = '';
-      console.time('loading');
-      const pm = new PackageManager(file);
-      if (!await pm.open()) {
-        console.error('unable to open file:', file);
-        return;
+        target.files = null;
+        target.value = '';
+        console.time('loading');
+        const pm = new PackageManager(file);
+        if (!await pm.open()) {
+          console.error('unable to open file:', file);
+          return;
+        }
+
+        console.timeEnd('loading');
+        setCurrentDocument(pm);
+
+        await tick();
+        // open home
+        openPath(pm.getHome());
+      } finally {
+        setOpening(false);
       }
+    },
+    [refReader]
+  );
 
-      console.timeEnd('loading');
-      setCurrentDocument(pm);
+  const title = useMemo(() => doc?.navigation?.title ?? (isOpening ? 'Loading...' : 'EPub Reader'), [doc, isOpening]);
+  const onToggleToc = useCallback(() => setShowToc(!showToc), [showToc, setShowToc]);
+  const onSelectItem = useCallback((id: string) => {
+    const parentIds = new Set(current.helper!.getContentItemWithAllParentIds(id));
+    setSelected({ id, parentIds });
+  }, [setSelected]);
+  const onClickItem = useCallback(
+    (item: ContentItem) => {
+      openPath(doc!.toResponse(item.path));
+      onSelectItem(item.id);
+      console.debug('open', item);
+    },
+    [doc],
+  );
 
-      await tick();
-      // open home
-      openPath(pm.getHome());
-    } finally {
-      setOpening(false);
-    }
-  };
+  useEffect(() => {
+    actions.toggleToc = onToggleToc;
+  }, [onToggleToc]);
 
-  const title = doc?.navigation?.title ?? (isOpening ? 'Loading...' : 'EPub Reader');
-  const onToggleToc = () => setShowToc(!showToc);
-  const onClickItem = (item: ContentItem) => {
-    openPath(doc!.toResponse(item.path));
-    setSelected(item.id);
-    console.debug('open', item);
-  };
-
-  actions.toggleToc = onToggleToc;
+  useEffect(() => {
+    ui.setSelected = onSelectItem;
+  }, [onSelectItem]);
 
   return (
     <div className="flex column flex-auto">
@@ -237,6 +281,7 @@ const Home = () => {
             ) : null
         }
         <iframe id="reader" ref={refReader} className={doc?.navigation ? '': "hide"} />
+        <PageIndicator {...pageIndProps} />
       </div>
     </div>
   );

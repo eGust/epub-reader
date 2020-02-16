@@ -6,6 +6,7 @@ export interface ContentItem {
   label: string;
   path: string;
   level: number;
+  parentId: string;
   items: ContentItem[];
 }
 
@@ -15,31 +16,47 @@ interface PathMapItem {
 }
 
 export class PathHelper {
-  private map = new Map<string, PathMapItem>();
+  private pathMap = new Map<string, PathMapItem>();
+  private idMap = new Map<string, ContentItem>();
 
   public readonly tocItems: readonly ContentItem[];
 
   public getPathInfo(path: string): PathMapItem | null {
-    return this.map.get(path) ?? null;
+    return this.pathMap.get(path) ?? null;
   }
 
-  private convert(navItems: NavItem[], level = 0, key = ''): ContentItem[] {
+  public getContentItem(id: string): ContentItem | null {
+    return this.idMap.get(id) ?? null;
+  }
+
+  public getContentItemWithAllParentIds(id: string): string[] {
+    const ids: string[] = [];
+    const { idMap } = this;
+    for (let item = idMap.get(id); item; item = idMap.get(item.parentId)) {
+      ids.push(item.parentId);
+    }
+    return ids;
+  }
+
+  private convert(navItems: NavItem[], level = 0, key = '', parentId = ''): ContentItem[] {
     const lvl = level + 1;
-    const { map } = this;
+    const { pathMap, idMap } = this;
     return navItems.map(({ label, path, items }, index) => {
       const id = `${key}${index}`;
       const item = {
-        id: `${key}${index}`,
+        id,
         label,
         path,
         level,
-        items: this.convert(items, lvl, `${id}-`),
+        parentId,
+        items: this.convert(items, lvl, `${id}-`, id),
       };
+      idMap.set(id, item);
 
-      if (map.has(item.path)) {
-        map.get(item.path)!.tocItems.push(item);
+      if (pathMap.has(item.path)) {
+        pathMap.get(item.path)!.tocItems.push(item);
       } else {
-        map.set(item.path, { tocItems: [item] });
+        pathMap.set(item.path, { tocItems: [item] });
       }
       return item;
     });
@@ -47,12 +64,12 @@ export class PathHelper {
 
   constructor (pm: PackageManager) {
     this.tocItems = this.convert(pm.navigation!.items);
-    const { map } = this;
+    const { pathMap } = this;
     pm.metadata!.spineItems.forEach(({ item: { path } }, spineIndex) => {
-      if (map.has(path)) {
-        map.get(path)!.spineIndex = spineIndex;
+      if (pathMap.has(path)) {
+        pathMap.get(path)!.spineIndex = spineIndex;
       } else {
-        map.set(path, { spineIndex, tocItems: [] });
+        pathMap.set(path, { spineIndex, tocItems: [] });
       }
     });
   }
