@@ -4,6 +4,7 @@ export interface MessageType {
   go: PathPayload,
   image: PathPayload,
   images: { paths: string[] },
+  trigger: { action: string },
   keyUp: {
     alt: boolean;
     ctrl: boolean;
@@ -17,4 +18,9 @@ export interface MessageType {
     pageNo: number;
     basePath: string;
   },
+}
+
+export enum Direction {
+  prev = -1,
+  next = +1,
 }

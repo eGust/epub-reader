@@ -9,12 +9,14 @@ import TocIcon from '@material-ui/icons/Toc';
 
 import TocView from './TocView';
 import PageIndicator, { PageIndicatorProps } from './PageIndicator';
+import ArrowIconButton from './ArrowIconButton';
 
 import { PackageManager, ResponseObject } from '../epub/package_manager';
 import { tick } from '../utils';
 import { addMessageHandler, current, sendMessage } from './message';
 import { actions } from './shortcuts';
 import { PathHelper, ContentItem } from './path_helper';
+import { Direction } from './types';
 
 const openPath = async (page: ResponseObject | null, atLast = false): Promise<void> => {
   if (!page) { return; }
@@ -74,7 +76,7 @@ const updateSelectedChapter = (spineIndex: number) => {
   }
 };
 
-const flipChapter = (direction: 1 | -1): void => {
+const flipChapter = (direction: Direction): void => {
   const cur = current.helper!.getPathInfo(current.path);
   if (!cur || cur.spineIndex === undefined) {
     console.warn(current);
@@ -96,9 +98,9 @@ const flipChapter = (direction: 1 | -1): void => {
   updateSelectedChapter(spineIndex);
 }
 
-actions.flipChapterPrev = () => flipChapter(-1);
+actions.flipChapterPrev = () => flipChapter(Direction.prev);
 
-actions.flipChapterNext = () => flipChapter(+1);
+actions.flipChapterNext = () => flipChapter(Direction.next);
 
 const jumpPage = (pageNo: number): boolean => {
   if (pageNo < 0 || pageNo >= current.pageCount || pageNo === current.pageNo) {
@@ -108,7 +110,7 @@ const jumpPage = (pageNo: number): boolean => {
   return true;
 }
 
-const flipPage = (direction: 1 | -1): void => {
+const flipPage = (direction: Direction): void => {
   if (current.pageCount < 0 || current.pageNo < 0) return;
 
   if (jumpPage(current.pageNo + direction)) {
@@ -118,13 +120,17 @@ const flipPage = (direction: 1 | -1): void => {
   flipChapter(direction);
 }
 
-actions.flipPagePrev = () => flipPage(-1);
+actions.flipPagePrev = () => flipPage(Direction.prev);
 
-actions.flipPageNext = () => flipPage(+1);
+actions.flipPageNext = () => flipPage(Direction.next);
 
 actions.jumpPageFirst = () => jumpPage(0);
 
 actions.jumpPageLast = () => jumpPage(current.pageCount - 1);
+
+addMessageHandler('trigger', ({ action }) => {
+  actions[action]?.();
+});
 
 const updateReaderHtml = async (reader: HTMLIFrameElement) => {
   if (reader.getAttribute('src')) return;
@@ -280,8 +286,24 @@ const Home = () => {
             <TocView show={showToc} helper={helper} selected={selected} onClickItem={onClickItem} />
             ) : null
         }
-        <iframe id="reader" ref={refReader} className={doc?.navigation ? '': "hide"} />
-        <PageIndicator {...pageIndProps} />
+        <div className="reader">
+          {
+            doc ? (
+              <ArrowIconButton direction={Direction.prev} onClick={flipPage} />
+            ) : null
+          }
+          <iframe id="reader" ref={refReader} className={doc?.navigation ? '': "hide"} />
+          {
+            doc ? (
+              <ArrowIconButton direction={Direction.next} onClick={flipPage} />
+            ) : null
+          }
+          {
+            doc && pageIndProps.count > 1 ? (
+              <PageIndicator {...pageIndProps} />
+            ) : null
+          }
+        </div>
       </div>
     </div>
   );

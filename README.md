@@ -23,15 +23,40 @@ Currently, the browser version is working but still lacks features. It's **PRE-A
 * Parcel.js v2 for packaging
 * Rust with [web-view](https://github.com/Boscop/web-view) for Desktop
 
+## Operation
+
+### Keyboard
+
+1. Prev Page: `PageUp`, `ArrowLeft`
+2. Next Page: `PageDown`, `ArrowRight`
+3. Prev Chapter: `Ctrl/Meta + ArrowLeft`
+4. Next Chapter: `Ctrl/Meta + ArrowRight`
+5. Toggle ToC: `Backquote`
+6. First Page of Chapter: `Home`
+7. Last Page of Chapter: `End`
+
+> Not configurable yet.
+
+### Mouse
+
+1. Wheel Up / Down
+2. Wheel Left / Right
+3. Click Page No. on the bottom bar
+4. Click Left / Right arrows
+
+### Touch
+
+* Swipe Left / Right
+
 ## Road-map
 
 1. Generic Features
    * [x] flip pages between chapters
-   * [ ] drag and drop files to read
-   * [ ] remember position
-   * [ ] mouse supports
-   * [ ] shortcuts: toggle ToC, prev/next chapter
+   * [x] keyboard shortcuts: toggle ToC, prev/next page/chapter
+   * [x] mouse & touch supports
    * [ ] settings: fonts, background, themes, keybindings
+   * [ ] remember position
+   * [ ] drag and drop files to read
    * [ ] multiple tabs?
 2. Desktop only
    * [ ] settings: font family

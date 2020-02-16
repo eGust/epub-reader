@@ -1,4 +1,4 @@
-import React, { WheelEvent, useCallback, useMemo, MouseEvent } from 'react';
+import React, { useCallback, useMemo, MouseEvent } from 'react';
 
 export interface PageIndicatorProps {
   no: number;
@@ -6,15 +6,6 @@ export interface PageIndicatorProps {
   hidden: boolean;
   onUpdate: (newIndex: number) => void,
 }
-
-const onScroll = (ev: WheelEvent<HTMLDivElement>): void => {
-  const { deltaX, deltaY, deltaMode } = ev;
-  if (deltaX > 0 || deltaY > 0) {
-    //
-  } else if (deltaX < 0 || deltaY < 0) {
-    //
-  }
-};
 
 const PageIndicator = ({ no, count, onUpdate }: PageIndicatorProps) => {
   const blocks = useMemo<{ className: string, title: string }[]>(() => {
@@ -38,7 +29,7 @@ const PageIndicator = ({ no, count, onUpdate }: PageIndicatorProps) => {
   }, [onUpdate]);
 
   return (
-    <div className="page-indicator" onWheelCapture={onScroll}>
+    <div className="page-indicator">
       <div className="label">{no + 1} / {count}</div>
       <div className="scroll-bar">
         {

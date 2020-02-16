@@ -1,7 +1,7 @@
 import './reader.styl';
 import { sendMessage, emitMessage, addMessageHandler } from './reader/message';
 import { IMAGE_TYPES } from './reader/parser';
-import { page, doOpen, doSetPageNo } from './reader/actions';
+import { page, doOpen, doSetPageNo, $content } from './reader/actions';
 import { join } from './utils';
 
 addMessageHandler('open', doOpen);
@@ -53,4 +53,61 @@ document.addEventListener('click', async (ev) => {
 window.addEventListener('keyup', (ev) => {
   const { altKey: alt, ctrlKey: ctrl, metaKey: meta, shiftKey: shift, key, code } = ev;
   sendMessage('keyUp', { alt, ctrl, meta, shift, key, code });
+}, false);
+
+const WHEEL_EVENT_TIMEOUT = 250; // ms
+const TOUCH_SWIPE_THRESHOLD = 20; // px
+
+const wheelTimeouts = {
+  next: 0,
+  prev: 0,
+};
+
+window.addEventListener('wheel', (ev) => {
+  const { deltaX, deltaY } = ev;
+  const now = Date.now();
+
+  if (deltaX > 0 || deltaY > 0) {
+    if (now < wheelTimeouts.next) return;
+    wheelTimeouts.next = now + WHEEL_EVENT_TIMEOUT;
+    sendMessage('trigger', { action: 'flipPageNext' });
+  } else if (deltaX < 0 || deltaY < 0) {
+    if (now < wheelTimeouts.prev) return;
+    wheelTimeouts.prev = now + WHEEL_EVENT_TIMEOUT;
+    sendMessage('trigger', { action: 'flipPagePrev' });
+  }
+}, false);
+
+const touchPosition = { startX: -1 };
+
+$content.addEventListener('touchstart', (ev) => {
+  if (ev.touches.length !== 1) return;
+
+  touchPosition.startX = ev.touches[0].pageX;
+}, false);
+
+$content.addEventListener('touchmove', (ev) => {
+  if (ev.touches.length !== 1) return;
+
+  ev.preventDefault();
+}, false);
+
+$content.addEventListener('touchend', (ev) => {
+  try {
+    if (ev.changedTouches.length !== 1 || touchPosition.startX < 0) return;
+
+    const endX = ev.changedTouches[0].pageX;
+    const direction = touchPosition.startX - endX;
+    if (Math.abs(direction) > TOUCH_SWIPE_THRESHOLD) {
+      sendMessage('trigger', { action: direction < 0 ? 'flipPagePrev' : 'flipPageNext' });
+    }
+  } finally {
+    touchPosition.startX = -1;
+  }
+}, false);
+
+$content.addEventListener('touchcancel', (ev) => {
+  if (ev.touches.length !== 1) return;
+
+  touchPosition.startX = -1;
 }, false);

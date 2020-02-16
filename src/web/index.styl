@@ -7,6 +7,16 @@ body
   height 100vh
   overflow auto
 
+horizontal-center()
+  position absolute
+  left 50%
+  transform translateX(-50%)
+
+vertical-center()
+  position absolute
+  top 50%
+  transform translateY(-50%)
+
 *
   scrollbar-width thin
   scrollbar-color #444 #CCC
@@ -49,9 +59,16 @@ body
     overflow hidden
     text-overflow ellipsis
 
+.reader
+  position relative
+  display flex
+  padding 0
+  margin 0
+  flex 1
+
 #reader
   border none
-  margin 5px 8px 16px 5px
+  margin 8px 15px 16px 15px
   padding 0
   flex 1
 
@@ -61,14 +78,12 @@ body
   overflow hidden
 
 .page-indicator
-  position absolute
+  horizontal-center()
   width 62%
   height 10px
-  left 19%
-  bottom 3px
+  bottom 4px
   color white
   border-radius 20px
-  opacity 0.4
   display flex
   flex-direction column
   justify-content space-evenly
@@ -80,33 +95,33 @@ body
   .scroll-bar
     position relative
     margin 0 20px
-    height 8px
+    height 10px
     align-self stretch
-    border-radius 5px
+    border-radius 6px
     overflow hidden
     display flex
     flex-direction row
     align-content stretch
     border 0.5px dotted black
     .scroll-thumb
-      background-color black
+      background-color #222
       flex 1
     .scroll-block
       cursor pointer
+      background-color #ddd
       flex 1
       &:hover
-        border 0.5px dotted white
+        border 0.5px dotted #eee
 
   &:hover
-    opacity 0.9
     background-color rgba(0, 0, 0, 0.9)
-    height 40px
+    height 42px
     .label
       opacity 1
       display block
-    .scroll-bar
+    .scroll-block
       border none
-      background-color #666
+      background-color #777
     .scroll-thumb
       background-color #eee
 
@@ -151,3 +166,36 @@ ul.toc
 
   ul
     padding-left 24px
+
+-caret-offset = 3px
+-caret-size = 120px
+-caret-width = 12px
+-caret-color = rgba(0, 0, 0, 0.7)
+
+.arrow-icon-button
+  vertical-center()
+  height 66%
+  width 20px
+  opacity 0
+  cursor pointer
+
+  .caret
+    vertical-center()
+    border-top -caret-size solid transparent
+    border-bottom -caret-size solid transparent
+    width 0
+    height 0
+
+  &.direction-prev
+    left 0
+    .caret
+      left -caret-offset
+      border-right -caret-width solid -caret-color
+  &.direction-next
+    right 0
+    .caret
+      right -caret-offset
+      border-left -caret-width solid -caret-color
+
+  &:hover
+    opacity 1
