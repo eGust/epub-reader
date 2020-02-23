@@ -3,11 +3,15 @@ export interface PayloadType {
     mime: string;
     path: string;
     content: string | Blob;
-    atLast: boolean;
+    pageNo: number;
+    pageCount?: number;
   },
   setPage: {
     pageNo: number;
     forceSync?: boolean;
+  },
+  updateStyles: {
+    css: string;
   },
 }
 

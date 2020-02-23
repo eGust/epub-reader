@@ -1,12 +1,14 @@
 import './reader.styl';
 import { sendMessage, emitMessage, addMessageHandler } from './reader/message';
 import { IMAGE_TYPES } from './reader/parser';
-import { page, doOpen, doSetPageNo, $content } from './reader/actions';
+import { page, $content, doOpen, doSetPageNo, doUpdateStyles } from './reader/actions';
 import { join } from './utils';
 
 addMessageHandler('open', doOpen);
 
 addMessageHandler('setPage', doSetPageNo);
+
+addMessageHandler('updateStyles', doUpdateStyles);
 
 const goToLink = (path: string) => sendMessage('go', { path });
 

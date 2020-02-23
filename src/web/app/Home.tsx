@@ -6,24 +6,27 @@ import Typography from '@material-ui/core/Typography';
 
 import LibraryAddIcon from '@material-ui/icons/LibraryAdd';
 import TocIcon from '@material-ui/icons/Toc';
+import SettingsIcon from '@material-ui/icons/Settings';
 
 import TocView from './TocView';
+import SettingsModal from './SettingsModal';
 import PageIndicator, { PageIndicatorProps } from './PageIndicator';
 import ArrowIconButton from './ArrowIconButton';
 
 import { PackageManager, ResponseObject } from '../epub/package_manager';
 import { tick } from '../utils';
 import { addMessageHandler, current, sendMessage } from './message';
-import { actions } from './shortcuts';
+import { actions, toggleShortCutsDisabled } from './shortcuts';
 import { PathHelper, ContentItem } from './path_helper';
 import { Direction } from './types';
+import { settingsManager } from './settings';
 
-const openPath = async (page: ResponseObject | null, atLast = false): Promise<void> => {
+const openPath = async (page: ResponseObject | null, { pageNo = 0, pageCount }: { pageNo?: number, pageCount?: number } = {}): Promise<void> => {
   if (!page) { return; }
 
   const { mime, path, zip } = page;
   const content = await zip.async(mime.includes('html') ? 'text' : 'blob');
-  sendMessage('open', { content, path, mime, atLast });
+  sendMessage('open', { content, path, mime, pageNo, pageCount });
   current.path = path;
   current.pageCount = -1;
   current.pageNo = -1;
@@ -60,6 +63,7 @@ addMessageHandler('updateStatus', ({ pageCount, pageNo }) => {
   current.pageCount = pageCount;
   current.pageNo = pageNo;
   ui.setPageStatus({ count: pageCount, no: pageNo });
+  settingsManager.saveCurrentInfo(current);
   console.debug('updateStatus', current);
 });
 
@@ -94,7 +98,7 @@ const flipChapter = (direction: Direction): void => {
   const next = spineItems[spineIndex];
   const { item: { path } } = next;
   console.debug(cur, next, current.helper!.getPathInfo(path));
-  openPath(doc.toResponse(path), direction < 0);
+  openPath(doc.toResponse(path), { pageNo: direction });
   updateSelectedChapter(spineIndex);
 }
 
@@ -154,12 +158,16 @@ const updateReaderHtml = async (reader: HTMLIFrameElement) => {
   }
 };
 
+const firstRun = { firstRun: true };
+
 const Home = () => {
   const [doc, setDoc] = useState<PackageManager | null>(null);
   const [helper, setHelper] = useState<PathHelper | null>(null);
   const [selected, setSelected] = useState({ id: '', parentIds: new Set<string>() });
   const [showToc, setShowToc] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isOpening, setOpening] = useState(false);
+  const [settings, setSettings] = useState(settingsManager.getSettings());
   const [pageIndProps, setPageIndProps] = useState<PageIndicatorProps>({
     count: -1,
     no: -1,
@@ -205,6 +213,11 @@ const Home = () => {
       const file = target.files![0];
       current.reader = refReader.current?.contentWindow ?? null;
 
+      if (firstRun.firstRun) {
+        settingsManager.syncSettings();
+        firstRun.firstRun = false;
+      }
+
       console.clear();
       sendMessage('reset');
       setOpening(true);
@@ -226,7 +239,13 @@ const Home = () => {
 
         await tick();
         // open home
-        openPath(pm.getHome());
+        const saved = settingsManager.getCurrentInfo(pm);
+        if (saved) {
+          const { path, pageNo, pageCount } = saved;
+          openPath(pm.toResponse(path), { pageNo, pageCount });
+        } else {
+          openPath(pm.getHome());
+        }
       } finally {
         setOpening(false);
       }
@@ -235,7 +254,32 @@ const Home = () => {
   );
 
   const title = useMemo(() => doc?.navigation?.title ?? (isOpening ? 'Loading...' : 'EPub Reader'), [doc, isOpening]);
-  const onToggleToc = useCallback(() => setShowToc(!showToc), [showToc, setShowToc]);
+  const onToggleSettingsModal = useCallback(
+    () => {
+      setShowSettingsModal(!showSettingsModal);
+      toggleShortCutsDisabled();
+    },
+    [showSettingsModal, setShowSettingsModal],
+  );
+  const onCloseModalAndSave = useCallback(
+    (data?: { css: string }) => {
+      onToggleSettingsModal();
+      if (!data) return;
+
+
+      const newSettings = {
+        ...settings,
+        ...data,
+      }
+      setSettings(newSettings);
+      settingsManager.updateSettings(newSettings);
+    },
+    [onToggleSettingsModal, settings, setSettings],
+  );
+  const onToggleToc = useCallback(
+    () => setShowToc(!showToc),
+    [showToc, setShowToc],
+  );
   const onSelectItem = useCallback((id: string) => {
     const parentIds = new Set(current.helper!.getContentItemWithAllParentIds(id));
     setSelected({ id, parentIds });
@@ -274,6 +318,9 @@ const Home = () => {
             <Typography className="title">{title}</Typography>
           </div>
 
+          <IconButton edge="end" color="inherit" onClick={onToggleSettingsModal}>
+            <SettingsIcon />
+          </IconButton>
           <IconButton edge="end" color="inherit" component="label">
             <input type="file" accept=".epub" className="hide" onChange={onSelectFile} />
             <LibraryAddIcon />
@@ -305,6 +352,7 @@ const Home = () => {
           }
         </div>
       </div>
+      <SettingsModal open={showSettingsModal} css={settings.css} onClose={onCloseModalAndSave} />
     </div>
   );
 }

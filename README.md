@@ -54,8 +54,9 @@ Currently, the browser version is working but still lacks features. It's **PRE-A
    * [x] flip pages between chapters
    * [x] keyboard shortcuts: toggle ToC, prev/next page/chapter
    * [x] mouse & touch supports
-   * [ ] settings: fonts, background, themes, keybindings
-   * [ ] remember position
+   * [x] settings: fonts, background
+   * [x] remember position
+   * [ ] settings: themes, keybindings
    * [ ] drag and drop files to read
    * [ ] multiple tabs?
 2. Desktop only

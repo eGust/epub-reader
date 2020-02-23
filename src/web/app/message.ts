@@ -2,7 +2,7 @@ import { PathHelper } from './path_helper';
 import { PackageManager } from "../epub/package_manager";
 import { MessageType } from "./types";
 
-interface Current {
+export interface Current {
   doc: PackageManager | null;
   reader: Window | null;
   helper: PathHelper | null;

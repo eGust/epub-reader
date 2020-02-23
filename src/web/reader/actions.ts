@@ -46,10 +46,7 @@ export const updatePageCount = async ({ ignoreSync = false } = {}) => {
   pending.pageCount = timestamp + PAGE_COUNT_DELAY;
   await tick(PAGE_COUNT_DELAY);
 
-  const fullWidth = Math.max(0, ...[...$content.children].map((element) => {
-    const el = element as HTMLElement;
-    return el.offsetLeft + el.clientWidth;
-  })) || $content.scrollWidth;
+  const fullWidth = $content.scrollWidth;
   const pageWidth = $content.clientWidth;
   const vw = $body.clientWidth * 0.03;
   const count = (fullWidth + pageWidth * 0.4 + vw) / (pageWidth + vw);
@@ -66,7 +63,7 @@ export const updatePageCount = async ({ ignoreSync = false } = {}) => {
   }
 };
 
-export const doOpen = async ({ mime, path, content, atLast }: PayloadType['open']): Promise<void> => {
+export const doOpen = async ({ mime, path, content, pageNo, pageCount }: PayloadType['open']): Promise<void> => {
   if (/(html|xml)/.test(mime)) {
     $content.innerHTML = '';
     page.basePath = `/${getBasePath(path)}`;
@@ -79,13 +76,25 @@ export const doOpen = async ({ mime, path, content, atLast }: PayloadType['open'
 
       await updatePageCount({ ignoreSync: true });
       $content.style.removeProperty('visibility');
-      doSetPageNo({ pageNo: atLast ? page.count - 1 : 0, forceSync: true });
+      if (pageCount) {
+        const pos = (pageNo + 1) / pageCount;
+        doSetPageNo({ pageNo: Math.round(pos * page.count) - 1, forceSync: true });
+      } else {
+        doSetPageNo({ pageNo: pageNo < 0 ? page.count - 1 : 0, forceSync: true });
+      }
     } catch (e) {
       console.error('doOpen', e);
     }
     return;
   }
   console.error('open', { mime, path, content });
+};
+
+const $style = document.getElementById('custom-styles')!;
+
+export const doUpdateStyles = ({ css }: PayloadType['updateStyles']): void => {
+  $style.innerHTML = `body {${css}}`;
+  setTimeout(updatePageCount, 10);
 };
 
 window.addEventListener('resize', () => updatePageCount());

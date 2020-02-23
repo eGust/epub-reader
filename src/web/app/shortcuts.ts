@@ -1,6 +1,19 @@
 import { addMessageHandler } from "./message";
 import { MessageType } from "./types";
 
+const shortCutSettings = {
+  disabledHandling: false,
+};
+
+export const toggleShortCutsDisabled = (disabled?: boolean): void => {
+  shortCutSettings.disabledHandling = disabled === undefined
+    ? !shortCutSettings.disabledHandling
+    : disabled;
+};
+
+export const enableShortCuts = () => toggleShortCutsDisabled(false);
+export const disableShortCuts = () => toggleShortCutsDisabled(true);
+
 export const bindings: { [key: string]: Record<string, string> } = {
   keyboard: {
     'CtrlMeta + ArrowLeft': 'flipChapterPrev',
@@ -21,6 +34,8 @@ export const actions: Record<string, Function> = {};
 const CONTROL_KEYS = new Set(['Control', 'Meta', 'Shift', 'Alt']);
 
 const keyHandler = (keyStatus: MessageType['keyUp']) => {
+  if (shortCutSettings.disabledHandling) return;
+
   if (CONTROL_KEYS.has(keyStatus.key)) return;
 
   const maps = [[keyStatus.code]];
