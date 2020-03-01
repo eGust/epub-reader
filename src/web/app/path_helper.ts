@@ -33,6 +33,7 @@ export class PathHelper {
     const ids: string[] = [];
     const { idMap } = this;
     for (let item = idMap.get(id); item; item = idMap.get(item.parentId)) {
+      if (!item.parentId) break;
       ids.push(item.parentId);
     }
     return ids;

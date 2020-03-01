@@ -1,4 +1,6 @@
 import React, { useState, ChangeEvent, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useSelector, useDispatch } from 'react-redux';
+
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
@@ -10,16 +12,37 @@ import SettingsIcon from '@material-ui/icons/Settings';
 
 import TocView from './TocView';
 import SettingsModal from './SettingsModal';
-import PageIndicator, { PageIndicatorProps } from './PageIndicator';
+import PageIndicator from './PageIndicator';
 import ArrowIconButton from './ArrowIconButton';
 
 import { PackageManager, ResponseObject } from '../epub/package_manager';
 import { tick } from '../utils';
-import { addMessageHandler, current, sendMessage } from './message';
+import { addMessageHandler, currentReader, sendMessage } from './message';
 import { actions, toggleShortCutsDisabled } from './shortcuts';
 import { PathHelper, ContentItem } from './path_helper';
 import { Direction } from './types';
 import { settingsManager } from './settings';
+import { State } from './store/state';
+import { toggleBoolValue, updateSettings, updateSelectedChapters, updatePageInfo, updatePartialCurrent } from './store/reducer';
+import { store } from './store';
+
+const updateSelectedChapter = (path: string) => {
+  const h = currentReader.helper!;
+  const spineIndex = h.getPathInfo(path)?.spineIndex;
+  if (spineIndex === undefined) return;
+
+  const { spineItems } = currentReader.doc!.metadata!;
+  for (let i = spineIndex; i >= 0; i -= 1) {
+    const { item } = spineItems[spineIndex];
+    const info = h.getPathInfo(item.path)!;
+    if (info.tocItems.length) {
+      const { id } = info.tocItems[0];
+      const parentIds = currentReader.helper!.getContentItemWithAllParentIds(id);
+      store.dispatch(updateSelectedChapters({ id, parentIds }));
+      break;
+    }
+  }
+};
 
 const openPath = async (page: ResponseObject | null, { pageNo = 0, pageCount }: { pageNo?: number, pageCount?: number } = {}): Promise<void> => {
   if (!page) { return; }
@@ -27,68 +50,47 @@ const openPath = async (page: ResponseObject | null, { pageNo = 0, pageCount }: 
   const { mime, path, zip } = page;
   const content = await zip.async(mime.includes('html') ? 'text' : 'blob');
   sendMessage('open', { content, path, mime, pageNo, pageCount });
-  current.path = path;
-  current.pageCount = -1;
-  current.pageNo = -1;
+  store.dispatch(updatePageInfo({ path, pageCount: -1, pageNo: -1 }));
+  updateSelectedChapter(path);
 };
 
 addMessageHandler('go', ({ path }) => {
-  if (!path || !current.doc) return;
-  openPath(current.doc.toResponse(path));
+  if (!path || !currentReader.doc) return;
+  openPath(currentReader.doc.toResponse(path));
 });
 
 addMessageHandler('image', async ({ path }, respond) => {
-  if (!path || !current.doc) return;
-  const url = await current.doc.asUrl(path);
+  if (!path || !currentReader.doc) return;
+  const url = await currentReader.doc.asUrl(path);
   console.debug('image', { path, url });
   respond({ url });
 });
 
 addMessageHandler('images', async ({ paths }, respond) => {
-  if (!paths || !current.doc) return;
+  if (!paths || !currentReader.doc) return;
   const urls = (
       await Promise.all(
-        paths.map(async (path) => [path, await current.doc!.asUrl(path)]),
+        paths.map(async (path) => [path, await currentReader.doc!.asUrl(path)]),
       )
     ).mapToObject(([key, url]) => (url ? [key!, url] : false));
   respond({ urls });
 });
 
-const ui = {
-  setSelected: (_id: string) => {},
-  setPageStatus: (status: Record<string, any>) => {},
-};
-
 addMessageHandler('updateStatus', ({ pageCount, pageNo }) => {
-  current.pageCount = pageCount;
-  current.pageNo = pageNo;
-  ui.setPageStatus({ count: pageCount, no: pageNo });
-  settingsManager.saveCurrentInfo(current);
-  console.debug('updateStatus', current);
+  store.dispatch(updatePageInfo({ pageCount, pageNo }));
+  settingsManager.saveCurrentInfo(store.getState().current);
 });
 
-const updateSelectedChapter = (spineIndex: number) => {
-  const h = current.helper!;
-  const { spineItems } = current.doc!.metadata!;
-  for (let i = spineIndex; i >= 0; i -= 1) {
-    const { item } = spineItems[spineIndex];
-    const info = h.getPathInfo(item.path)!;
-    if (info.tocItems.length) {
-      ui.setSelected(info.tocItems[0].id);
-      break;
-    }
-  }
-};
-
 const flipChapter = (direction: Direction): void => {
-  const cur = current.helper!.getPathInfo(current.path);
+  const { current } = store.getState();
+  const cur = currentReader.helper!.getPathInfo(current.path);
   if (!cur || cur.spineIndex === undefined) {
     console.warn(current);
     return;
   }
 
   const spineIndex = cur.spineIndex + direction;
-  const doc = current.doc!;
+  const doc = currentReader.doc!;
   const { spineItems } = doc.metadata!;
   if (spineIndex < 0 || spineIndex >= spineItems.length) {
     console.warn(current, cur);
@@ -97,9 +99,8 @@ const flipChapter = (direction: Direction): void => {
 
   const next = spineItems[spineIndex];
   const { item: { path } } = next;
-  console.debug(cur, next, current.helper!.getPathInfo(path));
+  console.debug(cur, next, currentReader.helper!.getPathInfo(path));
   openPath(doc.toResponse(path), { pageNo: direction });
-  updateSelectedChapter(spineIndex);
 }
 
 actions.flipChapterPrev = () => flipChapter(Direction.prev);
@@ -107,6 +108,7 @@ actions.flipChapterPrev = () => flipChapter(Direction.prev);
 actions.flipChapterNext = () => flipChapter(Direction.next);
 
 const jumpPage = (pageNo: number): boolean => {
+  const { current } = store.getState();
   if (pageNo < 0 || pageNo >= current.pageCount || pageNo === current.pageNo) {
     return false;
   }
@@ -115,6 +117,7 @@ const jumpPage = (pageNo: number): boolean => {
 }
 
 const flipPage = (direction: Direction): void => {
+  const { current } = store.getState();
   if (current.pageCount < 0 || current.pageNo < 0) return;
 
   if (jumpPage(current.pageNo + direction)) {
@@ -130,7 +133,7 @@ actions.flipPageNext = () => flipPage(Direction.next);
 
 actions.jumpPageFirst = () => jumpPage(0);
 
-actions.jumpPageLast = () => jumpPage(current.pageCount - 1);
+actions.jumpPageLast = () => jumpPage(store.getState().current.pageCount - 1);
 
 addMessageHandler('trigger', ({ action }) => {
   actions[action]?.();
@@ -163,55 +166,53 @@ const firstRun = { firstRun: true };
 const Home = () => {
   const [doc, setDoc] = useState<PackageManager | null>(null);
   const [helper, setHelper] = useState<PathHelper | null>(null);
-  const [selected, setSelected] = useState({ id: '', parentIds: new Set<string>() });
-  const [showToc, setShowToc] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [isOpening, setOpening] = useState(false);
-  const [settings, setSettings] = useState(settingsManager.getSettings());
-  const [pageIndProps, setPageIndProps] = useState<PageIndicatorProps>({
-    count: -1,
-    no: -1,
-    hidden: false,
-    onUpdate: jumpPage,
-  });
   const refReader = useRef<HTMLIFrameElement>(null);
+  const dispatch = useDispatch();
+
+  const isOpening = useSelector(({ current }: State) => current.isOpening);
+  const showToc = useSelector(({ current }: State) => current.showToc);
+  const showSettingsModal = useSelector(({ current }: State) => current.showSettingsModal);
+  const selectedChapter = useSelector(({ current: { selectedChapter: { id, parentIds } } }: State) => ({
+    id,
+    parentIds: new Set(parentIds),
+  }));
+  const pageIndProps = useSelector(({ current: { pageNo, pageCount } }: State) => ({
+    no: pageNo,
+    count: pageCount,
+    onUpdate: jumpPage,
+  }));
+  const settings = useSelector(({ current }: State) => current.settings);
 
   const setCurrentDocument = useCallback(
     (doc: PackageManager | null) => {
-      setShowToc(!!doc);
+      dispatch(updatePartialCurrent({
+        showToc: !!doc,
+        docId: doc?.id ?? '',
+      }));
       setDoc(doc);
-      current.doc = doc;
+      currentReader.doc = doc;
     },
-    [setShowToc, setDoc],
+    [dispatch, setDoc],
   );
 
   useEffect(() => {
-    current.reader = refReader.current?.contentWindow ?? null;
+    currentReader.reader = refReader.current?.contentWindow ?? null;
     if (!refReader.current) return;
 
     updateReaderHtml(refReader.current);
   }, [refReader]);
 
   useEffect(() => {
-    current.helper = doc ? new PathHelper(doc) : null;
-    setHelper(current.helper);
+    currentReader.helper = doc ? new PathHelper(doc) : null;
+    setHelper(currentReader.helper);
+    console.debug(currentReader);
   }, [doc]);
-
-  useEffect(() => {
-    ui.setPageStatus = ({ count, no }: Record<string, number>) => {
-      setPageIndProps({
-        ...pageIndProps,
-        count,
-        no,
-      });
-    };
-  }, [setPageIndProps]);
 
   const onSelectFile = useCallback(
     async (ev: ChangeEvent<HTMLInputElement>) => {
       const { target } = ev;
       const file = target.files![0];
-      current.reader = refReader.current?.contentWindow ?? null;
+      currentReader.reader = refReader.current?.contentWindow ?? null;
 
       if (firstRun.firstRun) {
         settingsManager.syncSettings();
@@ -220,7 +221,7 @@ const Home = () => {
 
       console.clear();
       sendMessage('reset');
-      setOpening(true);
+      dispatch(updatePartialCurrent({ isOpening: true }));
       try {
         setCurrentDocument(null);
         await tick();
@@ -247,47 +248,36 @@ const Home = () => {
           openPath(pm.getHome());
         }
       } finally {
-        setOpening(false);
+        dispatch(updatePartialCurrent({ isOpening: false }));
       }
     },
-    [refReader]
+    [dispatch, refReader]
   );
 
   const title = useMemo(() => doc?.navigation?.title ?? (isOpening ? 'Loading...' : 'EPub Reader'), [doc, isOpening]);
   const onToggleSettingsModal = useCallback(
     () => {
-      setShowSettingsModal(!showSettingsModal);
+      dispatch(toggleBoolValue('showSettingsModal'));
       toggleShortCutsDisabled();
     },
-    [showSettingsModal, setShowSettingsModal],
+    [dispatch],
   );
   const onCloseModalAndSave = useCallback(
     (data?: { css: string }) => {
       onToggleSettingsModal();
       if (!data) return;
 
-
-      const newSettings = {
-        ...settings,
-        ...data,
-      }
-      setSettings(newSettings);
-      settingsManager.updateSettings(newSettings);
+      dispatch(updateSettings(data));
     },
-    [onToggleSettingsModal, settings, setSettings],
+    [dispatch],
   );
   const onToggleToc = useCallback(
-    () => setShowToc(!showToc),
-    [showToc, setShowToc],
+    () => dispatch(toggleBoolValue('showToc')),
+    [dispatch],
   );
-  const onSelectItem = useCallback((id: string) => {
-    const parentIds = new Set(current.helper!.getContentItemWithAllParentIds(id));
-    setSelected({ id, parentIds });
-  }, [setSelected]);
   const onClickItem = useCallback(
     (item: ContentItem) => {
       openPath(doc!.toResponse(item.path));
-      onSelectItem(item.id);
       console.debug('open', item);
     },
     [doc],
@@ -296,10 +286,6 @@ const Home = () => {
   useEffect(() => {
     actions.toggleToc = onToggleToc;
   }, [onToggleToc]);
-
-  useEffect(() => {
-    ui.setSelected = onSelectItem;
-  }, [onSelectItem]);
 
   return (
     <div className="flex column flex-auto">
@@ -330,7 +316,7 @@ const Home = () => {
       <div className="reader-wrap flex-auto">
         {
           helper ? (
-            <TocView show={showToc} helper={helper} selected={selected} onClickItem={onClickItem} />
+            <TocView show={showToc} helper={helper} selected={selectedChapter} onClickItem={onClickItem} />
             ) : null
         }
         <div className="reader">
@@ -355,6 +341,6 @@ const Home = () => {
       <SettingsModal open={showSettingsModal} css={settings.css} onClose={onCloseModalAndSave} />
     </div>
   );
-}
+};
 
 export default Home;

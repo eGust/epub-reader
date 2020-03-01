@@ -67,5 +67,4 @@ const SettingsModal = ({ open, css, onClose }: SettingsModalProps) => {
   );
 }
 
-
 export default SettingsModal;

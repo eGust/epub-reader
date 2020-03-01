@@ -2,26 +2,27 @@ import { PathHelper } from './path_helper';
 import { PackageManager } from "../epub/package_manager";
 import { MessageType } from "./types";
 
-export interface Current {
+export interface CurrentReader {
   doc: PackageManager | null;
   reader: Window | null;
   helper: PathHelper | null;
-  path: string;
+}
+
+export interface PageInfo {
+  docId: string,
+  path: string,
   pageNo: number;
   pageCount: number;
 }
 
-export const current: Current = {
+export const currentReader: CurrentReader = {
   doc: null,
   reader: null,
   helper: null,
-  path: '',
-  pageNo: -1,
-  pageCount: -1,
 };
 
 export const sendMessage = (type: string, payload: Record<string, any> = {}): void => {
-  current.reader?.postMessage({ type, payload }, '/');
+  currentReader.reader?.postMessage({ type, payload }, '/');
 };
 
 const respondMessage = (messageId: string, data: Record<string, any>): void =>
@@ -37,7 +38,7 @@ type MessageHandler<T extends keyof MessageType, P = MessageType[T]> = (payload:
 const messageHandlers: { [T in keyof MessageType]?: MessageHandler<T> } = {};
 
 window.addEventListener('message', async ({ data }) => {
-  if (!current.doc || !(data?.type)) return;
+  if (!currentReader.doc || !(data?.type)) return;
 
   const handler = messageHandlers[data.type as keyof MessageType];
   if (!handler) {

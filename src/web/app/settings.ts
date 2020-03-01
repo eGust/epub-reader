@@ -1,4 +1,5 @@
-import { sendMessage, Current } from "./message";
+import { DEFAULT_STATE } from './store/state';
+import { sendMessage, PageInfo } from "./message";
 import { PackageManager } from "../epub/package_manager";
 
 export interface Settings {
@@ -44,6 +45,8 @@ const CURRENT_KEY = `${APP_KEY}.position`;
 
 const SETTINGS_KEY = `${APP_KEY}.settings`;
 
+type CurrentType = typeof DEFAULT_STATE.current;
+
 class SettingsManager {
   constructor() {
     const saved = readStorage(SETTINGS_KEY);
@@ -73,13 +76,13 @@ class SettingsManager {
 
   public getCurrentInfo(doc: PackageManager): CurrentInfo | null {
     const saved = readStorage(`${CURRENT_KEY}.${doc.id}`);
-    return saved.path ? saved as Current : null;
+    return saved.path ? saved as PageInfo : null;
   }
 
-  public saveCurrentInfo(current: Current): void {
-    if (!current.doc) return;
+  public saveCurrentInfo<T extends PageInfo>(current: T): void {
+    if (!current.docId) return;
 
-    const key = `${CURRENT_KEY}.${current.doc.id}`;
+    const key = `${CURRENT_KEY}.${current.docId}`;
     const { path, pageNo, pageCount } = current;
     localStorage.setItem(key, JSON.stringify({ path, pageNo, pageCount }));
   }

@@ -3,7 +3,6 @@ import React, { useCallback, useMemo, MouseEvent } from 'react';
 export interface PageIndicatorProps {
   no: number;
   count: number;
-  hidden: boolean;
   onUpdate: (newIndex: number) => void,
 }
 
