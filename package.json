@@ -33,7 +33,7 @@
     "@material-ui/core": "^4.9.5",
     "@material-ui/icons": "^4.9.1",
     "@reduxjs/toolkit": "^1.2.5",
-    "jszip": "^3.2.2",
+    "jszip": "^3.7.0",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "react-redux": "^7.2.0"
